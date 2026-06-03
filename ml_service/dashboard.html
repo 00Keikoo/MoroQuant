@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Trading Intelligence Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .header .status {
+            color: #10b981;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .controls select, .controls button {
+            padding: 10px 20px;
+            background: #1f1f1f;
+            border: 1px solid #333;
+            color: #e5e5e5;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background: #2a2a2a;
+        }
+
+        .signals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .signal-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+
+        .signal-card:hover {
+            transform: translateY(-2px);
+            border-color: #3a3a3a;
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .symbol {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .timeframe {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .direction-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .direction-long {
+            background: #10b98120;
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .direction-short {
+            background: #ef444420;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .direction-neutral {
+            background: #6b728020;
+            color: #9ca3af;
+            border: 1px solid #6b7280;
+        }
+
+        .confidence {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+
+        .confidence-label {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .info-value {
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .features {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .features-title {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .feature-name {
+            color: #aaa;
+        }
+
+        .feature-value {
+            color: #e5e5e5;
+            font-family: monospace;
+        }
+
+        .error {
+            background: #ef444420;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .last-update {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ML Trading Intelligence</h1>
+        <div class="status" id="status">● Live</div>
+    </div>
+
+    <div class="controls">
+        <select id="symbolSelect">
+            <option value="">Loading symbols...</option>
+        </select>
+        <button onclick="refreshSignals()">Refresh Now</button>
+        <button onclick="toggleAutoRefresh()">Auto-refresh: <span id="autoRefreshStatus">ON</span></button>
+    </div>
+
+    <div class="signals-grid" id="signalsGrid">
+        <div class="loading">Loading signals...</div>
+    </div>
+
+    <div class="last-update" id="lastUpdate"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let autoRefresh = true;
+        let refreshInterval;
+        let availableSymbols = [];
+
+        async function loadSymbols() {
+            try {
+                const response = await fetch(`${API_BASE}/symbols`);
+                const data = await response.json();
+
+                availableSymbols = Object.keys(data.symbols);
+
+                const select = document.getElementById('symbolSelect');
+                select.innerHTML = '<option value="">All Symbols</option>';
+
+                availableSymbols.forEach(symbol => {
+                    const option = document.createElement('option');
+                    option.value = symbol;
+                    option.textContent = symbol;
+                    select.appendChild(option);
+                });
+
+                refreshSignals();
+            } catch (error) {
+                console.error('Error loading symbols:', error);
+                document.getElementById('signalsGrid').innerHTML =
+                    '<div class="error">Failed to load symbols. Is the API running?</div>';
+            }
+        }
+
+        async function refreshSignals() {
+            const selectedSymbol = document.getElementById('symbolSelect').value;
+            const symbols = selectedSymbol ? [selectedSymbol] : availableSymbols;
+
+            if (symbols.length === 0) return;
+
+            document.getElementById('status').textContent = '● Refreshing...';
+            document.getElementById('status').style.color = '#f59e0b';
+
+            const grid = document.getElementById('signalsGrid');
+            grid.innerHTML = '<div class="loading">Generating signals...</div>';
+
+            const signalPromises = symbols.map(symbol =>
+                fetch(`${API_BASE}/signals?symbol=${symbol}&timeframe=1h`)
+                    .then(r => r.json())
+                    .catch(e => ({ error: true, symbol, message: e.message }))
+            );
+
+            const signals = await Promise.all(signalPromises);
+
+            grid.innerHTML = '';
+
+            signals.forEach(signal => {
+                if (signal.error) {
+                    grid.innerHTML += `
+                        <div class="signal-card">
+                            <div class="error">
+                                ${signal.symbol}: ${signal.message || 'Failed to generate signal'}
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const directionClass = `direction-${signal.direction}`;
+                const topFeatures = Object.entries(signal.top_features || {}).slice(0, 5);
+
+                grid.innerHTML += `
+                    <div class="signal-card">
+                        <div class="signal-header">
+                            <div>
+                                <div class="symbol">${signal.symbol}</div>
+                                <div class="timeframe">${signal.timeframe}</div>
+                            </div>
+                            <div class="direction-badge ${directionClass}">
+                                ${signal.direction}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="confidence-label">Confidence</div>
+                            <div class="confidence">${signal.confidence}%</div>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">Price</span>
+                            <span class="info-value">$${signal.price.toLocaleString()}</span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">Regime</span>
+                            <span class="info-value">${signal.regime}</span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">Model</span>
+                            <span class="info-value">${signal.model_type}</span>
+                        </div>
+
+                        ${topFeatures.length > 0 ? `
+                            <div class="features">
+                                <div class="features-title">Top Features</div>
+                                ${topFeatures.map(([name, value]) => `
+                                    <div class="feature-item">
+                                        <span class="feature-name">${name}</span>
+                                        <span class="feature-value">${value.toFixed(4)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            document.getElementById('status').textContent = '● Live';
+            document.getElementById('status').style.color = '#10b981';
+            document.getElementById('lastUpdate').textContent =
+                `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            document.getElementById('autoRefreshStatus').textContent = autoRefresh ? 'ON' : 'OFF';
+
+            if (autoRefresh) {
+                startAutoRefresh();
+            } else {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        function startAutoRefresh() {
+            clearInterval(refreshInterval);
+            refreshInterval = setInterval(refreshSignals, 60000);
+        }
+
+        document.getElementById('symbolSelect').addEventListener('change', refreshSignals);
+
+        loadSymbols();
+        startAutoRefresh();
+    </script>
+</body>
+</html>

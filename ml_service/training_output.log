@@ -1,0 +1,49 @@
+2026-05-31 15:14:47 | ml_trading | INFO | Database schema initialized
+2026-05-31 15:14:47 | ml_trading | INFO | Database initialized at /home/zafka/trade-dashboard/ml_service/storage/database.db
+Loaded 721 BTCUSDT candles
+Loaded 140 ES_proxy candles
+
+2026-05-31 15:14:47 | ml_trading | INFO | Starting training for BTCUSDT 1h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-05-31 15:14:50 | ml_trading | INFO | Clean dataset: 505 rows after dropping NaN
+2026-05-31 15:14:50 | ml_trading | INFO | Fold 1: train=400, test=50
+2026-05-31 15:14:52 | ml_trading | INFO | Fold 2: train=450, test=50
+2026-05-31 15:14:53 | ml_trading | INFO | Walk-forward validation complete: 2 folds
+2026-05-31 15:14:53 | ml_trading | INFO | Avg F1 - Short: 0.145, Neutral: 0.334, Long: 0.045
+2026-05-31 15:14:53 | ml_trading | INFO | Training final xgboost model on 505 samples
+2026-05-31 15:14:54 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/BTCUSDT_1h_xgboost_20260531_151454.pkl
+
+====================================================================================================
+TRAINING RESULTS
+====================================================================================================
+Symbol: BTCUSDT 1h
+Model type: xgboost
+Number of folds: 2
+
+Average F1 Scores:
+  Short (0):   0.145
+  Neutral (1): 0.334
+  Long (2):    0.045
+  Weighted:    0.209
+
+====================================================================================================
+TOP 10 MOST IMPORTANT FEATURES
+====================================================================================================
+adx                           : 130.5267
+bb_upper                      : 112.0289
+ema_200_slope                 : 111.5267
+ema_200                       : 105.5327
+macd_signal                   : 102.5251
+atr                           : 97.0183
+rsi                           : 96.5156
+volume_ratio                  : 90.5131
+macd_histogram                : 88.0157
+ema_9                         : 80.5281
+
+====================================================================================================
+FOLD-BY-FOLD RESULTS
+====================================================================================================
+Fold  1 (lightgbm): F1=0.127 | Short=0.062 Neutral=0.250 Long=0.091
+Fold  2 (xgboost ): F1=0.291 | Short=0.227 Neutral=0.419 Long=0.000
+
+Model saved to: /home/zafka/trade-dashboard/ml_service/storage/models/BTCUSDT_1h_xgboost_20260531_151454.pkl

@@ -1,0 +1,30 @@
+# Core ML Libraries
+xgboost
+lightgbm
+scikit-learn
+numpy
+pandas
+
+# Data Sources
+yfinance
+requests
+python-binance
+
+# API & Web
+fastapi
+uvicorn
+pydantic
+
+# Database
+sqlalchemy
+
+# Utilities
+pyyaml
+python-dotenv
+click
+
+# Visualization
+plotly
+
+# Feature Engineering
+pandas-ta
