@@ -4,6 +4,17 @@ const CLAUDE_API_URL = 'http://127.0.0.1:8085/v1/chat/completions';
 const MODEL = 'claude-sonnet-4.5';
 const API_KEY = process.env.CLAUDE_API_KEY || '';
 
+function sanitizeJSON(jsonString: string): string {
+  // Fix common JSON errors from AI responses
+  // Fix missing commas between quoted strings in arrays: "word" "word" -> "word", "word"
+  jsonString = jsonString.replace(/("\s+)(")/g, '", "');
+
+  // Fix typo: affectedAsets -> affectedAssets
+  jsonString = jsonString.replace(/"affectedAsets"/g, '"affectedAssets"');
+
+  return jsonString;
+}
+
 function extractFieldsWithRegex(content: string) {
   try {
     const causeMatch = content.match(/"cause"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/);
@@ -14,7 +25,7 @@ function extractFieldsWithRegex(content: string) {
     if (causeMatch || impactMatch || assetsMatch || perspectiveMatch) {
       let assets: string[] = [];
       if (assetsMatch) {
-        const assetsStr = assetsMatch[1];
+        const assetsStr = assetsMatch[0];
         const assetMatches = assetsStr.match(/"([^"]+)"/g);
         if (assetMatches) {
           assets = assetMatches.map(m => m.replace(/"/g, ''));
@@ -48,10 +59,11 @@ Provide a concise analysis in the following JSON format:
 {
   "cause": "Brief explanation of what caused this event (1-2 sentences)",
   "marketImpact": "bullish" | "bearish" | "neutral",
-  "affectedAssets": ["list", "of", "affected", "assets"],
+  "affectedAssets": ["asset1", "asset2", "asset3"],
   "institutionalPerspective": "How institutional traders view this (2-3 sentences)"
 }
 
+CRITICAL: Ensure affectedAssets array has proper commas between ALL elements. Each asset must be a separate quoted string with commas: ["BTC", "ETH", "USD"] NOT ["BTC" "ETH" "USD"].
 Respond with ONLY valid JSON, no markdown code blocks, no backticks, no extra text. Be direct and actionable. Focus on tradeable insights.`;
 
     const response = await fetch(CLAUDE_API_URL, {
@@ -78,15 +90,26 @@ Respond with ONLY valid JSON, no markdown code blocks, no backticks, no extra te
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
+        // First attempt: parse as-is
         const analysis = JSON.parse(jsonMatch[0]);
         return NextResponse.json(analysis);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
         console.error('Raw content:', content);
 
-        const fallback = extractFieldsWithRegex(content);
-        if (fallback) {
-          return NextResponse.json(fallback);
+        // Second attempt: sanitize and retry
+        try {
+          const sanitized = sanitizeJSON(jsonMatch[0]);
+          const analysis = JSON.parse(sanitized);
+          return NextResponse.json(analysis);
+        } catch (sanitizeError) {
+          console.error('Sanitized parse failed:', sanitizeError);
+
+          // Third attempt: regex extraction
+          const fallback = extractFieldsWithRegex(content);
+          if (fallback) {
+            return NextResponse.json(fallback);
+          }
         }
       }
     }

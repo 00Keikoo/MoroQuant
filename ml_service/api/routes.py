@@ -4,28 +4,18 @@ from fastapi import APIRouter, Query
 from typing import List, Dict, Optional
 import sys
 from pathlib import Path
-import requests
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ml_service.models.predictor import generate_signal
 from ml_service.data.database import get_database
+from ml_service.services.crypto_price_service import get_crypto_service
+from ml_service.services.proxy_price_service import get_proxy_service
 
 router = APIRouter()
 
 CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT']
-
-def fetch_binance_live_price(symbol: str) -> Optional[float]:
-    """Fetch live price from Binance futures API."""
-    try:
-        url = f"https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}"
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            return float(data['price'])
-    except Exception as e:
-        print(f"Error fetching live price for {symbol}: {e}")
-    return None
+PROXY_SYMBOLS = ['ES_proxy', 'NQ_proxy', 'GC_proxy', 'CL_proxy', 'ZB_proxy']
 
 
 @router.get("/signals")
@@ -45,9 +35,18 @@ async def get_signal(
         }
 
     if symbol in CRYPTO_SYMBOLS:
-        live_price = fetch_binance_live_price(symbol)
-        if live_price is not None:
-            signal['price'] = live_price
+        crypto_service = get_crypto_service()
+        price_data = crypto_service.get_price(symbol)
+        if price_data and price_data.get('live'):
+            signal['price'] = price_data['price']
+            signal['price_live'] = True
+        else:
+            signal['price_live'] = False
+    elif symbol in PROXY_SYMBOLS:
+        proxy_service = get_proxy_service()
+        price_data = proxy_service.get_price(symbol)
+        if price_data and price_data.get('live'):
+            signal['price'] = price_data['price']
             signal['price_live'] = True
         else:
             signal['price_live'] = False

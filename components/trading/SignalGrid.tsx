@@ -108,12 +108,12 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
   if (loading && signals.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="h-10 bg-gray-800 rounded w-48 animate-pulse"></div>
-          <div className="h-10 bg-gray-800 rounded w-32 animate-pulse"></div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="h-10 bg-gray-800 rounded w-full sm:w-48 animate-pulse"></div>
+          <div className="h-10 bg-gray-800 rounded w-full sm:w-32 animate-pulse"></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="bg-gray-900 rounded-lg p-4 border border-gray-800">
               <div className="animate-pulse space-y-3">
                 <div className="h-4 bg-gray-800 rounded w-3/4"></div>
@@ -128,24 +128,24 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {signalStats.total > 0 && (
-        <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-3 sm:p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{signalStats.total}</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Total Signals</div>
+              <div className="text-xl sm:text-2xl font-bold text-white">{signalStats.total}</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{getPercentage(signalStats.long)}%</div>
+              <div className="text-xl sm:text-2xl font-bold text-green-400">{getPercentage(signalStats.long)}%</div>
               <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Long ({signalStats.long})</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-400">{getPercentage(signalStats.short)}%</div>
+              <div className="text-xl sm:text-2xl font-bold text-red-400">{getPercentage(signalStats.short)}%</div>
               <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Short ({signalStats.short})</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-400">{getPercentage(signalStats.neutral)}%</div>
+              <div className="text-xl sm:text-2xl font-bold text-gray-400">{getPercentage(signalStats.neutral)}%</div>
               <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Neutral ({signalStats.neutral})</div>
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
         <select
           value={selectedSymbol}
           onChange={(e) => setSelectedSymbol(e.target.value)}
-          className="bg-gray-900 border border-gray-800 text-white rounded px-4 py-2 text-sm focus:outline-none focus:border-gray-700"
+          className="w-full sm:w-auto bg-gray-900 border border-gray-800 text-white rounded px-4 py-2 text-sm focus:outline-none focus:border-gray-700"
         >
           <option value="">All Symbols</option>
           {availableSymbols.map(symbol => (
@@ -164,23 +164,23 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
           ))}
         </select>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-end gap-3">
           {lastUpdate && (
-            <span className="text-xs text-gray-500">
-              Updated {lastUpdate.toLocaleTimeString()}
+            <span className="text-xs text-gray-500 truncate">
+              {lastUpdate.toLocaleTimeString()}
             </span>
           )}
           <button
             onClick={refreshSignals}
             disabled={loading}
-            className="bg-gray-900 border border-gray-800 text-white rounded px-4 py-2 text-sm hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="bg-gray-900 border border-gray-800 text-white rounded px-4 py-2 text-sm hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         {signals.map(signal => (
           <SignalCard key={signal.symbol} signal={signal} />
         ))}
