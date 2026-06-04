@@ -89,53 +89,96 @@ def create_market_phase(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def add_rolling_correlation(
+def add_cross_pair_correlation(
     df: pd.DataFrame,
-    symbol2_df: pd.DataFrame = None,
+    btc_df: pd.DataFrame = None,
+    spy_df: pd.DataFrame = None,
     window: int = 20,
 ) -> pd.DataFrame:
     """
-    Calculate rolling correlation between two symbols' returns.
+    Calculate rolling correlation with BTC and ES_proxy (SPY).
+
+    Correlation interpretation:
+    - High correlation with SPY (>0.5): Risk-on regime
+    - Low correlation with SPY (<0.2): Decorrelated/crypto-specific moves
+    - BTC correlation shows broader crypto market influence
 
     Args:
         df: Primary symbol DataFrame with close prices
-        symbol2_df: Secondary symbol DataFrame (e.g., ES_proxy)
+        btc_df: BTCUSDT DataFrame for BTC correlation
+        spy_df: ES_proxy (SPY) DataFrame for risk-on/off correlation
         window: Rolling correlation window
 
     Returns:
-        DataFrame with btc_es_correlation column (or NaN if symbol2 not available)
+        DataFrame with btc_correlation, spy_correlation, and correlation_regime
     """
     df = df.copy()
-
-    if symbol2_df is None or len(symbol2_df) == 0:
-        df['btc_es_correlation'] = np.nan
-        return df
-
     df['returns'] = df['close'].pct_change()
 
-    symbol2_df = symbol2_df.copy()
-    symbol2_df['returns'] = symbol2_df['close'].pct_change()
+    # BTC correlation
+    if btc_df is not None and len(btc_df) > 0:
+        btc_df = btc_df.copy()
+        btc_df['returns'] = btc_df['close'].pct_change()
 
-    if 'timestamp' in df.columns and 'timestamp' in symbol2_df.columns:
-        df_aligned = df.set_index('timestamp')
-        symbol2_aligned = symbol2_df.set_index('timestamp')
+        if 'timestamp' in df.columns and 'timestamp' in btc_df.columns:
+            df_aligned = df.set_index('timestamp')
+            btc_aligned = btc_df.set_index('timestamp')
 
-        merged = df_aligned[['returns']].join(
-            symbol2_aligned[['returns']],
-            how='left',
-            rsuffix='_symbol2'
-        )
-
-        df['btc_es_correlation'] = merged['returns'].rolling(window=window).corr(
-            merged['returns_symbol2']
-        ).values
-    else:
-        if len(df) == len(symbol2_df):
-            df['btc_es_correlation'] = df['returns'].rolling(window=window).corr(
-                symbol2_df['returns']
+            merged = df_aligned[['returns']].join(
+                btc_aligned[['returns']],
+                how='left',
+                rsuffix='_btc'
             )
+
+            df['btc_correlation'] = merged['returns'].rolling(window=window).corr(
+                merged['returns_btc']
+            ).values
         else:
-            df['btc_es_correlation'] = np.nan
+            if len(df) == len(btc_df):
+                df['btc_correlation'] = df['returns'].rolling(window=window).corr(
+                    btc_df['returns']
+                )
+            else:
+                df['btc_correlation'] = 0.0
+    else:
+        df['btc_correlation'] = 0.0
+
+    # SPY correlation (risk-on/off indicator)
+    if spy_df is not None and len(spy_df) > 0:
+        spy_df = spy_df.copy()
+        spy_df['returns'] = spy_df['close'].pct_change()
+
+        if 'timestamp' in df.columns and 'timestamp' in spy_df.columns:
+            df_aligned = df.set_index('timestamp')
+            spy_aligned = spy_df.set_index('timestamp')
+
+            merged = df_aligned[['returns']].join(
+                spy_aligned[['returns']],
+                how='left',
+                rsuffix='_spy'
+            )
+
+            df['spy_correlation'] = merged['returns'].rolling(window=window).corr(
+                merged['returns_spy']
+            ).values
+        else:
+            if len(df) == len(spy_df):
+                df['spy_correlation'] = df['returns'].rolling(window=window).corr(
+                    spy_df['returns']
+                )
+            else:
+                df['spy_correlation'] = 0.0
+    else:
+        df['spy_correlation'] = 0.0
+
+    # Fill NaN with 0 (neutral correlation)
+    df['btc_correlation'] = df['btc_correlation'].fillna(0.0)
+    df['spy_correlation'] = df['spy_correlation'].fillna(0.0)
+
+    # Correlation regime classification
+    df['correlation_regime'] = 'mixed'
+    df.loc[df['spy_correlation'] > 0.5, 'correlation_regime'] = 'risk_on'
+    df.loc[df['spy_correlation'].abs() < 0.2, 'correlation_regime'] = 'decorrelated'
 
     df = df.drop(columns=['returns'], errors='ignore')
 
@@ -144,7 +187,8 @@ def add_rolling_correlation(
 
 def add_regime_features(
     df: pd.DataFrame,
-    symbol2_df: pd.DataFrame = None,
+    btc_df: pd.DataFrame = None,
+    spy_df: pd.DataFrame = None,
     atr_window: int = 50,
     adx_period: int = 14,
     correlation_window: int = 20,
@@ -154,7 +198,8 @@ def add_regime_features(
 
     Args:
         df: DataFrame with OHLCV and ATR already calculated
-        symbol2_df: Optional second symbol for correlation (e.g., ES_proxy)
+        btc_df: Optional BTCUSDT DataFrame for BTC correlation
+        spy_df: Optional ES_proxy DataFrame for risk-on/off correlation
         atr_window: Window for ATR rolling mean
         adx_period: ADX period
         correlation_window: Rolling correlation window
@@ -165,6 +210,6 @@ def add_regime_features(
     df = classify_volatility_regime(df, atr_window=atr_window)
     df = classify_trend_regime(df, adx_period=adx_period)
     df = create_market_phase(df)
-    df = add_rolling_correlation(df, symbol2_df=symbol2_df, window=correlation_window)
+    df = add_cross_pair_correlation(df, btc_df=btc_df, spy_df=spy_df, window=correlation_window)
 
     return df

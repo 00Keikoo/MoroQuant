@@ -118,7 +118,7 @@ def generate_signal(
 
     df = df.sort_values('timestamp').reset_index(drop=True)
 
-    df = prepare_features(df)
+    df = prepare_features(df, symbol=symbol)
 
     df_clean = df[feature_cols].dropna()
 

@@ -114,11 +114,43 @@ def train(symbol: str, timeframe: str, retrain: bool):
 
     click.echo(f"Loaded {len(df)} candles")
 
+    btc_df = None
+    spy_df = None
+
+    with db.get_connection() as conn:
+        try:
+            btc_query = """
+                SELECT timestamp, open, high, low, close, volume
+                FROM ohlcv
+                WHERE symbol = 'BTCUSDT' AND timeframe = ?
+                ORDER BY timestamp ASC
+            """
+            btc_df = pd.read_sql_query(btc_query, conn, params=(timeframe,))
+            if not btc_df.empty:
+                click.echo(f"Loaded {len(btc_df)} BTC candles for correlation")
+        except Exception as e:
+            click.echo(f"Warning: Could not load BTC data for correlation: {e}")
+
+        try:
+            spy_query = """
+                SELECT timestamp, open, high, low, close, volume
+                FROM ohlcv
+                WHERE symbol = 'ES_proxy' AND timeframe = ?
+                ORDER BY timestamp ASC
+            """
+            spy_df = pd.read_sql_query(spy_query, conn, params=(timeframe,))
+            if not spy_df.empty:
+                click.echo(f"Loaded {len(spy_df)} ES_proxy candles for correlation")
+        except Exception as e:
+            click.echo(f"Warning: Could not load ES_proxy data for correlation: {e}")
+
     try:
         results = train_ml_model(
             df=df,
             symbol=symbol,
             timeframe=timeframe,
+            btc_df=btc_df if btc_df is not None and not btc_df.empty else None,
+            spy_df=spy_df if spy_df is not None and not spy_df.empty else None,
             forward_periods=12,
             long_threshold=0.005,
             short_threshold=-0.005,

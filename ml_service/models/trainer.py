@@ -16,6 +16,7 @@ from ..utils.config import get_config
 from ..features.price_action import add_price_action_features
 from ..features.indicators import add_all_indicators
 from ..features.regime import add_regime_features
+from ..features.funding_rate import add_funding_rate_features
 
 logger = get_logger()
 
@@ -57,7 +58,9 @@ def create_target_variable(
 
 def prepare_features(
     df: pd.DataFrame,
-    symbol2_df: pd.DataFrame = None,
+    symbol: str,
+    btc_df: pd.DataFrame = None,
+    spy_df: pd.DataFrame = None,
     ema_periods: list = None,
 ) -> pd.DataFrame:
     """
@@ -65,7 +68,9 @@ def prepare_features(
 
     Args:
         df: Raw OHLCV DataFrame
-        symbol2_df: Optional second symbol for correlation
+        symbol: Trading symbol (for funding rate features)
+        btc_df: Optional BTCUSDT DataFrame for BTC correlation
+        spy_df: Optional ES_proxy DataFrame for risk-on/off correlation
         ema_periods: List of EMA periods (auto-adjusted if None)
 
     Returns:
@@ -81,7 +86,8 @@ def prepare_features(
 
     df = add_price_action_features(df, swing_lookback=10, sr_window=50)
     df = add_all_indicators(df, ema_periods=ema_periods)
-    df = add_regime_features(df, symbol2_df=symbol2_df)
+    df = add_regime_features(df, btc_df=btc_df, spy_df=spy_df)
+    df = add_funding_rate_features(df, symbol=symbol)
 
     return df
 
@@ -140,8 +146,17 @@ def get_feature_columns(df: pd.DataFrame = None, ema_periods: list = None) -> Li
         # Volume
         'volume_ratio',
 
+        # Volume Profile
+        'poc_distance', 'vah_distance', 'val_distance', 'price_in_value_area', 'volume_nodes',
+
         # Regime
         'adx', 'ema_alignment_score',
+
+        # Cross-pair Correlation
+        'btc_correlation', 'spy_correlation',
+
+        # Funding Rate (crypto-specific)
+        'funding_rate', 'funding_rate_ma', 'funding_extreme', 'funding_sentiment',
     ])
 
     return features
@@ -358,7 +373,8 @@ def train_model(
     df: pd.DataFrame,
     symbol: str,
     timeframe: str,
-    symbol2_df: pd.DataFrame = None,
+    btc_df: pd.DataFrame = None,
+    spy_df: pd.DataFrame = None,
     forward_periods: int = 12,
     long_threshold: float = 0.005,
     short_threshold: float = -0.005,
@@ -370,7 +386,8 @@ def train_model(
         df: Raw OHLCV DataFrame
         symbol: Trading symbol
         timeframe: Timeframe
-        symbol2_df: Optional second symbol for correlation
+        btc_df: Optional BTCUSDT DataFrame for BTC correlation
+        spy_df: Optional ES_proxy DataFrame for risk-on/off correlation
         forward_periods: Forward periods for target
         long_threshold: Long signal threshold
         short_threshold: Short signal threshold
@@ -380,7 +397,7 @@ def train_model(
     """
     logger.info(f"Starting training for {symbol} {timeframe}")
 
-    df = prepare_features(df, symbol2_df=symbol2_df)
+    df = prepare_features(df, symbol=symbol, btc_df=btc_df, spy_df=spy_df)
 
     df = create_target_variable(
         df,

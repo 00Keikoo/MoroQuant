@@ -187,6 +187,111 @@ def add_ema_alignment_score(df: pd.DataFrame, periods: list = [9, 21, 50, 200]) 
     return df
 
 
+def add_volume_profile(df: pd.DataFrame, window: int = 50, price_buckets: int = 20) -> pd.DataFrame:
+    """
+    Add volume profile features using rolling window.
+
+    Calculates Point of Control (POC), Value Area High/Low (VAH/VAL),
+    and other volume profile metrics.
+
+    Args:
+        df: DataFrame with OHLCV data
+        window: Rolling window for volume profile calculation
+        price_buckets: Number of price buckets to split range into
+
+    Returns:
+        DataFrame with volume profile features
+    """
+    df = df.copy()
+
+    poc_list = []
+    vah_list = []
+    val_list = []
+    in_va_list = []
+    volume_nodes_list = []
+
+    for i in range(len(df)):
+        if i < window:
+            poc_list.append(np.nan)
+            vah_list.append(np.nan)
+            val_list.append(np.nan)
+            in_va_list.append(0)
+            volume_nodes_list.append(0)
+            continue
+
+        window_df = df.iloc[i - window:i]
+
+        price_min = window_df['low'].min()
+        price_max = window_df['high'].max()
+        price_range = price_max - price_min
+
+        if price_range == 0:
+            poc_list.append(0.0)
+            vah_list.append(0.0)
+            val_list.append(0.0)
+            in_va_list.append(0)
+            volume_nodes_list.append(0)
+            continue
+
+        bucket_size = price_range / price_buckets
+        price_buckets_data = np.zeros(price_buckets)
+
+        for _, row in window_df.iterrows():
+            bucket_idx = int((row['close'] - price_min) / bucket_size)
+            bucket_idx = min(bucket_idx, price_buckets - 1)
+            price_buckets_data[bucket_idx] += row['volume']
+
+        poc_idx = np.argmax(price_buckets_data)
+        poc_price = price_min + (poc_idx + 0.5) * bucket_size
+
+        sorted_indices = np.argsort(price_buckets_data)[::-1]
+        total_volume = price_buckets_data.sum()
+        value_area_volume = 0
+        value_area_indices = []
+
+        for idx in sorted_indices:
+            value_area_indices.append(idx)
+            value_area_volume += price_buckets_data[idx]
+            if value_area_volume >= 0.7 * total_volume:
+                break
+
+        vah_idx = max(value_area_indices)
+        val_idx = min(value_area_indices)
+
+        vah_price = price_min + (vah_idx + 0.5) * bucket_size
+        val_price = price_min + (val_idx + 0.5) * bucket_size
+
+        current_price = df.iloc[i]['close']
+
+        poc_distance = (current_price - poc_price) / current_price
+        vah_distance = (current_price - vah_price) / current_price
+        val_distance = (current_price - val_price) / current_price
+
+        in_value_area = 1 if val_price <= current_price <= vah_price else 0
+
+        price_tolerance = 0.02
+        volume_nodes = 0
+        for idx in range(price_buckets):
+            bucket_price = price_min + (idx + 0.5) * bucket_size
+            if abs(bucket_price - current_price) / current_price <= price_tolerance:
+                if price_buckets_data[idx] > np.median(price_buckets_data):
+                    volume_nodes += 1
+
+        poc_list.append(poc_distance)
+        vah_list.append(vah_distance)
+        val_list.append(val_distance)
+        in_va_list.append(in_value_area)
+        volume_nodes_list.append(volume_nodes)
+
+    df['poc_distance'] = poc_list
+    df['vah_distance'] = vah_list
+    df['val_distance'] = val_list
+    df['price_in_value_area'] = in_va_list
+    df['volume_nodes'] = volume_nodes_list
+
+    return df
+
+
 def add_all_indicators(
     df: pd.DataFrame,
     ema_periods: list = [9, 21, 50, 200],
@@ -221,5 +326,6 @@ def add_all_indicators(
     df = add_vwap(df)
     df = add_volume_ratio(df, period=volume_period)
     df = add_ema_alignment_score(df, periods=ema_periods)
+    df = add_volume_profile(df, window=50, price_buckets=20)
 
     return df
