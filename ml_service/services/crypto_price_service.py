@@ -1,27 +1,24 @@
-"""Crypto price fetching service - Binance Futures API."""
+"""Crypto price fetching service - Binance Spot API."""
 
 import requests
 from typing import Dict, Optional
 from datetime import datetime
 import logging
-import warnings
-
-warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 
 logger = logging.getLogger(__name__)
 
 class CryptoPriceService:
-    """On-demand crypto price fetching from Binance Futures."""
+    """On-demand crypto price fetching from Binance Spot API."""
 
     def __init__(self, symbols: list[str]):
         self.symbols = symbols
         self.price_cache: Dict[str, Dict] = {}
 
     def fetch_price(self, symbol: str) -> Optional[float]:
-        """Fetch single price from Binance Futures API."""
+        """Fetch single price from Binance Spot API."""
         try:
-            url = f"https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}"
-            response = requests.get(url, timeout=5, verify=False)
+            url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
+            response = requests.get(url, timeout=5)
 
             if response.status_code == 200:
                 data = response.json()
@@ -40,7 +37,7 @@ class CryptoPriceService:
             self.price_cache[symbol] = {
                 'price': price,
                 'timestamp': datetime.now().isoformat(),
-                'source': 'binance_futures',
+                'source': 'binance_spot',
                 'live': True
             }
             return self.price_cache[symbol]
