@@ -292,6 +292,46 @@ def add_volume_profile(df: pd.DataFrame, window: int = 50, price_buckets: int = 
     return df
 
 
+def add_order_flow_features(df: pd.DataFrame, delta_ma_period: int = 10, cumulative_delta_window: int = 20) -> pd.DataFrame:
+    """
+    Add order flow features based on estimated buy/sell volume.
+
+    Args:
+        df: DataFrame with OHLCV data
+        delta_ma_period: Period for delta moving average
+        cumulative_delta_window: Window for cumulative delta
+
+    Returns:
+        DataFrame with order flow features
+    """
+    df = df.copy()
+
+    price_range = df['high'] - df['low']
+    price_range = price_range.replace(0, np.nan)
+
+    df['buy_volume'] = df['volume'] * (df['close'] - df['low']) / price_range
+    df['sell_volume'] = df['volume'] * (df['high'] - df['close']) / price_range
+
+    df['buy_volume'] = df['buy_volume'].fillna(0)
+    df['sell_volume'] = df['sell_volume'].fillna(0)
+
+    df['delta'] = df['buy_volume'] - df['sell_volume']
+
+    df['delta_ma'] = df['delta'].rolling(window=delta_ma_period, min_periods=1).mean()
+
+    df['cumulative_delta'] = df['delta'].rolling(window=cumulative_delta_window, min_periods=1).sum()
+
+    df['delta_ratio'] = df['delta'] / df['volume'].replace(0, np.nan)
+    df['delta_ratio'] = df['delta_ratio'].fillna(0).clip(-1, 1)
+
+    price_change = df['close'].diff()
+    df['delta_divergence'] = 0
+    df.loc[(price_change > 0) & (df['delta'] < 0), 'delta_divergence'] = 1
+    df.loc[(price_change < 0) & (df['delta'] > 0), 'delta_divergence'] = 1
+
+    return df
+
+
 def add_all_indicators(
     df: pd.DataFrame,
     ema_periods: list = [9, 21, 50, 200],
@@ -327,5 +367,6 @@ def add_all_indicators(
     df = add_volume_ratio(df, period=volume_period)
     df = add_ema_alignment_score(df, periods=ema_periods)
     df = add_volume_profile(df, window=50, price_buckets=20)
+    df = add_order_flow_features(df, delta_ma_period=10, cumulative_delta_window=20)
 
     return df

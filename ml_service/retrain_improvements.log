@@ -1,0 +1,237 @@
+2026-06-04 07:44:28 | ml_trading | INFO | Loading reference data for correlations...
+2026-06-04 07:44:28 | ml_trading | INFO | Database schema initialized
+2026-06-04 07:44:28 | ml_trading | INFO | Database initialized at /home/zafka/trade-dashboard/ml_service/storage/database.db
+2026-06-04 07:44:28 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:44:28 | ml_trading | INFO | Training BTCUSDT 1h
+2026-06-04 07:44:28 | ml_trading | INFO | ================================================================================
+2026-06-04 07:44:28 | ml_trading | INFO | Starting training for BTCUSDT 1h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:44:36 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-04 07:44:36 | ml_trading | INFO | Clean dataset: 580 rows after dropping NaN
+2026-06-04 07:44:36 | ml_trading | INFO | Fold 1: train=400, test=50
+2026-06-04 07:44:58 | ml_trading | INFO | Fold 2: train=450, test=50
+2026-06-04 07:45:21 | ml_trading | INFO | Fold 3: train=500, test=50
+2026-06-04 07:45:53 | ml_trading | INFO | Walk-forward validation complete: 3 folds
+2026-06-04 07:45:53 | ml_trading | INFO | Avg F1 - Short: 0.156, Neutral: 0.211, Long: 0.172
+2026-06-04 07:45:53 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 580 samples
+2026-06-04 07:46:35 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/BTCUSDT_1h_ensemble_xgb_lgb_20260604_074635.pkl
+2026-06-04 07:46:35 | ml_trading | INFO | ✓ Training complete: F1 = 0.1302
+2026-06-04 07:46:35 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:46:35 | ml_trading | INFO | Training BTCUSDT 4h
+2026-06-04 07:46:35 | ml_trading | INFO | ================================================================================
+2026-06-04 07:46:35 | ml_trading | INFO | Starting training for BTCUSDT 4h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:46:36 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-04 07:46:36 | ml_trading | INFO | Clean dataset: 83 rows after dropping NaN
+2026-06-04 07:46:36 | ml_trading | INFO | Fold 1: train=49, test=12
+2026-06-04 07:46:37 | ml_trading | INFO | Fold 2: train=61, test=12
+2026-06-04 07:46:39 | ml_trading | INFO | Walk-forward validation complete: 2 folds
+2026-06-04 07:46:39 | ml_trading | INFO | Avg F1 - Short: 0.608, Neutral: 0.111, Long: 0.182
+2026-06-04 07:46:39 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 83 samples
+2026-06-04 07:46:44 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/BTCUSDT_4h_ensemble_xgb_lgb_20260604_074644.pkl
+2026-06-04 07:46:44 | ml_trading | INFO | ✓ Training complete: F1 = 0.3634
+2026-06-04 07:46:44 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:46:44 | ml_trading | INFO | Training ETHUSDT 1h
+2026-06-04 07:46:44 | ml_trading | INFO | ================================================================================
+2026-06-04 07:46:44 | ml_trading | INFO | Starting training for ETHUSDT 1h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:46:50 | ml_trading | INFO | Fetched 200 funding rate records for ETHUSDT
+2026-06-04 07:46:50 | ml_trading | INFO | Clean dataset: 579 rows after dropping NaN
+2026-06-04 07:46:50 | ml_trading | INFO | Fold 1: train=400, test=50
+2026-06-04 07:47:22 | ml_trading | INFO | Fold 2: train=450, test=50
+2026-06-04 07:47:50 | ml_trading | INFO | Fold 3: train=500, test=50
+2026-06-04 07:48:37 | ml_trading | INFO | Walk-forward validation complete: 3 folds
+2026-06-04 07:48:37 | ml_trading | INFO | Avg F1 - Short: 0.145, Neutral: 0.105, Long: 0.268
+2026-06-04 07:48:37 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 579 samples
+2026-06-04 07:49:00 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/ETHUSDT_1h_ensemble_xgb_lgb_20260604_074900.pkl
+2026-06-04 07:49:00 | ml_trading | INFO | ✓ Training complete: F1 = 0.1418
+2026-06-04 07:49:00 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:49:00 | ml_trading | INFO | Training ETHUSDT 4h
+2026-06-04 07:49:00 | ml_trading | INFO | ================================================================================
+2026-06-04 07:49:00 | ml_trading | INFO | Starting training for ETHUSDT 4h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:49:03 | ml_trading | INFO | Fetched 200 funding rate records for ETHUSDT
+2026-06-04 07:49:03 | ml_trading | INFO | Clean dataset: 83 rows after dropping NaN
+2026-06-04 07:49:03 | ml_trading | INFO | Fold 1: train=49, test=12
+2026-06-04 07:49:12 | ml_trading | INFO | Fold 2: train=61, test=12
+2026-06-04 07:49:20 | ml_trading | INFO | Walk-forward validation complete: 2 folds
+2026-06-04 07:49:20 | ml_trading | INFO | Avg F1 - Short: 0.764, Neutral: 0.286, Long: 0.833
+2026-06-04 07:49:20 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 83 samples
+2026-06-04 07:49:22 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/ETHUSDT_4h_ensemble_xgb_lgb_20260604_074922.pkl
+2026-06-04 07:49:22 | ml_trading | INFO | ✓ Training complete: F1 = 0.6894
+2026-06-04 07:49:22 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:49:22 | ml_trading | INFO | Training BNBUSDT 1h
+2026-06-04 07:49:22 | ml_trading | INFO | ================================================================================
+2026-06-04 07:49:22 | ml_trading | INFO | Starting training for BNBUSDT 1h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:49:30 | ml_trading | INFO | Fetched 200 funding rate records for BNBUSDT
+2026-06-04 07:49:30 | ml_trading | INFO | Clean dataset: 579 rows after dropping NaN
+2026-06-04 07:49:30 | ml_trading | INFO | Fold 1: train=400, test=50
+2026-06-04 07:50:04 | ml_trading | INFO | Fold 2: train=450, test=50
+2026-06-04 07:50:15 | ml_trading | INFO | Fold 3: train=500, test=50
+2026-06-04 07:51:14 | ml_trading | INFO | Walk-forward validation complete: 3 folds
+2026-06-04 07:51:14 | ml_trading | INFO | Avg F1 - Short: 0.421, Neutral: 0.278, Long: 0.562
+2026-06-04 07:51:14 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 579 samples
+2026-06-04 07:52:25 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/BNBUSDT_1h_ensemble_xgb_lgb_20260604_075225.pkl
+2026-06-04 07:52:25 | ml_trading | INFO | ✓ Training complete: F1 = 0.5178
+2026-06-04 07:52:25 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:52:25 | ml_trading | INFO | Training BNBUSDT 4h
+2026-06-04 07:52:25 | ml_trading | INFO | ================================================================================
+2026-06-04 07:52:25 | ml_trading | INFO | Starting training for BNBUSDT 4h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:52:27 | ml_trading | INFO | Fetched 200 funding rate records for BNBUSDT
+2026-06-04 07:52:27 | ml_trading | INFO | Clean dataset: 83 rows after dropping NaN
+2026-06-04 07:52:27 | ml_trading | INFO | Fold 1: train=49, test=12
+2026-06-04 07:52:32 | ml_trading | INFO | Fold 2: train=61, test=12
+2026-06-04 07:52:34 | ml_trading | INFO | Walk-forward validation complete: 2 folds
+2026-06-04 07:52:34 | ml_trading | INFO | Avg F1 - Short: 0.458, Neutral: 0.000, Long: 0.724
+2026-06-04 07:52:34 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 83 samples
+2026-06-04 07:52:42 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/BNBUSDT_4h_ensemble_xgb_lgb_20260604_075242.pkl
+2026-06-04 07:52:42 | ml_trading | INFO | ✓ Training complete: F1 = 0.6018
+2026-06-04 07:52:42 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:52:42 | ml_trading | INFO | Training SOLUSDT 1h
+2026-06-04 07:52:42 | ml_trading | INFO | ================================================================================
+2026-06-04 07:52:43 | ml_trading | INFO | Starting training for SOLUSDT 1h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:52:47 | ml_trading | INFO | Fetched 200 funding rate records for SOLUSDT
+2026-06-04 07:52:48 | ml_trading | INFO | Clean dataset: 579 rows after dropping NaN
+2026-06-04 07:52:48 | ml_trading | INFO | Fold 1: train=400, test=50
+2026-06-04 07:53:52 | ml_trading | INFO | Fold 2: train=450, test=50
+2026-06-04 07:54:37 | ml_trading | INFO | Fold 3: train=500, test=50
+2026-06-04 07:55:04 | ml_trading | INFO | Walk-forward validation complete: 3 folds
+2026-06-04 07:55:04 | ml_trading | INFO | Avg F1 - Short: 0.256, Neutral: 0.000, Long: 0.315
+2026-06-04 07:55:04 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 579 samples
+2026-06-04 07:55:37 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/SOLUSDT_1h_ensemble_xgb_lgb_20260604_075537.pkl
+2026-06-04 07:55:37 | ml_trading | INFO | ✓ Training complete: F1 = 0.1910
+2026-06-04 07:55:37 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:55:37 | ml_trading | INFO | Training SOLUSDT 4h
+2026-06-04 07:55:37 | ml_trading | INFO | ================================================================================
+2026-06-04 07:55:37 | ml_trading | INFO | Starting training for SOLUSDT 4h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:55:39 | ml_trading | INFO | Fetched 200 funding rate records for SOLUSDT
+2026-06-04 07:55:39 | ml_trading | INFO | Clean dataset: 83 rows after dropping NaN
+2026-06-04 07:55:39 | ml_trading | INFO | Fold 1: train=49, test=12
+2026-06-04 07:55:39 | ml_trading | INFO | Fold 2: train=61, test=12
+2026-06-04 07:55:48 | ml_trading | INFO | Walk-forward validation complete: 2 folds
+2026-06-04 07:55:48 | ml_trading | INFO | Avg F1 - Short: 0.899, Neutral: 0.000, Long: 0.639
+2026-06-04 07:55:48 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 83 samples
+2026-06-04 07:55:49 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/SOLUSDT_4h_ensemble_xgb_lgb_20260604_075549.pkl
+2026-06-04 07:55:49 | ml_trading | INFO | ✓ Training complete: F1 = 0.5861
+2026-06-04 07:55:49 | ml_trading | INFO | 
+================================================================================
+2026-06-04 07:55:49 | ml_trading | INFO | Training HYPEUSDT 1h
+2026-06-04 07:55:49 | ml_trading | INFO | ================================================================================
+2026-06-04 07:55:49 | ml_trading | INFO | Starting training for HYPEUSDT 1h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 07:56:03 | ml_trading | INFO | Fetched 200 funding rate records for HYPEUSDT
+2026-06-04 07:56:03 | ml_trading | INFO | Clean dataset: 1784 rows after dropping NaN
+2026-06-04 07:56:03 | ml_trading | INFO | Fold 1: train=400, test=50
+2026-06-04 07:56:20 | ml_trading | INFO | Fold 2: train=450, test=50
+2026-06-04 07:56:24 | ml_trading | INFO | Fold 3: train=500, test=50
+2026-06-04 07:56:50 | ml_trading | INFO | Fold 4: train=550, test=50
+2026-06-04 07:57:13 | ml_trading | INFO | Fold 5: train=600, test=50
+2026-06-04 07:57:24 | ml_trading | INFO | Fold 6: train=650, test=50
+2026-06-04 07:57:33 | ml_trading | INFO | Fold 7: train=700, test=50
+2026-06-04 07:58:06 | ml_trading | INFO | Fold 8: train=750, test=50
+2026-06-04 07:58:19 | ml_trading | INFO | Fold 9: train=800, test=50
+2026-06-04 07:58:38 | ml_trading | INFO | Fold 10: train=850, test=50
+2026-06-04 07:59:00 | ml_trading | INFO | Fold 11: train=900, test=50
+2026-06-04 07:59:21 | ml_trading | INFO | Fold 12: train=950, test=50
+2026-06-04 07:59:33 | ml_trading | INFO | Fold 13: train=1000, test=50
+2026-06-04 08:00:00 | ml_trading | INFO | Fold 14: train=1050, test=50
+2026-06-04 08:00:31 | ml_trading | INFO | Fold 15: train=1100, test=50
+2026-06-04 08:00:55 | ml_trading | INFO | Fold 16: train=1150, test=50
+2026-06-04 08:01:19 | ml_trading | INFO | Fold 17: train=1200, test=50
+2026-06-04 08:01:38 | ml_trading | INFO | Fold 18: train=1250, test=50
+2026-06-04 08:01:58 | ml_trading | INFO | Fold 19: train=1300, test=50
+2026-06-04 08:02:17 | ml_trading | INFO | Fold 20: train=1350, test=50
+2026-06-04 08:02:24 | ml_trading | INFO | Fold 21: train=1400, test=50
+2026-06-04 08:02:54 | ml_trading | INFO | Fold 22: train=1450, test=50
+2026-06-04 08:03:14 | ml_trading | INFO | Fold 23: train=1500, test=50
+2026-06-04 08:03:40 | ml_trading | INFO | Fold 24: train=1550, test=50
+2026-06-04 08:04:08 | ml_trading | INFO | Fold 25: train=1600, test=50
+2026-06-04 08:04:22 | ml_trading | INFO | Fold 26: train=1650, test=50
+2026-06-04 08:04:47 | ml_trading | INFO | Fold 27: train=1700, test=50
+2026-06-04 08:05:21 | ml_trading | INFO | Walk-forward validation complete: 27 folds
+2026-06-04 08:05:21 | ml_trading | INFO | Avg F1 - Short: 0.386, Neutral: 0.156, Long: 0.387
+2026-06-04 08:05:21 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 1784 samples
+2026-06-04 08:05:33 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/HYPEUSDT_1h_ensemble_xgb_lgb_20260604_080533.pkl
+2026-06-04 08:05:33 | ml_trading | INFO | ✓ Training complete: F1 = 0.3710
+2026-06-04 08:05:33 | ml_trading | INFO | 
+================================================================================
+2026-06-04 08:05:33 | ml_trading | INFO | Training HYPEUSDT 4h
+2026-06-04 08:05:33 | ml_trading | INFO | ================================================================================
+2026-06-04 08:05:33 | ml_trading | INFO | Starting training for HYPEUSDT 4h
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-04 08:05:46 | ml_trading | INFO | Fetched 200 funding rate records for HYPEUSDT
+2026-06-04 08:05:46 | ml_trading | INFO | Clean dataset: 1784 rows after dropping NaN
+2026-06-04 08:05:46 | ml_trading | INFO | Fold 1: train=400, test=50
+2026-06-04 08:06:05 | ml_trading | INFO | Fold 2: train=450, test=50
+2026-06-04 08:06:19 | ml_trading | INFO | Fold 3: train=500, test=50
+2026-06-04 08:06:42 | ml_trading | INFO | Fold 4: train=550, test=50
+2026-06-04 08:06:59 | ml_trading | INFO | Fold 5: train=600, test=50
+2026-06-04 08:07:19 | ml_trading | INFO | Fold 6: train=650, test=50
+2026-06-04 08:07:32 | ml_trading | INFO | Fold 7: train=700, test=50
+2026-06-04 08:07:52 | ml_trading | INFO | Fold 8: train=750, test=50
+2026-06-04 08:08:21 | ml_trading | INFO | Fold 9: train=800, test=50
+2026-06-04 08:08:25 | ml_trading | INFO | Fold 10: train=850, test=50
+2026-06-04 08:08:56 | ml_trading | INFO | Fold 11: train=900, test=50
+2026-06-04 08:09:26 | ml_trading | INFO | Fold 12: train=950, test=50
+2026-06-04 08:09:49 | ml_trading | INFO | Fold 13: train=1000, test=50
+2026-06-04 08:10:07 | ml_trading | INFO | Fold 14: train=1050, test=50
+2026-06-04 08:10:25 | ml_trading | INFO | Fold 15: train=1100, test=50
+2026-06-04 08:11:07 | ml_trading | INFO | Fold 16: train=1150, test=50
+2026-06-04 08:11:32 | ml_trading | INFO | Fold 17: train=1200, test=50
+2026-06-04 08:12:47 | ml_trading | INFO | Fold 18: train=1250, test=50
+2026-06-04 08:13:23 | ml_trading | INFO | Fold 19: train=1300, test=50
+2026-06-04 08:14:04 | ml_trading | INFO | Fold 20: train=1350, test=50
+2026-06-04 08:15:05 | ml_trading | INFO | Fold 21: train=1400, test=50
+2026-06-04 08:15:50 | ml_trading | INFO | Fold 22: train=1450, test=50
+2026-06-04 08:16:42 | ml_trading | INFO | Fold 23: train=1500, test=50
+2026-06-04 08:17:25 | ml_trading | INFO | Fold 24: train=1550, test=50
+2026-06-04 08:17:53 | ml_trading | INFO | Fold 25: train=1600, test=50
+2026-06-04 08:18:16 | ml_trading | INFO | Fold 26: train=1650, test=50
+2026-06-04 08:18:26 | ml_trading | INFO | Fold 27: train=1700, test=50
+2026-06-04 08:18:56 | ml_trading | INFO | Walk-forward validation complete: 27 folds
+2026-06-04 08:18:56 | ml_trading | INFO | Avg F1 - Short: 0.392, Neutral: 0.100, Long: 0.392
+2026-06-04 08:18:56 | ml_trading | INFO | Training ensemble model (XGBoost + LightGBM) on 1784 samples
+2026-06-04 08:19:25 | ml_trading | INFO | Model saved to /home/zafka/trade-dashboard/ml_service/storage/models/HYPEUSDT_4h_ensemble_xgb_lgb_20260604_081925.pkl
+2026-06-04 08:19:25 | ml_trading | INFO | ✓ Training complete: F1 = 0.3385
+
+====================================================================================================
+F1 SCORES - ALL CRYPTO MODELS (WITH ALL 4 IMPROVEMENTS)
+====================================================================================================
+Symbol       Timeframe  F1 Score     Status              
+----------------------------------------------------------------------------------------------------
+BTCUSDT      1h         0.1302       SUCCESS             
+BTCUSDT      4h         0.3634       SUCCESS             
+ETHUSDT      1h         0.1418       SUCCESS             
+ETHUSDT      4h         0.6894       SUCCESS             
+BNBUSDT      1h         0.5178       SUCCESS             
+BNBUSDT      4h         0.6018       SUCCESS             
+SOLUSDT      1h         0.1910       SUCCESS             
+SOLUSDT      4h         0.5861       SUCCESS             
+HYPEUSDT     1h         0.3710       SUCCESS             
+HYPEUSDT     4h         0.3385       SUCCESS             
+
+✓ Successfully trained: 10/10 models
+✗ Failed/Skipped: 0/10 models
+
+====================================================================================================
+IMPROVEMENTS INTEGRATED:
+====================================================================================================
+1. Order Flow Delta: buy_volume, sell_volume, delta, delta_ma, delta_divergence,
+   cumulative_delta, delta_ratio
+2. Time Features: hour_of_day, session flags, month-end indicators
+3. Risk-Adjusted Target: ATR-normalized forward returns (±0.5 threshold)
+4. Ensemble Model: XGBoost + LightGBM averaged predictions
+5. Multi-Timeframe Confirmation: 1h signals check 4h for agreement
+====================================================================================================

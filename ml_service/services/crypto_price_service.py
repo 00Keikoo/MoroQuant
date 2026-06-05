@@ -1,4 +1,4 @@
-"""Crypto price fetching service - Binance Spot API."""
+"""Crypto price fetching service - Binance Futures API."""
 
 import requests
 from typing import Dict, Optional
@@ -8,16 +8,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 class CryptoPriceService:
-    """On-demand crypto price fetching from Binance Spot API."""
+    """On-demand crypto price fetching from Binance Futures API."""
 
     def __init__(self, symbols: list[str]):
         self.symbols = symbols
         self.price_cache: Dict[str, Dict] = {}
 
     def fetch_price(self, symbol: str) -> Optional[float]:
-        """Fetch single price from Binance Spot API."""
+        """Fetch single price from Binance Futures API."""
         try:
-            url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
+            url = f"https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}"
             response = requests.get(url, timeout=5)
 
             if response.status_code == 200:
@@ -37,7 +37,7 @@ class CryptoPriceService:
             self.price_cache[symbol] = {
                 'price': price,
                 'timestamp': datetime.now().isoformat(),
-                'source': 'binance_spot',
+                'source': 'binance_futures',
                 'live': True
             }
             return self.price_cache[symbol]
@@ -63,6 +63,6 @@ def get_crypto_service() -> CryptoPriceService:
     """Get or create global crypto price service."""
     global _crypto_service
     if _crypto_service is None:
-        symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT']
+        symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
         _crypto_service = CryptoPriceService(symbols)
     return _crypto_service

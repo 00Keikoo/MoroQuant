@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from .routes import router
 from ml_service.services.crypto_price_service import get_crypto_service
 from ml_service.services.proxy_price_service import get_proxy_service
+from ml_service.scheduler import start_scheduler
 
 app = FastAPI(
     title="ML Trading Intelligence API",
@@ -34,10 +35,13 @@ dashboard_path = Path(__file__).parent.parent / "dashboard.html"
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize price services (on-demand fetching)."""
+    """Initialize price services and auto-retrain scheduler."""
     get_crypto_service()
     get_proxy_service()
     print("✅ Price services ready (on-demand fetching)")
+
+    start_scheduler()
+    print("✅ Auto-retrain scheduler started (runs every 24h)")
 
 @app.get("/")
 async def serve_dashboard():

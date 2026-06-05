@@ -78,6 +78,7 @@ def generate_signal(
     symbol: str,
     timeframe: str,
     n_candles: int = 500,
+    skip_mtf: bool = False,
 ) -> Optional[Dict]:
     """
     Generate trading signal for a symbol/timeframe.
@@ -129,15 +130,27 @@ def generate_signal(
     X_latest = df_clean.iloc[[-1]]
     latest_row = df.iloc[-1]
 
-    prediction = model.predict(X_latest)[0]
-    prediction_proba = model.predict_proba(X_latest)[0]
+    if isinstance(model, dict) and 'xgb' in model and 'lgb' in model:
+        xgb_proba = model['xgb'].predict_proba(X_latest)[0]
+        lgb_proba = model['lgb'].predict_proba(X_latest)[0]
+        prediction_proba = (xgb_proba + lgb_proba) / 2
+        prediction = int(np.argmax(prediction_proba))
+
+        xgb_importance = model['xgb'].feature_importances_
+        lgb_importance = model['lgb'].feature_importances_
+        combined_importance = (xgb_importance + lgb_importance) / 2
+        feature_importance = dict(zip(feature_cols, combined_importance))
+        feature_importance = dict(sorted(feature_importance.items(), key=lambda x: x[1], reverse=True))
+    else:
+        prediction = model.predict(X_latest)[0]
+        prediction_proba = model.predict_proba(X_latest)[0]
+        feature_importance = calculate_feature_importance(model, feature_cols, X_latest)
 
     direction_map = {0: 'short', 1: 'neutral', 2: 'long'}
     direction = direction_map[prediction]
 
     confidence = int(prediction_proba[prediction] * 100)
 
-    feature_importance = calculate_feature_importance(model, feature_cols, X_latest)
     top_features = dict(list(feature_importance.items())[:5])
 
     regime = latest_row.get('market_phase', 'unknown')
@@ -152,7 +165,23 @@ def generate_signal(
         'regime': regime,
         'generated_at': datetime.now().isoformat(),
         'model_type': metadata['model_type'],
+        'mtf_conflict': False,
     }
+
+    if timeframe == '1h' and not skip_mtf:
+        try:
+            higher_tf_signal = generate_signal(symbol=symbol, timeframe='4h', n_candles=n_candles, skip_mtf=True)
+
+            if higher_tf_signal is not None:
+                if higher_tf_signal['direction'] == signal['direction']:
+                    signal['confidence'] = min(100, int(signal['confidence'] * 1.15))
+                    logger.info(f"MTF confirmation: 1h and 4h agree, boosted confidence to {signal['confidence']}%")
+                else:
+                    signal['confidence'] = max(0, int(signal['confidence'] * 0.80))
+                    signal['mtf_conflict'] = True
+                    logger.info(f"MTF conflict: 1h={signal['direction']}, 4h={higher_tf_signal['direction']}, reduced confidence to {signal['confidence']}%")
+        except Exception as e:
+            logger.warning(f"MTF check failed: {e}")
 
     save_signal_to_db(signal)
 

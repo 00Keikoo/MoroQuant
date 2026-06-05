@@ -214,5 +214,58 @@ def signal(symbol: str, timeframe: str, explain: bool):
     click.echo("=" * 80 + "\n")
 
 
+@cli.command()
+@click.option("--start", "action", flag_value="start", help="Start the scheduler")
+@click.option("--status", "action", flag_value="status", help="Show scheduler status")
+def scheduler(action: str):
+    """Manage the auto-retrain scheduler."""
+    from ..scheduler import start_scheduler, get_scheduler_status
+    import json
+
+    if action == "start":
+        click.echo("Starting auto-retrain scheduler...")
+        start_scheduler()
+        click.echo("✓ Scheduler started - will retrain models every 24 hours")
+        click.echo("\nKeep this process running. Press Ctrl+C to stop.")
+
+        try:
+            import time
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            click.echo("\n\nStopping scheduler...")
+            from ..scheduler import stop_scheduler
+            stop_scheduler()
+            click.echo("✓ Scheduler stopped")
+
+    elif action == "status":
+        status = get_scheduler_status()
+
+        click.echo("\n" + "=" * 80)
+        click.echo("SCHEDULER STATUS")
+        click.echo("=" * 80)
+        click.echo(f"Running: {'Yes' if status['running'] else 'No'}")
+
+        if status['last_retrain']:
+            click.echo(f"Last retrain: {status['last_retrain']}")
+        else:
+            click.echo("Last retrain: Never")
+
+        if status['running'] and status['next_retrain']:
+            click.echo(f"Next retrain: {status['next_retrain']}")
+
+        if status['results']:
+            click.echo("\nLast Retrain Results:")
+            click.echo(f"{'Symbol':<12} {'TF':<4} {'Status':<10} {'Old F1':<10} {'New F1':<10}")
+            click.echo("-" * 80)
+            for r in status['results']:
+                click.echo(f"{r['symbol']:<12} {r['timeframe']:<4} {r['status']:<10} {r['old_f1']:<10.4f} {r['new_f1']:<10.4f}")
+
+        click.echo("=" * 80 + "\n")
+
+    else:
+        click.echo("Error: Use --start or --status")
+
+
 if __name__ == "__main__":
     cli()

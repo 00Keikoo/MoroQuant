@@ -4,13 +4,36 @@ const CLAUDE_API_URL = 'http://127.0.0.1:8085/v1/chat/completions';
 const MODEL = 'claude-sonnet-4.5';
 const API_KEY = process.env.CLAUDE_API_KEY || '';
 
-function sanitizeJSON(jsonString: string): string {
-  // Fix common JSON errors from AI responses
-  // Fix missing commas between quoted strings in arrays: "word" "word" -> "word", "word"
-  jsonString = jsonString.replace(/("\s+)(")/g, '", "');
+function sanitizeAffectedAssets(jsonString: string): string {
+  // Extract affectedAssets array and rebuild it properly
+  const assetsMatch = jsonString.match(/"affectedA[ss]ets"\s*:\s*\[(.*?)\]/s);
+
+  if (assetsMatch) {
+    const arrayContent = assetsMatch[1];
+    // Split by comma and clean each item
+    const items = arrayContent.split(',').map(item => {
+      // Remove all quotes and whitespace, then get the clean value
+      const cleaned = item.replace(/["'\s]/g, '');
+      return cleaned;
+    }).filter(item => item.length > 0);
+
+    // Rebuild as valid JSON array
+    const validArray = '["' + items.join('", "') + '"]';
+    jsonString = jsonString.replace(assetsMatch[0], `"affectedAssets": ${validArray}`);
+  }
 
   // Fix typo: affectedAsets -> affectedAssets
   jsonString = jsonString.replace(/"affectedAsets"/g, '"affectedAssets"');
+
+  return jsonString;
+}
+
+function sanitizeJSON(jsonString: string): string {
+  // Fix affectedAssets array issues first
+  jsonString = sanitizeAffectedAssets(jsonString);
+
+  // Fix missing commas between quoted strings in arrays: "word" "word" -> "word", "word"
+  jsonString = jsonString.replace(/("\s+)(")/g, '", "');
 
   return jsonString;
 }
@@ -63,7 +86,16 @@ Provide a concise analysis in the following JSON format:
   "institutionalPerspective": "How institutional traders view this (2-3 sentences)"
 }
 
-CRITICAL: Ensure affectedAssets array has proper commas between ALL elements. Each asset must be a separate quoted string with commas: ["BTC", "ETH", "USD"] NOT ["BTC" "ETH" "USD"].
+CRITICAL: In the affectedAssets array, each item must be a separate string with proper quotes. Never put two items in the same string.
+
+Example of WRONG format:
+["USD "Gold", "Oil"]
+["Oil", "Gold", "USD "Defense Stocks"]
+
+Example of CORRECT format:
+["USD", "Gold", "Oil"]
+["Oil", "Gold", "USD", "Defense Stocks"]
+
 Respond with ONLY valid JSON, no markdown code blocks, no backticks, no extra text. Be direct and actionable. Focus on tradeable insights.`;
 
     const response = await fetch(CLAUDE_API_URL, {
