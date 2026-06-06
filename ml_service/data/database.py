@@ -101,6 +101,45 @@ class Database:
                 ON signals(symbol, timeframe, timestamp DESC)
             """)
 
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS user_trades (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    direction TEXT NOT NULL CHECK(direction IN ('long', 'short')),
+                    entry_price REAL NOT NULL,
+                    exit_price REAL NOT NULL,
+                    leverage REAL NOT NULL,
+                    size_usdt REAL NOT NULL,
+                    pnl REAL NOT NULL,
+                    pnl_pct REAL NOT NULL,
+                    opened_at TIMESTAMP NOT NULL,
+                    closed_at TIMESTAMP NOT NULL,
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_user_trades_closed_at
+                ON user_trades(closed_at DESC)
+            """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS market_dominance (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp INTEGER NOT NULL UNIQUE,
+                    btc_dominance REAL NOT NULL,
+                    usdt_dominance REAL,
+                    total_market_cap REAL NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_market_dominance_timestamp
+                ON market_dominance(timestamp DESC)
+            """)
+
             conn.commit()
             logger.info("Database schema initialized")
 
@@ -114,7 +153,7 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
-            tables = ["ohlcv", "macro_events", "signals"]
+            tables = ["ohlcv", "macro_events", "signals", "user_trades", "market_dominance"]
             info = {}
 
             for table in tables:

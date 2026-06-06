@@ -74,3 +74,41 @@ export interface BacktestResults {
   error?: string;
   message?: string;
 }
+
+export interface OpenPosition {
+  id: string;
+  symbol: string;
+  direction: 'long' | 'short';
+  entry_price: number;
+  leverage: number;
+  size_usdt: number;
+  opened_at: string;
+  notes?: string;
+}
+
+export interface ClosedTrade {
+  id?: number;
+  symbol: string;
+  direction: 'long' | 'short';
+  entry_price: number;
+  exit_price: number;
+  leverage: number;
+  size_usdt: number;
+  pnl: number;
+  pnl_pct: number;
+  opened_at: string;
+  closed_at: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface TradeHistoryResponse {
+  trades: ClosedTrade[];
+  summary: {
+    total_pnl: number;
+    win_rate: number;
+    total_trades: number;
+    best_trade: ClosedTrade | null;
+    worst_trade: ClosedTrade | null;
+  };
+}

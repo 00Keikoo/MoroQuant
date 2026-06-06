@@ -60,7 +60,9 @@ def prepare_features(
     df: pd.DataFrame,
     symbol: str,
     btc_df: pd.DataFrame = None,
+    eth_df: pd.DataFrame = None,
     spy_df: pd.DataFrame = None,
+    dominance_df: pd.DataFrame = None,
     ema_periods: list = None,
 ) -> pd.DataFrame:
     """
@@ -70,7 +72,9 @@ def prepare_features(
         df: Raw OHLCV DataFrame
         symbol: Trading symbol (for funding rate features)
         btc_df: Optional BTCUSDT DataFrame for BTC correlation
+        eth_df: Optional ETHUSDT DataFrame for USDT dominance features
         spy_df: Optional ES_proxy DataFrame for risk-on/off correlation
+        dominance_df: Optional market dominance data from CoinGecko
         ema_periods: List of EMA periods (auto-adjusted if None)
 
     Returns:
@@ -86,7 +90,7 @@ def prepare_features(
 
     df = add_price_action_features(df, swing_lookback=10, sr_window=50)
     df = add_all_indicators(df, ema_periods=ema_periods)
-    df = add_regime_features(df, btc_df=btc_df, spy_df=spy_df)
+    df = add_regime_features(df, btc_df=btc_df, eth_df=eth_df, spy_df=spy_df, dominance_df=dominance_df)
     df = add_funding_rate_features(df, symbol=symbol)
 
     return df
@@ -154,6 +158,10 @@ def get_feature_columns(df: pd.DataFrame = None, ema_periods: list = None) -> Li
 
         # Cross-pair Correlation
         'btc_correlation', 'spy_correlation',
+
+        # USDT Dominance (risk-off detection)
+        'btc_dominance_proxy', 'usdt_flight_signal', 'risk_off_regime',
+        'usdt_dominance', 'usdt_dominance_1h_change',
 
         # Funding Rate (crypto-specific)
         'funding_rate', 'funding_rate_ma', 'funding_extreme', 'funding_sentiment',
@@ -374,7 +382,9 @@ def train_model(
     symbol: str,
     timeframe: str,
     btc_df: pd.DataFrame = None,
+    eth_df: pd.DataFrame = None,
     spy_df: pd.DataFrame = None,
+    dominance_df: pd.DataFrame = None,
     forward_periods: int = 12,
     long_threshold: float = 0.005,
     short_threshold: float = -0.005,
@@ -387,7 +397,9 @@ def train_model(
         symbol: Trading symbol
         timeframe: Timeframe
         btc_df: Optional BTCUSDT DataFrame for BTC correlation
+        eth_df: Optional ETHUSDT DataFrame for USDT dominance features
         spy_df: Optional ES_proxy DataFrame for risk-on/off correlation
+        dominance_df: Optional market dominance data from CoinGecko
         forward_periods: Forward periods for target
         long_threshold: Long signal threshold
         short_threshold: Short signal threshold
@@ -397,7 +409,7 @@ def train_model(
     """
     logger.info(f"Starting training for {symbol} {timeframe}")
 
-    df = prepare_features(df, symbol=symbol, btc_df=btc_df, spy_df=spy_df)
+    df = prepare_features(df, symbol=symbol, btc_df=btc_df, eth_df=eth_df, spy_df=spy_df, dominance_df=dominance_df)
 
     df = create_target_variable(
         df,

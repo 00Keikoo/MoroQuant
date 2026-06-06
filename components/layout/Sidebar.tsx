@@ -50,6 +50,16 @@ export default function Sidebar() {
             >
               Backtest
             </Link>
+            <Link
+              href="/trades"
+              className={`block w-full text-left px-3 py-2 rounded transition-colors text-sm ${
+                pathname === '/trades'
+                  ? 'bg-blue-600 text-white'
+                  : 'hover:bg-gray-800 text-gray-300'
+              }`}
+            >
+              My Trades
+            </Link>
           </div>
         </div>
 

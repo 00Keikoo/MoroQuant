@@ -1,7 +1,9 @@
 """API routes for ML trading system."""
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Body
 from typing import List, Dict, Optional
+from pydantic import BaseModel
+from datetime import datetime
 import sys
 from pathlib import Path
 
@@ -13,6 +15,20 @@ from ml_service.services.crypto_price_service import get_crypto_service
 from ml_service.services.proxy_price_service import get_proxy_service
 
 router = APIRouter()
+
+
+class ClosedTrade(BaseModel):
+    symbol: str
+    direction: str
+    entry_price: float
+    exit_price: float
+    leverage: float
+    size_usdt: float
+    pnl: float
+    pnl_pct: float
+    opened_at: str
+    closed_at: str
+    notes: Optional[str] = None
 
 CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
 PROXY_SYMBOLS = ['ES_proxy', 'NQ_proxy', 'GC_proxy', 'CL_proxy', 'ZB_proxy']
@@ -179,3 +195,93 @@ async def get_backtest_results(symbol: str, timeframe: str) -> Dict:
         "trades": trades_data,
         "trade_count": len(trades_data)
     }
+
+
+@router.post("/trades/close")
+async def close_trade(trade: ClosedTrade) -> Dict:
+    """Save a closed trade to the database."""
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO user_trades (
+                symbol, direction, entry_price, exit_price, leverage,
+                size_usdt, pnl, pnl_pct, opened_at, closed_at, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                trade.symbol,
+                trade.direction,
+                trade.entry_price,
+                trade.exit_price,
+                trade.leverage,
+                trade.size_usdt,
+                trade.pnl,
+                trade.pnl_pct,
+                trade.opened_at,
+                trade.closed_at,
+                trade.notes,
+            )
+        )
+
+        return {
+            "status": "success",
+            "message": "Trade closed and saved",
+            "trade_id": cursor.lastrowid
+        }
+
+
+@router.get("/trades/history")
+async def get_trade_history() -> Dict:
+    """Get all closed trades from database."""
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, symbol, direction, entry_price, exit_price, leverage,
+                   size_usdt, pnl, pnl_pct, opened_at, closed_at, notes, created_at
+            FROM user_trades
+            ORDER BY closed_at DESC
+            """
+        )
+
+        rows = cursor.fetchall()
+
+        trades = []
+        for row in rows:
+            trades.append({
+                "id": row[0],
+                "symbol": row[1],
+                "direction": row[2],
+                "entry_price": row[3],
+                "exit_price": row[4],
+                "leverage": row[5],
+                "size_usdt": row[6],
+                "pnl": row[7],
+                "pnl_pct": row[8],
+                "opened_at": row[9],
+                "closed_at": row[10],
+                "notes": row[11],
+                "created_at": row[12],
+            })
+
+        total_pnl = sum(t["pnl"] for t in trades)
+        winning_trades = [t for t in trades if t["pnl"] > 0]
+        win_rate = (len(winning_trades) / len(trades) * 100) if trades else 0
+        best_trade = max(trades, key=lambda t: t["pnl"]) if trades else None
+        worst_trade = min(trades, key=lambda t: t["pnl"]) if trades else None
+
+        return {
+            "trades": trades,
+            "summary": {
+                "total_pnl": round(total_pnl, 2),
+                "win_rate": round(win_rate, 2),
+                "total_trades": len(trades),
+                "best_trade": best_trade,
+                "worst_trade": worst_trade,
+            }
+        }

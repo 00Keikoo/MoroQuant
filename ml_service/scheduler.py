@@ -13,6 +13,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from ml_service.data.database import get_database
 from ml_service.data.ingestion import fetch_all
+from ml_service.data.coingecko import get_coingecko_fetcher
 from ml_service.models.trainer import train_model
 from ml_service.utils.logger import setup_logger, get_logger
 
@@ -90,10 +91,17 @@ def retrain_job():
     logger.info("Step 2: Loading reference data...")
     btc_1h = load_data('BTCUSDT', '1h')
     btc_4h = load_data('BTCUSDT', '4h')
+    eth_1h = load_data('ETHUSDT', '1h')
+    eth_4h = load_data('ETHUSDT', '4h')
     spy_1h = load_data('ES_proxy', '1h')
     spy_4h = load_data('ES_proxy', '4h')
 
-    logger.info("Step 3: Retraining all models...")
+    logger.info("Step 3: Loading market dominance data...")
+    fetcher = get_coingecko_fetcher()
+    dominance_df = fetcher.get_dominance_dataframe()
+    logger.info(f"Loaded {len(dominance_df)} market dominance records")
+
+    logger.info("Step 4: Retraining all models...")
 
     for symbol in SYMBOLS:
         for timeframe in TIMEFRAMES:
@@ -116,6 +124,7 @@ def retrain_job():
             old_f1 = get_current_model_f1(symbol, timeframe)
 
             btc_df = None if symbol == 'BTCUSDT' else (btc_1h if timeframe == '1h' else btc_4h)
+            eth_df = eth_1h if timeframe == '1h' else eth_4h
             spy_df = spy_1h if timeframe == '1h' else spy_4h
 
             try:
@@ -124,7 +133,9 @@ def retrain_job():
                     symbol=symbol,
                     timeframe=timeframe,
                     btc_df=btc_df,
+                    eth_df=eth_df,
                     spy_df=spy_df,
+                    dominance_df=dominance_df,
                 )
 
                 new_f1 = train_results['avg_f1_weighted']
@@ -156,12 +167,28 @@ def retrain_job():
                     'new_f1': 0.0,
                 })
 
-    logger.info("Step 4: Logging results...")
+    logger.info("Step 5: Logging results...")
     log_retrain_results(_last_retrain_results)
 
     logger.info("="*80)
     logger.info("Scheduled retrain job complete")
     logger.info("="*80)
+
+
+def market_dominance_job():
+    """Fetch market dominance data from CoinGecko - runs every hour."""
+    logger.info("Fetching market dominance data from CoinGecko...")
+
+    try:
+        fetcher = get_coingecko_fetcher()
+        success = fetcher.fetch_and_store()
+
+        if success:
+            logger.info("Market dominance data updated successfully")
+        else:
+            logger.warning("Failed to update market dominance data")
+    except Exception as e:
+        logger.error(f"Market dominance fetch failed: {e}")
 
 
 def log_retrain_results(results):
@@ -200,6 +227,7 @@ def start_scheduler():
         return
 
     _scheduler = BackgroundScheduler(daemon=True)
+
     _scheduler.add_job(
         retrain_job,
         trigger=IntervalTrigger(hours=24),
@@ -207,8 +235,17 @@ def start_scheduler():
         name='Auto-retrain all models',
         replace_existing=True,
     )
+
+    _scheduler.add_job(
+        market_dominance_job,
+        trigger=IntervalTrigger(hours=1),
+        id='market_dominance_job',
+        name='Fetch market dominance from CoinGecko',
+        replace_existing=True,
+    )
+
     _scheduler.start()
-    logger.info("Scheduler started - will retrain every 24 hours")
+    logger.info("Scheduler started - retrain every 24h, market dominance every 1h")
 
 
 def stop_scheduler():

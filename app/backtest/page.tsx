@@ -8,7 +8,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function BacktestPage() {
   const [symbols, setSymbols] = useState<string[]>([]);
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('');
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('BTCUSDT');
   const [timeframe, setTimeframe] = useState<'1h' | '4h'>('1h');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<BacktestResults | null>(null);

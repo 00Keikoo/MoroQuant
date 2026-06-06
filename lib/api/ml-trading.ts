@@ -1,4 +1,4 @@
-import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults } from '@/lib/types/ml';
+import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse } from '@/lib/types/ml';
 
 const ML_API_BASE = 'http://localhost:8000/api';
 
@@ -78,11 +78,54 @@ export async function getDbInfo(): Promise<MLDbInfo> {
 export async function getBacktestResults(symbol: string, timeframe: string): Promise<BacktestResults> {
   try {
     const response = await fetch(`${ML_API_BASE}/backtest/${symbol}/${timeframe}`, {
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000),
     });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch backtest results: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline. Please start the FastAPI server on port 8000.');
+    }
+    throw error;
+  }
+}
+
+export async function closeTrade(trade: ClosedTrade): Promise<{ status: string; message: string; trade_id: number }> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/trades/close`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(trade),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to close trade: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline. Please start the FastAPI server on port 8000.');
+    }
+    throw error;
+  }
+}
+
+export async function getTradeHistory(): Promise<TradeHistoryResponse> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/trades/history`, {
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch trade history: ${response.statusText}`);
     }
 
     return response.json();
