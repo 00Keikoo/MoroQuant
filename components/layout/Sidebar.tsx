@@ -40,6 +40,16 @@ export default function Sidebar() {
             >
               ML Signals
             </Link>
+            <Link
+              href="/backtest"
+              className={`block w-full text-left px-3 py-2 rounded transition-colors text-sm ${
+                pathname === '/backtest'
+                  ? 'bg-blue-600 text-white'
+                  : 'hover:bg-gray-800 text-gray-300'
+              }`}
+            >
+              Backtest
+            </Link>
           </div>
         </div>
 

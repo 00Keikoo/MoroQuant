@@ -1,4 +1,4 @@
-import { MLSignal, MLSymbolsResponse, MLDbInfo } from '@/lib/types/ml';
+import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults } from '@/lib/types/ml';
 
 const ML_API_BASE = 'http://localhost:8000/api';
 
@@ -64,6 +64,25 @@ export async function getDbInfo(): Promise<MLDbInfo> {
 
     if (!response.ok) {
       throw new Error(`Failed to fetch DB info: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline. Please start the FastAPI server on port 8000.');
+    }
+    throw error;
+  }
+}
+
+export async function getBacktestResults(symbol: string, timeframe: string): Promise<BacktestResults> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/backtest/${symbol}/${timeframe}`, {
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch backtest results: ${response.statusText}`);
     }
 
     return response.json();

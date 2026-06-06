@@ -34,3 +34,43 @@ export interface MLDbInfo {
     count: number;
   }>;
 }
+
+export interface BacktestTrade {
+  type: 'long' | 'short';
+  entry_price: number;
+  entry_timestamp: number;
+  entry_idx: number;
+  exit_price: number;
+  exit_timestamp: number;
+  exit_idx: number;
+  pnl: number;
+  pnl_pct: number;
+  hold_candles: number;
+}
+
+export interface BacktestEquityPoint {
+  timestamp: number;
+  equity: number;
+  signal: string;
+}
+
+export interface BacktestMetrics {
+  total_return_pct: number;
+  win_rate_pct: number;
+  profit_factor: number;
+  max_drawdown_pct: number;
+  sharpe_ratio: number;
+  total_trades: number;
+  avg_profit_per_trade: number;
+}
+
+export interface BacktestResults {
+  symbol: string;
+  timeframe: string;
+  equity_curve: BacktestEquityPoint[];
+  trades: BacktestTrade[];
+  trade_count: number;
+  metrics?: BacktestMetrics;
+  error?: string;
+  message?: string;
+}

@@ -14,7 +14,7 @@ from ml_service.services.proxy_price_service import get_proxy_service
 
 router = APIRouter()
 
-CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT']
+CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
 PROXY_SYMBOLS = ['ES_proxy', 'NQ_proxy', 'GC_proxy', 'CL_proxy', 'ZB_proxy']
 
 
@@ -143,3 +143,39 @@ async def get_symbols() -> Dict:
             "symbols": symbols,
             "total_symbols": len(symbols)
         }
+
+
+@router.get("/backtest/{symbol}/{timeframe}")
+async def get_backtest_results(symbol: str, timeframe: str) -> Dict:
+    """Get backtest equity curve and metrics for a symbol/timeframe."""
+    from pathlib import Path
+    import json
+
+    storage_dir = Path(__file__).parent.parent / "storage" / "backtest"
+    equity_file = storage_dir / f"{symbol}_{timeframe}_equity.json"
+    trades_file = storage_dir / f"{symbol}_{timeframe}_trades.csv"
+
+    if not equity_file.exists():
+        return {
+            "error": "Backtest results not found",
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "message": "Run backtest first: python cli.py backtest --symbol {symbol} --timeframe {timeframe}"
+        }
+
+    with open(equity_file, 'r') as f:
+        equity_data = json.load(f)
+
+    trades_data = []
+    if trades_file.exists():
+        import pandas as pd
+        trades_df = pd.read_csv(trades_file)
+        trades_data = trades_df.to_dict('records')
+
+    return {
+        "symbol": symbol,
+        "timeframe": timeframe,
+        "equity_curve": equity_data,
+        "trades": trades_data,
+        "trade_count": len(trades_data)
+    }

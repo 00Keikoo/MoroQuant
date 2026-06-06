@@ -267,5 +267,105 @@ def scheduler(action: str):
         click.echo("Error: Use --start or --status")
 
 
+@cli.command()
+@click.option("--symbol", help="Trading symbol (e.g., BTCUSDT)")
+@click.option("--timeframe", help="Timeframe (e.g., 1h, 4h)")
+@click.option("--all", "backtest_all", is_flag=True, help="Backtest all trained models")
+def backtest(symbol: Optional[str], timeframe: Optional[str], backtest_all: bool):
+    """Run backtests on historical data with walk-forward validation."""
+    from ..backtester import run_backtest, print_backtest_summary
+    from ..utils.config import get_config
+
+    if backtest_all:
+        config = get_config()
+
+        symbols = config.data_sources.binance.symbols
+        timeframes = ['1h', '4h']
+
+        click.echo(f"\nRunning backtests for all symbol/timeframe combinations...")
+        click.echo(f"Symbols: {', '.join(symbols)}")
+        click.echo(f"Timeframes: {', '.join(timeframes)}")
+        click.echo("\n" + "=" * 80)
+
+        results_summary = []
+
+        for sym in symbols:
+            for tf in timeframes:
+                click.echo(f"\nBacktesting {sym} {tf}...")
+
+                try:
+                    results = run_backtest(symbol=sym, timeframe=tf)
+
+                    if results is None:
+                        click.echo(f"  ❌ Failed (no model or insufficient data)")
+                        results_summary.append({
+                            'symbol': sym,
+                            'timeframe': tf,
+                            'status': 'failed',
+                        })
+                    else:
+                        print_backtest_summary(results)
+                        results_summary.append({
+                            'symbol': sym,
+                            'timeframe': tf,
+                            'status': 'success',
+                            'metrics': results['metrics'],
+                        })
+
+                except Exception as e:
+                    click.echo(f"  ❌ Error: {str(e)}")
+                    results_summary.append({
+                        'symbol': sym,
+                        'timeframe': tf,
+                        'status': 'error',
+                    })
+
+        click.echo("\n" + "=" * 80)
+        click.echo("BACKTEST SUMMARY - ALL SYMBOLS")
+        click.echo("=" * 80)
+        click.echo(f"{'Symbol':<12} {'TF':<4} {'Return %':<10} {'Win %':<8} {'Trades':<8} {'Sharpe':<8}")
+        click.echo("-" * 80)
+
+        for r in results_summary:
+            if r['status'] == 'success':
+                m = r['metrics']
+                click.echo(
+                    f"{r['symbol']:<12} {r['timeframe']:<4} "
+                    f"{m['total_return_pct']:>9.2f} {m['win_rate_pct']:>7.2f} "
+                    f"{m['total_trades']:>7} {m['sharpe_ratio']:>7.2f}"
+                )
+            else:
+                click.echo(f"{r['symbol']:<12} {r['timeframe']:<4} {r['status'].upper()}")
+
+        click.echo("=" * 80 + "\n")
+        return
+
+    if not symbol or not timeframe:
+        click.echo("Error: --symbol and --timeframe are required (or use --all)")
+        return
+
+    click.echo(f"\nRunning backtest for {symbol} {timeframe}...")
+
+    try:
+        results = run_backtest(symbol=symbol, timeframe=timeframe)
+
+        if results is None:
+            click.echo("\n❌ Backtest failed")
+            click.echo("Possible reasons:")
+            click.echo("  - No trained model found (run 'train' command first)")
+            click.echo("  - Insufficient historical data (need at least 200 candles)")
+            return
+
+        print_backtest_summary(results)
+
+        click.echo(f"Equity curve saved: storage/backtest/{symbol}_{timeframe}_equity.json")
+        click.echo(f"Trade log saved: storage/backtest/{symbol}_{timeframe}_trades.csv")
+
+    except Exception as e:
+        click.echo(f"\n❌ Backtest error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+
 if __name__ == "__main__":
     cli()
