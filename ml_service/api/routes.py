@@ -30,7 +30,7 @@ class ClosedTrade(BaseModel):
     closed_at: str
     notes: Optional[str] = None
 
-CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
+CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT', 'ADAUSDT', 'XRPUSDT', 'LINKUSDT', 'LTCUSDT', 'ZECUSDT', 'SUIUSDT']
 PROXY_SYMBOLS = ['ES_proxy', 'NQ_proxy', 'GC_proxy', 'CL_proxy', 'ZB_proxy']
 
 
@@ -50,23 +50,27 @@ async def get_signal(
             "message": "No trained model found or insufficient data"
         }
 
+    # Always fetch fresh price (signal from cache won't have price field)
     if symbol in CRYPTO_SYMBOLS:
         crypto_service = get_crypto_service()
         price_data = crypto_service.get_price(symbol)
-        if price_data and price_data.get('live'):
+        if price_data:
             signal['price'] = price_data['price']
-            signal['price_live'] = True
+            signal['price_live'] = price_data.get('live', False)
         else:
+            signal['price'] = signal.get('price', 0)
             signal['price_live'] = False
     elif symbol in PROXY_SYMBOLS:
         proxy_service = get_proxy_service()
         price_data = proxy_service.get_price(symbol)
-        if price_data and price_data.get('live'):
+        if price_data:
             signal['price'] = price_data['price']
-            signal['price_live'] = True
+            signal['price_live'] = price_data.get('live', False)
         else:
+            signal['price'] = signal.get('price', 0)
             signal['price_live'] = False
     else:
+        signal['price'] = signal.get('price', 0)
         signal['price_live'] = False
 
     return signal
@@ -173,28 +177,36 @@ async def get_backtest_results(symbol: str, timeframe: str) -> Dict:
 
     if not equity_file.exists():
         return {
-            "error": "Backtest results not found",
+            "error": "no_data",
             "symbol": symbol,
             "timeframe": timeframe,
-            "message": "Run backtest first: python cli.py backtest --symbol {symbol} --timeframe {timeframe}"
+            "message": f"Run backtest first: python cli.py backtest --symbol {symbol} --timeframe {timeframe}"
         }
 
-    with open(equity_file, 'r') as f:
-        equity_data = json.load(f)
+    try:
+        with open(equity_file, 'r') as f:
+            equity_data = json.load(f)
 
-    trades_data = []
-    if trades_file.exists():
-        import pandas as pd
-        trades_df = pd.read_csv(trades_file)
-        trades_data = trades_df.to_dict('records')
+        trades_data = []
+        if trades_file.exists():
+            import pandas as pd
+            trades_df = pd.read_csv(trades_file)
+            trades_data = trades_df.to_dict('records')
 
-    return {
-        "symbol": symbol,
-        "timeframe": timeframe,
-        "equity_curve": equity_data,
-        "trades": trades_data,
-        "trade_count": len(trades_data)
-    }
+        return {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "equity_curve": equity_data,
+            "trades": trades_data,
+            "trade_count": len(trades_data)
+        }
+    except Exception as e:
+        return {
+            "error": "parse_error",
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "message": f"Error loading backtest data: {str(e)}"
+        }
 
 
 @router.post("/trades/close")

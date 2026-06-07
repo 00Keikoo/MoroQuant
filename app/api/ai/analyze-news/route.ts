@@ -6,7 +6,7 @@ const API_KEY = process.env.CLAUDE_API_KEY || '';
 
 function sanitizeAffectedAssets(jsonString: string): string {
   // Extract affectedAssets array and rebuild it properly
-  const assetsMatch = jsonString.match(/"affectedA[ss]ets"\s*:\s*\[(.*?)\]/s);
+  const assetsMatch = jsonString.match(/"affectedA[ss]ets"\s*:\s*\[([\s\S]*?)\]/);
 
   if (assetsMatch) {
     const arrayContent = assetsMatch[1];

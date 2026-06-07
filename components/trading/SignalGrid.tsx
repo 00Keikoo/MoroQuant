@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MLSignal } from '@/lib/types/ml';
 import { getSignal, getSymbols, getDisplayName } from '@/lib/api/ml-trading';
 import SignalCard from './SignalCard';
@@ -9,56 +9,73 @@ interface SignalGridProps {
   timeframe: '1h' | '4h';
 }
 
+const ACTIVE_PAIRS = [
+  'BTCUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ZECUSDT',
+  'SUIUSDT', 'ADAUSDT', 'ETHUSDT', 'HYPEUSDT', 'LINKUSDT', 'LTCUSDT'
+];
+
 export default function SignalGrid({ timeframe }: SignalGridProps) {
   const [signals, setSignals] = useState<MLSignal[]>([]);
   const [availableSymbols, setAvailableSymbols] = useState<string[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const isFirstLoad = useRef(true);
+  const previousSignals = useRef<MLSignal[]>([]);
 
   useEffect(() => {
+    console.log('[SignalGrid] Component mounted');
     loadSymbols();
   }, []);
 
   useEffect(() => {
+    console.log('[SignalGrid] availableSymbols changed:', availableSymbols.length, 'symbols');
+    console.log('[SignalGrid] selectedSymbol:', selectedSymbol);
+    console.log('[SignalGrid] timeframe:', timeframe);
+
     if (availableSymbols.length > 0) {
+      console.log('[SignalGrid] Starting refreshSignals...');
       refreshSignals();
       const interval = setInterval(refreshSignals, 60000);
       return () => clearInterval(interval);
+    } else {
+      console.log('[SignalGrid] Skipping refreshSignals - no available symbols');
     }
   }, [availableSymbols, selectedSymbol, timeframe]);
 
   const loadSymbols = async () => {
     try {
+      console.log('[SignalGrid] Loading symbols...');
       const data = await getSymbols();
-      let symbols = Object.keys(data.symbols);
+      console.log('[SignalGrid] Symbols response:', data);
+      const allSymbols = Object.keys(data.symbols);
+      console.log('[SignalGrid] Total symbols before filter:', allSymbols.length);
 
-      // Filter out ZB_proxy entirely (F1 score too low)
-      symbols = symbols.filter(s => s !== 'ZB_proxy');
+      const filteredSymbols = allSymbols.filter(symbol => ACTIVE_PAIRS.includes(symbol));
+      console.log('[SignalGrid] Filtered to active pairs:', filteredSymbols.length);
 
-      setAvailableSymbols(symbols);
+      setAvailableSymbols(filteredSymbols);
     } catch (error) {
-      console.error('Error loading symbols:', error);
+      console.error('[SignalGrid] Error loading symbols:', error);
     }
   };
 
   const refreshSignals = async () => {
-    setLoading(true);
+    console.log('[SignalGrid] refreshSignals called');
+    if (isFirstLoad.current) {
+      setLoading(true);
+    }
+
     try {
       let symbolsToFetch = selectedSymbol ? [selectedSymbol] : availableSymbols;
-
-      // Filter out symbols with insufficient 1h data
-      if (timeframe === '1h') {
-        symbolsToFetch = symbolsToFetch.filter(s =>
-          !['ES_proxy', 'NQ_proxy', 'ZB_proxy'].includes(s)
-        );
-      }
+      console.log('[SignalGrid] Symbols to fetch:', symbolsToFetch);
 
       const results: MLSignal[] = [];
-      const BATCH_SIZE = 2;
+      const BATCH_SIZE = 3;
 
       for (let i = 0; i < symbolsToFetch.length; i += BATCH_SIZE) {
         const batch = symbolsToFetch.slice(i, i + BATCH_SIZE);
+        console.log(`[SignalGrid] Fetching batch ${i / BATCH_SIZE + 1}:`, batch);
         const batchPromises = batch.map(symbol =>
           getSignal(symbol, timeframe).catch(error => ({
             symbol,
@@ -78,18 +95,43 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
         const batchResults = await Promise.all(batchPromises);
         results.push(...batchResults);
 
-        setSignals([...results]);
+        // Show cards incrementally as they load
+        if (isFirstLoad.current) {
+          setSignals([...results]);
+        } else if (previousSignals.current.length > 0) {
+          // Stale-while-revalidate: merge new signals with previous ones
+          const signalMap = new Map(previousSignals.current.map(s => [s.symbol, s]));
+          results.forEach(s => signalMap.set(s.symbol, s));
+          setSignals(Array.from(signalMap.values()));
+        } else {
+          setSignals([...results]);
+        }
       }
 
+      // Store as previous signals for next refresh
+      previousSignals.current = results;
       setLastUpdate(new Date());
+
+      if (isFirstLoad.current) {
+        isFirstLoad.current = false;
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error refreshing signals:', error);
-    } finally {
-      setLoading(false);
+      if (isFirstLoad.current) {
+        isFirstLoad.current = false;
+        setLoading(false);
+      }
     }
   };
 
-  const signalStats = signals.reduce(
+  const cryptoSymbols = availableSymbols.filter(s => !s.endsWith('_proxy'));
+  const proxySymbols = availableSymbols.filter(s => s.endsWith('_proxy'));
+
+  const cryptoSignals = signals.filter(s => !s.symbol.endsWith('_proxy'));
+  const proxySignals = signals.filter(s => s.symbol.endsWith('_proxy'));
+
+  const signalStats = cryptoSignals.reduce(
     (acc, signal) => {
       if (!signal.error) {
         acc.total++;
@@ -159,9 +201,18 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
           className="w-full sm:w-auto bg-gray-900 border border-gray-800 text-white rounded px-4 py-2 text-sm focus:outline-none focus:border-gray-700"
         >
           <option value="">All Symbols</option>
-          {availableSymbols.map(symbol => (
-            <option key={symbol} value={symbol}>{getDisplayName(symbol)}</option>
-          ))}
+          <optgroup label="Crypto Pairs">
+            {cryptoSymbols.map(symbol => (
+              <option key={symbol} value={symbol}>{getDisplayName(symbol)}</option>
+            ))}
+          </optgroup>
+          {proxySymbols.length > 0 && (
+            <optgroup label="Macro Context">
+              {proxySymbols.map(symbol => (
+                <option key={symbol} value={symbol}>{getDisplayName(symbol)}</option>
+              ))}
+            </optgroup>
+          )}
         </select>
 
         <div className="flex items-center justify-between sm:justify-end gap-3">
@@ -181,10 +232,21 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-        {signals.map(signal => (
+        {cryptoSignals.map(signal => (
           <SignalCard key={signal.symbol} signal={signal} />
         ))}
       </div>
+
+      {proxySignals.length > 0 && (
+        <div className="space-y-3 mt-6">
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Macro Context</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {proxySignals.map(signal => (
+              <SignalCard key={signal.symbol} signal={signal} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

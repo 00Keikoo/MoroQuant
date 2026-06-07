@@ -106,7 +106,7 @@ export default function SignalCard({ signal }: SignalCardProps) {
             {signal.price_live !== undefined && (
               <span className={`flex items-center gap-1 text-xs font-semibold ${signal.price_live ? 'text-green-400' : 'text-gray-500'}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${signal.price_live ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`}></span>
-                {signal.price_live ? 'LIVE' : 'Delayed'}
+                {signal.price_live ? 'LIVE' : (signal.symbol.endsWith('_proxy') ? 'ETF Data' : 'Delayed')}
               </span>
             )}
           </div>

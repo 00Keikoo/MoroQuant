@@ -63,6 +63,9 @@ def get_crypto_service() -> CryptoPriceService:
     """Get or create global crypto price service."""
     global _crypto_service
     if _crypto_service is None:
-        symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
+        symbols = [
+            'BTCUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ZECUSDT',
+            'SUIUSDT', 'ADAUSDT', 'ETHUSDT', 'HYPEUSDT', 'LINKUSDT', 'LTCUSDT'
+        ]
         _crypto_service = CryptoPriceService(symbols)
     return _crypto_service

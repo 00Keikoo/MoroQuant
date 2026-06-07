@@ -21,7 +21,7 @@ export function getDisplayDescription(symbol: string): string | null {
 export async function getSignal(symbol: string, timeframe: string): Promise<MLSignal> {
   try {
     const response = await fetch(`${ML_API_BASE}/signals?symbol=${symbol}&timeframe=${timeframe}`, {
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(45000),
     });
 
     if (!response.ok) {
@@ -85,13 +85,47 @@ export async function getBacktestResults(symbol: string, timeframe: string): Pro
       throw new Error(`Failed to fetch backtest results: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+
+    if (data.error === 'no_data') {
+      return {
+        symbol,
+        timeframe,
+        equity_curve: [],
+        trades: [],
+        trade_count: 0,
+        error: 'no_data',
+        message: data.message,
+      } as BacktestResults;
+    }
+
+    return data;
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error('ML API is offline. Please start the FastAPI server on port 8000.');
     }
     throw error;
   }
+}
+
+export async function getAllBacktestResults(symbols: string[], timeframe: string): Promise<BacktestResults[]> {
+  const results = await Promise.all(
+    symbols.map(async (symbol) => {
+      try {
+        return await getBacktestResults(symbol, timeframe);
+      } catch (error) {
+        return {
+          symbol,
+          timeframe,
+          equity_curve: [],
+          trades: [],
+          trade_count: 0,
+          error: 'Failed to load',
+        } as BacktestResults;
+      }
+    })
+  );
+  return results;
 }
 
 export async function closeTrade(trade: ClosedTrade): Promise<{ status: string; message: string; trade_id: number }> {

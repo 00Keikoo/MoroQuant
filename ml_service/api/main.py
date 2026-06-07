@@ -73,4 +73,11 @@ async def health_prices():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        limit_concurrency=20,
+        timeout_keep_alive=5,
+        workers=1
+    )

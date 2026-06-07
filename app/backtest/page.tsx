@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import { getSymbols, getBacktestResults } from '@/lib/api/ml-trading';
-import { BacktestResults } from '@/lib/types/ml';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getSymbols, getBacktestResults, getAllBacktestResults } from '@/lib/api/ml-trading';
+import { BacktestResults, BacktestTrade } from '@/lib/types/ml';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, ReferenceLine, Area, ComposedChart, Legend } from 'recharts';
+
+const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
+const STARTING_CAPITAL = 10000;
 
 export default function BacktestPage() {
   const [symbols, setSymbols] = useState<string[]>([]);
@@ -14,6 +17,10 @@ export default function BacktestPage() {
   const [results, setResults] = useState<BacktestResults | null>(null);
   const [error, setError] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [allResults, setAllResults] = useState<BacktestResults[]>([]);
+  const [loadingAll, setLoadingAll] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
 
   const [posCalc, setPosCalc] = useState({
     type: 'long' as 'long' | 'short',
@@ -39,12 +46,37 @@ export default function BacktestPage() {
     loadSymbols();
   }, []);
 
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+
+    if (isPolling && selectedSymbol) {
+      pollInterval = setInterval(async () => {
+        try {
+          const data = await getBacktestResults(selectedSymbol, timeframe);
+          if (!data.error || data.error !== 'no_data') {
+            setResults(data);
+            setError('');
+            setIsPolling(false);
+            setShowModal(false);
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
+      }, 5000);
+    }
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [isPolling, selectedSymbol, timeframe]);
+
   const handleLoadResults = async () => {
     if (!selectedSymbol) return;
 
     setLoading(true);
     setError('');
     setResults(null);
+    setCompareMode(false);
 
     try {
       const data = await getBacktestResults(selectedSymbol, timeframe);
@@ -58,6 +90,135 @@ export default function BacktestPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadAll = async () => {
+    if (symbols.length === 0) return;
+
+    setLoadingAll(true);
+    setError('');
+    setResults(null);
+    setAllResults([]);
+
+    try {
+      const data = await getAllBacktestResults(symbols, timeframe);
+      setAllResults(data);
+      setCompareMode(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load backtest results');
+    } finally {
+      setLoadingAll(false);
+    }
+  };
+
+  const handleRunBacktest = () => {
+    setShowModal(true);
+    setIsPolling(true);
+  };
+
+  const getAggregateStats = () => {
+    if (allResults.length === 0) return null;
+
+    const validResults = allResults.filter(r => r.metrics);
+    if (validResults.length === 0) return null;
+
+    const sorted = [...validResults].sort((a, b) =>
+      (b.metrics!.total_return_pct) - (a.metrics!.total_return_pct)
+    );
+
+    const avgWinRate = validResults.reduce((sum, r) => sum + r.metrics!.win_rate_pct, 0) / validResults.length;
+    const totalTrades = validResults.reduce((sum, r) => sum + r.metrics!.total_trades, 0);
+
+    return {
+      best: sorted[0],
+      worst: sorted[sorted.length - 1],
+      avgWinRate,
+      totalTrades,
+    };
+  };
+
+  const calculateDrawdowns = (equityCurve: { timestamp: number; equity: number }[]) => {
+    const drawdowns: { start: number; end: number; depth: number }[] = [];
+    let peak = equityCurve[0]?.equity || STARTING_CAPITAL;
+    let drawdownStart = 0;
+    let inDrawdown = false;
+    let maxDrawdown = 0;
+    let maxDrawdownPeriod = { start: 0, end: 0 };
+
+    equityCurve.forEach((point, idx) => {
+      if (point.equity > peak) {
+        if (inDrawdown) {
+          drawdowns.push({
+            start: drawdownStart,
+            end: idx - 1,
+            depth: ((peak - equityCurve[idx - 1].equity) / peak) * 100,
+          });
+          inDrawdown = false;
+        }
+        peak = point.equity;
+      } else if (point.equity < peak) {
+        if (!inDrawdown) {
+          drawdownStart = idx;
+          inDrawdown = true;
+        }
+        const currentDrawdown = ((peak - point.equity) / peak) * 100;
+        if (currentDrawdown > maxDrawdown) {
+          maxDrawdown = currentDrawdown;
+          maxDrawdownPeriod = { start: drawdownStart, end: idx };
+        }
+      }
+    });
+
+    if (inDrawdown) {
+      drawdowns.push({
+        start: drawdownStart,
+        end: equityCurve.length - 1,
+        depth: ((peak - equityCurve[equityCurve.length - 1].equity) / peak) * 100,
+      });
+    }
+
+    return { drawdowns, maxDrawdownPeriod };
+  };
+
+  const getPnLDistribution = (trades: BacktestTrade[]) => {
+    const bins = [-100, -50, -25, -10, -5, 0, 5, 10, 25, 50, 100];
+    const distribution = bins.slice(0, -1).map((binStart, idx) => ({
+      range: `${binStart}% to ${bins[idx + 1]}%`,
+      count: 0,
+    }));
+
+    trades.forEach(trade => {
+      const pnlPct = trade.pnl_pct;
+      const binIdx = bins.findIndex((bin, idx) => idx < bins.length - 1 && pnlPct >= bin && pnlPct < bins[idx + 1]);
+      if (binIdx >= 0 && binIdx < distribution.length) {
+        distribution[binIdx].count++;
+      }
+    });
+
+    return distribution;
+  };
+
+  const getLongShortStats = (trades: BacktestTrade[]) => {
+    const longTrades = trades.filter(t => t.type === 'long');
+    const shortTrades = trades.filter(t => t.type === 'short');
+
+    const longWins = longTrades.filter(t => t.pnl > 0).length;
+    const shortWins = shortTrades.filter(t => t.pnl > 0).length;
+
+    return [
+      {
+        name: 'Long',
+        count: longTrades.length,
+        winRate: longTrades.length > 0 ? (longWins / longTrades.length) * 100 : 0,
+        color: '#10B981',
+      },
+      {
+        name: 'Short',
+        count: shortTrades.length,
+        winRate: shortTrades.length > 0 ? (shortWins / shortTrades.length) * 100 : 0,
+        color: '#EF4444',
+      },
+    ];
   };
 
   const calculatePosition = () => {
@@ -91,10 +252,57 @@ export default function BacktestPage() {
 
   const positionResults = calculatePosition();
 
-  const chartData = results?.equity_curve?.map((point) => ({
+  const chartData = results?.equity_curve?.map((point, idx) => ({
     timestamp: new Date(point.timestamp * 1000).toLocaleDateString(),
     equity: point.equity,
+    date: new Date(point.timestamp * 1000),
+    index: idx,
   })) || [];
+
+  const { drawdowns, maxDrawdownPeriod } = results?.equity_curve
+    ? calculateDrawdowns(results.equity_curve)
+    : { drawdowns: [], maxDrawdownPeriod: { start: 0, end: 0 } };
+
+  const pnlDistribution = results?.trades ? getPnLDistribution(results.trades) : [];
+  const longShortStats = results?.trades ? getLongShortStats(results.trades) : [];
+
+  const aggregateStats = getAggregateStats();
+
+  const compareTableData = allResults
+    .filter(r => r.metrics)
+    .map(r => ({
+      symbol: r.symbol,
+      timeframe: r.timeframe,
+      returnPct: r.metrics!.total_return_pct,
+      winRate: r.metrics!.win_rate_pct,
+      sharpe: r.metrics!.sharpe_ratio,
+      maxDD: r.metrics!.max_drawdown_pct,
+      trades: r.metrics!.total_trades,
+    }))
+    .sort((a, b) => b.returnPct - a.returnPct);
+
+  const multiSymbolChartData = (() => {
+    if (allResults.length === 0) return [];
+
+    const timestampMap = new Map<number, any>();
+
+    allResults.forEach((result, idx) => {
+      if (!result.equity_curve || !result.metrics) return;
+
+      result.equity_curve.forEach(point => {
+        if (!timestampMap.has(point.timestamp)) {
+          timestampMap.set(point.timestamp, {
+            timestamp: new Date(point.timestamp * 1000).toLocaleDateString(),
+            date: new Date(point.timestamp * 1000),
+          });
+        }
+        const entry = timestampMap.get(point.timestamp)!;
+        entry[result.symbol] = point.equity;
+      });
+    });
+
+    return Array.from(timestampMap.values()).sort((a, b) => a.date - b.date);
+  })();
 
   const backtestCommand = `venv/bin/python3 cli.py backtest --symbol ${selectedSymbol} --timeframe ${timeframe}`;
 
@@ -159,7 +367,7 @@ export default function BacktestPage() {
                 </div>
 
                 <button
-                  onClick={() => setShowModal(true)}
+                  onClick={handleRunBacktest}
                   disabled={!selectedSymbol}
                   className="px-8 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all"
                 >
@@ -173,16 +381,25 @@ export default function BacktestPage() {
                 >
                   {loading ? 'Loading...' : 'Load Results'}
                 </button>
+
+                <button
+                  onClick={handleLoadAll}
+                  disabled={loadingAll}
+                  className="px-8 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all"
+                >
+                  {loadingAll ? 'Loading All...' : 'Compare All'}
+                </button>
               </div>
             </div>
 
             {showModal && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
+              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={() => { setShowModal(false); setIsPolling(false); }}>
                 <div className="bg-gray-900 rounded-xl p-8 border border-gray-800 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
                   <h2 className="text-2xl font-bold text-white mb-4">Run Backtest from Terminal</h2>
-                  <p className="text-gray-400 mb-4">
-                    Backtests must be run from the terminal. Copy and paste the command below:
-                  </p>
+                  <div className="bg-blue-900/30 border border-blue-800/50 rounded-lg p-4 mb-4">
+                    <p className="text-blue-200 text-sm font-semibold mb-2">Backtest must be run from terminal first to generate data</p>
+                    <p className="text-blue-300/80 text-sm">Copy this command and run it in your terminal:</p>
+                  </div>
                   <div className="bg-gray-800 rounded-lg p-4 mb-4 flex items-center justify-between">
                     <code className="text-green-400 text-sm">{backtestCommand}</code>
                     <button
@@ -192,11 +409,19 @@ export default function BacktestPage() {
                       Copy
                     </button>
                   </div>
-                  <p className="text-gray-500 text-sm mb-6">
-                    After running the backtest, click "Load Results" to view the results in the dashboard.
+                  {isPolling && (
+                    <div className="bg-yellow-900/20 border border-yellow-800/50 rounded-lg p-3 mb-4">
+                      <p className="text-yellow-300 text-sm flex items-center">
+                        <span className="animate-pulse mr-2">●</span>
+                        Auto-polling every 5 seconds for results...
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-gray-400 text-sm mb-6">
+                    Results will load automatically when available. You can close this dialog and continue working.
                   </p>
                   <button
-                    onClick={() => setShowModal(false)}
+                    onClick={() => { setShowModal(false); setIsPolling(false); }}
                     className="w-full px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
                   >
                     Close
@@ -215,6 +440,141 @@ export default function BacktestPage() {
                   </code>
                 </p>
               </div>
+            )}
+
+            {compareMode && allResults.length > 0 && (
+              <>
+                {aggregateStats && (
+                  <div className="bg-gradient-to-r from-blue-900/30 via-purple-900/20 to-blue-900/30 rounded-xl p-6 border border-blue-800/30">
+                    <h2 className="text-xl font-bold text-white mb-4">Multi-Symbol Performance Summary</h2>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-gray-900/50 rounded-lg p-4">
+                        <p className="text-sm text-gray-400 mb-1">Best Performer</p>
+                        <p className="text-2xl font-bold text-green-400">{aggregateStats.best.symbol}</p>
+                        <p className="text-sm text-green-300">+{aggregateStats.best.metrics!.total_return_pct.toFixed(2)}%</p>
+                      </div>
+                      <div className="bg-gray-900/50 rounded-lg p-4">
+                        <p className="text-sm text-gray-400 mb-1">Worst Performer</p>
+                        <p className="text-2xl font-bold text-red-400">{aggregateStats.worst.symbol}</p>
+                        <p className="text-sm text-red-300">{aggregateStats.worst.metrics!.total_return_pct.toFixed(2)}%</p>
+                      </div>
+                      <div className="bg-gray-900/50 rounded-lg p-4">
+                        <p className="text-sm text-gray-400 mb-1">Avg Win Rate</p>
+                        <p className="text-2xl font-bold text-white">{aggregateStats.avgWinRate.toFixed(2)}%</p>
+                      </div>
+                      <div className="bg-gray-900/50 rounded-lg p-4">
+                        <p className="text-sm text-gray-400 mb-1">Total Trades</p>
+                        <p className="text-2xl font-bold text-white">{aggregateStats.totalTrades}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {allResults.filter(r => r.metrics && r.equity_curve.length > 0).length > 0 && (
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <h2 className="text-lg font-bold text-white mb-4">All Equity Curves</h2>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <LineChart data={multiSymbolChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="timestamp" stroke="#9CA3AF" />
+                        <YAxis stroke="#9CA3AF" />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Legend />
+                        <ReferenceLine y={STARTING_CAPITAL} stroke="#6B7280" strokeDasharray="3 3" />
+                        {allResults.filter(r => r.metrics).map((result, idx) => (
+                          <Line
+                            key={result.symbol}
+                            type="monotone"
+                            dataKey={result.symbol}
+                            stroke={CHART_COLORS[idx % CHART_COLORS.length]}
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {compareTableData.length > 0 && (
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <h2 className="text-lg font-bold text-white mb-4">Comparison Table</h2>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-800">
+                            <th className="text-left py-3 text-gray-400 font-semibold">Symbol</th>
+                            <th className="text-center py-3 text-gray-400 font-semibold">TF</th>
+                            <th className="text-right py-3 text-gray-400 font-semibold">Return %</th>
+                            <th className="text-right py-3 text-gray-400 font-semibold">Win Rate</th>
+                            <th className="text-right py-3 text-gray-400 font-semibold">Sharpe</th>
+                            <th className="text-right py-3 text-gray-400 font-semibold">Max DD</th>
+                            <th className="text-right py-3 text-gray-400 font-semibold">Trades</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {compareTableData.map((row, idx) => (
+                            <tr
+                              key={row.symbol}
+                              className={`border-b border-gray-800 ${
+                                idx === 0
+                                  ? 'bg-green-900/20'
+                                  : idx === compareTableData.length - 1
+                                  ? 'bg-red-900/20'
+                                  : ''
+                              }`}
+                            >
+                              <td className="py-3 font-bold text-white">{row.symbol}</td>
+                              <td className="text-center py-3 text-gray-300">{row.timeframe}</td>
+                              <td className={`text-right py-3 font-bold ${row.returnPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {row.returnPct >= 0 ? '+' : ''}{row.returnPct.toFixed(2)}%
+                              </td>
+                              <td className="text-right py-3 text-gray-300">{row.winRate.toFixed(2)}%</td>
+                              <td className="text-right py-3 text-gray-300">{row.sharpe.toFixed(2)}</td>
+                              <td className="text-right py-3 text-red-400">{row.maxDD.toFixed(2)}%</td>
+                              <td className="text-right py-3 text-gray-300">{row.trades}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {allResults.filter(r => r.error === 'no_data').length > 0 && (
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <h2 className="text-lg font-bold text-white mb-4">Symbols Without Backtest Data</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {allResults.filter(r => r.error === 'no_data').map((result) => {
+                        const cmd = `venv/bin/python3 cli.py backtest --symbol ${result.symbol} --timeframe ${result.timeframe}`;
+                        return (
+                          <div key={result.symbol} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                            <h3 className="font-bold text-white mb-2">{result.symbol}</h3>
+                            <p className="text-sm text-gray-400 mb-3">No data — run backtest first:</p>
+                            <div className="bg-gray-900 rounded p-2 mb-2">
+                              <code className="text-xs text-green-400 break-all">{cmd}</code>
+                            </div>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(cmd);
+                              }}
+                              className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded transition-all"
+                            >
+                              Copy Command
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {results && results.metrics && (
@@ -262,8 +622,8 @@ export default function BacktestPage() {
 
                 <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                   <h2 className="text-lg font-bold text-white mb-4">Equity Curve</h2>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={chartData}>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <ComposedChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="timestamp" stroke="#9CA3AF" />
                       <YAxis stroke="#9CA3AF" />
@@ -273,7 +633,42 @@ export default function BacktestPage() {
                           border: '1px solid #374151',
                           borderRadius: '8px',
                         }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length > 0) {
+                            const data = payload[0].payload;
+                            const pnl = data.equity - STARTING_CAPITAL;
+                            return (
+                              <div className="bg-gray-900 border border-gray-700 rounded p-3">
+                                <p className="text-gray-400 text-xs mb-1">{data.timestamp}</p>
+                                <p className="text-white font-bold">${data.equity.toFixed(2)}</p>
+                                <p className={`text-xs ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                  {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} from start
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
                       />
+                      <ReferenceLine
+                        y={STARTING_CAPITAL}
+                        stroke="#6B7280"
+                        strokeDasharray="3 3"
+                        label={{ value: `Start: $${STARTING_CAPITAL}`, fill: '#9CA3AF', fontSize: 12 }}
+                      />
+                      {drawdowns.map((dd, idx) => (
+                        chartData[dd.start] && chartData[dd.end] && (
+                          <Area
+                            key={idx}
+                            type="monotone"
+                            dataKey="equity"
+                            fill="#EF4444"
+                            fillOpacity={0.1}
+                            stroke="none"
+                            data={chartData.slice(dd.start, dd.end + 1)}
+                          />
+                        )
+                      ))}
                       <Line
                         type="monotone"
                         dataKey="equity"
@@ -281,8 +676,78 @@ export default function BacktestPage() {
                         strokeWidth={2}
                         dot={false}
                       />
-                    </LineChart>
+                      {results.trades && results.trades.map((trade, idx) => {
+                        const entryPoint = chartData.find(d => d.index === trade.entry_idx);
+                        return entryPoint ? (
+                          <circle
+                            key={`trade-${idx}`}
+                            cx={0}
+                            cy={0}
+                            r={3}
+                            fill={trade.pnl >= 0 ? '#10B981' : '#EF4444'}
+                            style={{
+                              transform: `translate(${(trade.entry_idx / chartData.length) * 100}%, 0)`,
+                            }}
+                          />
+                        ) : null;
+                      })}
+                    </ComposedChart>
                   </ResponsiveContainer>
+                  {maxDrawdownPeriod.start !== maxDrawdownPeriod.end && chartData[maxDrawdownPeriod.start] && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      Max drawdown period: {chartData[maxDrawdownPeriod.start].timestamp} to {chartData[maxDrawdownPeriod.end]?.timestamp}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <h2 className="text-lg font-bold text-white mb-4">PnL Distribution</h2>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={pnlDistribution}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="range" stroke="#9CA3AF" angle={-45} textAnchor="end" height={80} fontSize={10} />
+                        <YAxis stroke="#9CA3AF" />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Bar dataKey="count" fill="#3B82F6" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <h2 className="text-lg font-bold text-white mb-4">Long vs Short Performance</h2>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={longShortStats}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={(entry: any) => `${entry.name}: ${entry.count} (${entry.winRate.toFixed(1)}% WR)`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="count"
+                        >
+                          {longShortStats.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
 
                 {results.trades && results.trades.length > 0 && (

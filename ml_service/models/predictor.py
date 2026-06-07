@@ -14,6 +14,9 @@ from .trainer import prepare_features, get_feature_columns
 
 logger = get_logger()
 
+_model_cache = {}
+_signal_cache = {}
+
 
 def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     """
@@ -26,6 +29,11 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     Returns:
         Model package dict or None if no model found
     """
+    cache_key = f"{symbol}_{timeframe}"
+    if cache_key in _model_cache:
+        logger.info(f"Using cached model for {symbol} {timeframe}")
+        return _model_cache[cache_key]
+
     models_dir = Path(__file__).parent.parent / "storage" / "models"
 
     if not models_dir.exists():
@@ -40,11 +48,12 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
         return None
 
     latest_model = max(model_files, key=lambda p: p.stat().st_mtime)
-    logger.info(f"Loading model: {latest_model.name}")
+    logger.info(f"Loading model from disk: {latest_model.name}")
 
     with open(latest_model, 'rb') as f:
         model_package = pickle.load(f)
 
+    _model_cache[cache_key] = model_package
     return model_package
 
 
@@ -77,7 +86,7 @@ def calculate_feature_importance(
 def generate_signal(
     symbol: str,
     timeframe: str,
-    n_candles: int = 500,
+    n_candles: int = 300,
     skip_mtf: bool = False,
 ) -> Optional[Dict]:
     """
@@ -91,6 +100,15 @@ def generate_signal(
     Returns:
         Signal dictionary or None if generation fails
     """
+    cache_key = f"{symbol}_{timeframe}"
+    cached = _signal_cache.get(cache_key)
+    if cached:
+        age = (datetime.now() - cached['cached_at']).total_seconds()
+        if age < 300:
+            logger.info(f"Using cached signal for {symbol} {timeframe} (age: {age:.1f}s)")
+            # Return cached signal without price - routes.py will add fresh price
+            return cached['signal']
+
     logger.info(f"Generating signal for {symbol} {timeframe}")
 
     model_package = load_latest_model(symbol, timeframe)
@@ -184,6 +202,13 @@ def generate_signal(
             logger.warning(f"MTF check failed: {e}")
 
     save_signal_to_db(signal)
+
+    # Cache signal without price field (price is always fetched fresh in routes.py)
+    signal_to_cache = {k: v for k, v in signal.items() if k != 'price'}
+    _signal_cache[cache_key] = {
+        'signal': signal_to_cache,
+        'cached_at': datetime.now()
+    }
 
     logger.info(f"Signal generated: {direction} with {confidence}% confidence")
 
