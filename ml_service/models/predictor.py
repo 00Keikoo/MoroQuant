@@ -100,6 +100,8 @@ def generate_signal(
     Returns:
         Signal dictionary or None if generation fails
     """
+    from .tp_sl_optimizer import load_optimized_params
+
     cache_key = f"{symbol}_{timeframe}"
     cached = _signal_cache.get(cache_key)
     if cached:
@@ -173,12 +175,50 @@ def generate_signal(
 
     regime = latest_row.get('market_phase', 'unknown')
 
+    current_price = float(latest_row['close'])
+    atr = float(latest_row.get('atr', 0))
+
+    optimized_params = load_optimized_params(symbol, timeframe)
+    if optimized_params:
+        tp_multiplier = optimized_params['tp_multiplier']
+        sl_multiplier = optimized_params['sl_multiplier']
+        max_hold_candles = optimized_params['optimal_hold_candles']
+        tp_sl_source = 'optimized'
+        logger.info(f"Using optimized TP/SL: TP={tp_multiplier}x, SL={sl_multiplier}x, Hold={max_hold_candles}")
+    else:
+        tp_multiplier = 3.0
+        sl_multiplier = 1.5
+        max_hold_candles = 12
+        tp_sl_source = 'default'
+
+    stop_loss = None
+    take_profit = None
+    if atr > 0 and direction != 'neutral':
+        if direction == 'long':
+            stop_loss = current_price - (atr * sl_multiplier)
+            take_profit = current_price + (atr * tp_multiplier)
+        elif direction == 'short':
+            stop_loss = current_price + (atr * sl_multiplier)
+            take_profit = current_price - (atr * tp_multiplier)
+
+    timeframe_hours = {'1h': 1, '4h': 4, '15m': 0.25, '30m': 0.5, '1d': 24}
+    hours = timeframe_hours.get(timeframe, 1)
+    from datetime import timedelta
+    valid_until = (datetime.now() + timedelta(hours=max_hold_candles * hours)).isoformat()
+
     signal = {
         'symbol': symbol,
         'timeframe': timeframe,
         'direction': direction,
         'confidence': confidence,
-        'price': float(latest_row['close']),
+        'price': current_price,
+        'stop_loss': round(stop_loss, 2) if stop_loss else None,
+        'take_profit': round(take_profit, 2) if take_profit else None,
+        'atr': round(atr, 2),
+        'risk_reward': f'1:{round(tp_multiplier / sl_multiplier, 1)}' if direction != 'neutral' else None,
+        'valid_until': valid_until,
+        'max_hold_candles': max_hold_candles,
+        'tp_sl_source': tp_sl_source,
         'top_features': {k: float(v) for k, v in top_features.items()},
         'regime': regime,
         'generated_at': datetime.now().isoformat(),

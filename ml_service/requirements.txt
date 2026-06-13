@@ -28,3 +28,6 @@ plotly
 
 # Feature Engineering
 pandas-ta
+
+# Hyperparameter Tuning
+optuna

@@ -176,6 +176,8 @@ def walk_forward_validation(
     min_train_size: int = 400,
     test_size: int = 50,
     step_size: int = 50,
+    xgb_params: Dict = None,
+    lgb_params: Dict = None,
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """
     Perform walk-forward validation.
@@ -186,6 +188,8 @@ def walk_forward_validation(
         min_train_size: Minimum training set size
         test_size: Test set size
         step_size: Step size for rolling window
+        xgb_params: Optional custom XGBoost hyperparameters
+        lgb_params: Optional custom LightGBM hyperparameters
 
     Returns:
         Tuple of (fold_results, feature_importance_df)
@@ -199,6 +203,27 @@ def walk_forward_validation(
 
     start_idx = min_train_size
     fold_num = 0
+
+    xgb_default = {
+        'max_depth': 6,
+        'learning_rate': 0.1,
+        'n_estimators': 100,
+        'objective': 'multi:softmax',
+        'num_class': 3,
+        'random_state': 42,
+    }
+    xgb_config = {**xgb_default, **(xgb_params or {})}
+
+    lgb_default = {
+        'max_depth': 6,
+        'learning_rate': 0.1,
+        'n_estimators': 100,
+        'objective': 'multiclass',
+        'num_class': 3,
+        'random_state': 42,
+        'verbose': -1,
+    }
+    lgb_config = {**lgb_default, **(lgb_params or {})}
 
     while start_idx + test_size <= len(df_clean):
         fold_num += 1
@@ -215,27 +240,12 @@ def walk_forward_validation(
 
         logger.info(f"Fold {fold_num}: train={len(X_train)}, test={len(X_test)}")
 
-        xgb_model = xgb.XGBClassifier(
-            max_depth=6,
-            learning_rate=0.1,
-            n_estimators=100,
-            objective='multi:softmax',
-            num_class=3,
-            random_state=42,
-        )
+        xgb_model = xgb.XGBClassifier(**xgb_config)
         xgb_model.fit(X_train, y_train)
         xgb_pred = xgb_model.predict(X_test)
         xgb_f1 = f1_score(y_test, xgb_pred, average='weighted')
 
-        lgb_model = lgb.LGBMClassifier(
-            max_depth=6,
-            learning_rate=0.1,
-            n_estimators=100,
-            objective='multiclass',
-            num_class=3,
-            random_state=42,
-            verbose=-1,
-        )
+        lgb_model = lgb.LGBMClassifier(**lgb_config)
         lgb_model.fit(X_train, y_train)
         lgb_pred = lgb_model.predict(X_test)
         lgb_f1 = f1_score(y_test, lgb_pred, average='weighted')
@@ -251,7 +261,6 @@ def walk_forward_validation(
             best_f1 = lgb_f1
             model_type = 'lightgbm'
 
-        # Handle cases where not all classes are present in test set
         f1_per_class = f1_score(y_test, best_pred, average=None, labels=[0, 1, 2], zero_division=0)
 
         fold_results.append({
@@ -287,6 +296,7 @@ def train_final_model(
     df: pd.DataFrame,
     feature_cols: List[str],
     model_type: str = 'xgboost',
+    custom_params: Dict = None,
 ) -> Tuple[object, Dict]:
     """
     Train final model on all available data.
@@ -295,6 +305,7 @@ def train_final_model(
         df: DataFrame with features and target
         feature_cols: List of feature column names
         model_type: 'xgboost' or 'lightgbm'
+        custom_params: Optional custom hyperparameters (from tuning)
 
     Returns:
         Tuple of (trained_model, metadata)
@@ -307,24 +318,36 @@ def train_final_model(
     logger.info(f"Training final {model_type} model on {len(X)} samples")
 
     if model_type == 'xgboost':
-        model = xgb.XGBClassifier(
-            max_depth=6,
-            learning_rate=0.1,
-            n_estimators=100,
-            objective='multi:softmax',
-            num_class=3,
-            random_state=42,
-        )
+        default_params = {
+            'max_depth': 6,
+            'learning_rate': 0.1,
+            'n_estimators': 100,
+            'objective': 'multi:softmax',
+            'num_class': 3,
+            'random_state': 42,
+        }
+        if custom_params:
+            params = {**default_params, **custom_params}
+            logger.info(f"Using tuned hyperparameters for XGBoost")
+        else:
+            params = default_params
+        model = xgb.XGBClassifier(**params)
     else:
-        model = lgb.LGBMClassifier(
-            max_depth=6,
-            learning_rate=0.1,
-            n_estimators=100,
-            objective='multiclass',
-            num_class=3,
-            random_state=42,
-            verbose=-1,
-        )
+        default_params = {
+            'max_depth': 6,
+            'learning_rate': 0.1,
+            'n_estimators': 100,
+            'objective': 'multiclass',
+            'num_class': 3,
+            'random_state': 42,
+            'verbose': -1,
+        }
+        if custom_params:
+            params = {**default_params, **custom_params}
+            logger.info(f"Using tuned hyperparameters for LightGBM")
+        else:
+            params = default_params
+        model = lgb.LGBMClassifier(**params)
 
     model.fit(X, y)
 
@@ -334,6 +357,7 @@ def train_final_model(
         'n_samples': len(X),
         'class_distribution': y.value_counts().to_dict(),
         'trained_at': datetime.now().isoformat(),
+        'hyperparameters': params if custom_params else 'default',
     }
 
     return model, metadata
@@ -407,7 +431,14 @@ def train_model(
     Returns:
         Training results dictionary
     """
+    from .tuner import load_tuned_params
+
     logger.info(f"Starting training for {symbol} {timeframe}")
+
+    tuned_config = load_tuned_params(symbol, timeframe)
+    if tuned_config:
+        logger.info(f"Found tuned hyperparameters for {symbol} {timeframe}")
+        logger.info(f"Model type: {tuned_config['model_type']}, F1: {tuned_config['best_f1']:.4f}")
 
     df = prepare_features(df, symbol=symbol, btc_df=btc_df, eth_df=eth_df, spy_df=spy_df, dominance_df=dominance_df)
 
@@ -420,11 +451,9 @@ def train_model(
 
     feature_cols = get_feature_columns(df)
 
-    # Calculate clean dataset size to adjust training parameters
     df_clean = df[feature_cols + ['target']].dropna()
     clean_size = len(df_clean)
 
-    # Dynamically adjust training parameters based on available data
     if clean_size < 100:
         min_train_size = int(clean_size * 0.6)
         test_size = int(clean_size * 0.15)
@@ -438,8 +467,21 @@ def train_model(
         test_size = 50
         step_size = 50
 
+    xgb_params = None
+    lgb_params = None
+    if tuned_config:
+        if tuned_config['model_type'] == 'xgboost':
+            xgb_params = tuned_config['best_params']
+        else:
+            lgb_params = tuned_config['best_params']
+
     fold_results, feature_importance = walk_forward_validation(
-        df, feature_cols, min_train_size=min_train_size, test_size=test_size, step_size=step_size
+        df, feature_cols,
+        min_train_size=min_train_size,
+        test_size=test_size,
+        step_size=step_size,
+        xgb_params=xgb_params,
+        lgb_params=lgb_params,
     )
 
     if len(fold_results) == 0:
@@ -455,7 +497,11 @@ def train_model(
 
     best_model_type = fold_results[-1]['model_type']
 
-    final_model, metadata = train_final_model(df, feature_cols, model_type=best_model_type)
+    custom_params = None
+    if tuned_config and tuned_config['model_type'] == best_model_type:
+        custom_params = tuned_config['best_params']
+
+    final_model, metadata = train_final_model(df, feature_cols, model_type=best_model_type, custom_params=custom_params)
 
     model_path = save_model(final_model, metadata, symbol, timeframe)
 
@@ -471,6 +517,7 @@ def train_model(
         'feature_importance': feature_importance,
         'model_path': model_path,
         'model_type': best_model_type,
+        'used_tuned_params': custom_params is not None,
     }
 
     return results
