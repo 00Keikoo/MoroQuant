@@ -188,7 +188,7 @@ def insert_candles(candles: List[Dict]) -> Tuple[int, int]:
             try:
                 cursor.execute(
                     """
-                    INSERT INTO ohlcv (symbol, timeframe, timestamp, open, high, low, close, volume)
+                    INSERT OR IGNORE INTO ohlcv (symbol, timeframe, timestamp, open, high, low, close, volume)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
@@ -202,7 +202,10 @@ def insert_candles(candles: List[Dict]) -> Tuple[int, int]:
                         candle["volume"],
                     ),
                 )
-                inserted += 1
+                if cursor.rowcount > 0:
+                    inserted += 1
+                else:
+                    skipped += 1
             except Exception:
                 skipped += 1
 
@@ -213,6 +216,7 @@ def ingest_binance_symbol(
     symbol: str,
     timeframe: str,
     days_back: int = 30,
+    fetch_from_beginning: bool = False,
 ) -> Tuple[int, int]:
     """
     Ingest historical data for a Binance symbol.
@@ -221,18 +225,23 @@ def ingest_binance_symbol(
         symbol: Trading pair (e.g., BTCUSDT)
         timeframe: Candle interval
         days_back: How many days of history to fetch
+        fetch_from_beginning: If True, fetch from (current_time - days_back) regardless of DB state
 
     Returns:
         Tuple of (inserted_count, skipped_count)
     """
     logger.info(f"Ingesting Binance {symbol} {timeframe} (last {days_back} days)")
 
-    last_ts = get_last_timestamp(symbol, timeframe)
-    if last_ts:
-        start_time = last_ts + 1
-        logger.info(f"Resuming from timestamp {start_time}")
-    else:
+    if fetch_from_beginning:
         start_time = int((datetime.now() - timedelta(days=days_back)).timestamp() * 1000)
+        logger.info(f"Fetching full history from {days_back} days ago (timestamp {start_time})")
+    else:
+        last_ts = get_last_timestamp(symbol, timeframe)
+        if last_ts:
+            start_time = last_ts + 1
+            logger.info(f"Resuming from timestamp {start_time}")
+        else:
+            start_time = int((datetime.now() - timedelta(days=days_back)).timestamp() * 1000)
 
     end_time = int(datetime.now().timestamp() * 1000)
 

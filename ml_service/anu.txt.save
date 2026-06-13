@@ -1,0 +1,8 @@
+venv/bin/python3 cli.py train --symbol SUIUSDT --timeframe 4h
+venv/bin/python3 cli.py train --symbol SUIUSDT --timeframe 1h
+venv/bin/python3 cli.py train --symbol ADAUSDT --timeframe 4h
+venv/bin/python3 cli.py train --symbol ADAUSDT --timeframe 1h
+venv/bin/python3 cli.py train --symbol LTCUSDT --timeframe 4h
+venv/bin/python3 cli.py train --symbol LTCUSDT --timeframe 1h
+venv/bin/python3 cli.py train --symbol XRPUSDT --timeframe 4h
+venv/bin/python3 cli.py train --symbol XRPUSDT --timeframe 1h

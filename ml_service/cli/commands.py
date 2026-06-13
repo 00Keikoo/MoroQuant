@@ -28,7 +28,8 @@ def cli():
 @click.option("--days", default=30, help="Days of history to fetch")
 @click.option("--all", "fetch_all_flag", is_flag=True, help="Fetch all configured symbols")
 @click.option("--source", type=click.Choice(["binance", "yfinance", "both"]), default="both")
-def fetch(symbol: Optional[str], timeframe: Optional[str], days: int, fetch_all_flag: bool, source: str):
+@click.option("--full-history", is_flag=True, help="Fetch from beginning regardless of DB state")
+def fetch(symbol: Optional[str], timeframe: Optional[str], days: int, fetch_all_flag: bool, source: str, full_history: bool):
     """Fetch OHLCV data from Binance and/or Yahoo Finance."""
 
     if fetch_all_flag:
@@ -63,7 +64,7 @@ def fetch(symbol: Optional[str], timeframe: Optional[str], days: int, fetch_all_
 
     if source in ["binance", "both"]:
         if symbol in config.data_sources.binance.symbols:
-            inserted, skipped = ingest_binance_symbol(symbol, timeframe, days)
+            inserted, skipped = ingest_binance_symbol(symbol, timeframe, days, fetch_from_beginning=full_history)
             click.echo(f"\nBinance {symbol} {timeframe}: {inserted} inserted, {skipped} skipped")
         else:
             click.echo(f"Warning: {symbol} not in Binance config")
