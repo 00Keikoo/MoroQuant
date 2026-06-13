@@ -172,24 +172,41 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
   return (
     <div className="space-y-3 sm:space-y-4">
       {signalStats.total > 0 && (
-        <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-3 sm:p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div className="text-center">
-              <div className="text-xl sm:text-2xl font-bold text-white">{signalStats.total}</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Total</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-gradient-to-br from-blue-900/40 to-blue-950/20 backdrop-blur border border-blue-700/30 rounded-xl p-4 sm:p-5 hover:scale-105 transition-transform duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-bold text-blue-400 uppercase tracking-wider">Total</div>
+              <div className="text-2xl">📊</div>
             </div>
-            <div className="text-center">
-              <div className="text-xl sm:text-2xl font-bold text-green-400">{getPercentage(signalStats.long)}%</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Long ({signalStats.long})</div>
+            <div className="text-3xl sm:text-4xl font-extrabold text-white">{signalStats.total}</div>
+            <div className="text-xs text-gray-400 mt-1 font-medium">Active Signals</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-900/40 to-green-950/20 backdrop-blur border border-green-700/30 rounded-xl p-4 sm:p-5 hover:scale-105 transition-transform duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-bold text-green-400 uppercase tracking-wider">Long</div>
+              <div className="text-2xl">↗️</div>
             </div>
-            <div className="text-center">
-              <div className="text-xl sm:text-2xl font-bold text-red-400">{getPercentage(signalStats.short)}%</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Short ({signalStats.short})</div>
+            <div className="text-3xl sm:text-4xl font-extrabold text-green-400">{getPercentage(signalStats.long)}%</div>
+            <div className="text-xs text-gray-400 mt-1 font-medium">{signalStats.long} signals</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-900/40 to-red-950/20 backdrop-blur border border-red-700/30 rounded-xl p-4 sm:p-5 hover:scale-105 transition-transform duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-bold text-red-400 uppercase tracking-wider">Short</div>
+              <div className="text-2xl">↘️</div>
             </div>
-            <div className="text-center">
-              <div className="text-xl sm:text-2xl font-bold text-gray-400">{getPercentage(signalStats.neutral)}%</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider mt-1">Neutral ({signalStats.neutral})</div>
+            <div className="text-3xl sm:text-4xl font-extrabold text-red-400">{getPercentage(signalStats.short)}%</div>
+            <div className="text-xs text-gray-400 mt-1 font-medium">{signalStats.short} signals</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/20 backdrop-blur border border-gray-700/30 rounded-xl p-4 sm:p-5 hover:scale-105 transition-transform duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Neutral</div>
+              <div className="text-2xl">➡️</div>
             </div>
+            <div className="text-3xl sm:text-4xl font-extrabold text-gray-400">{getPercentage(signalStats.neutral)}%</div>
+            <div className="text-xs text-gray-400 mt-1 font-medium">{signalStats.neutral} signals</div>
           </div>
         </div>
       )}

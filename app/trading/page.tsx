@@ -35,28 +35,38 @@ export default function TradingPage() {
     <div className="flex h-screen bg-black text-white">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto relative z-10">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="bg-gradient-to-r from-blue-900/30 via-purple-900/20 to-blue-900/30 rounded-2xl p-6 sm:p-8 border border-blue-800/30 shadow-2xl">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-white">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
                       ML Trading Intelligence
                     </h1>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-400 font-semibold uppercase tracking-wider">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-full border border-green-500/30">
+                      <div className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
+                      <span className="text-xs text-green-400 font-extrabold uppercase tracking-wider">
                         Live
                       </span>
                     </div>
                   </div>
-                  <p className="text-base sm:text-lg text-gray-300 mb-1">
+                  <p className="text-base sm:text-lg text-gray-300 mb-1 font-medium">
                     Real-time trading signals powered by XGBoost & LightGBM
                   </p>
                   {currentTime && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 font-medium">
                       Last updated: {currentTime} • {currentDate}
                     </p>
                   )}

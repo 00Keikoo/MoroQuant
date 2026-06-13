@@ -5,10 +5,18 @@ export interface MLSignal {
   confidence: number;
   price: number;
   price_live?: boolean;
+  stop_loss?: number;
+  take_profit?: number;
+  atr?: number;
+  risk_reward?: string;
+  valid_until?: string;
+  max_hold_candles?: number;
+  tp_sl_source?: 'optimized' | 'default';
   top_features: Record<string, number>;
   regime: string;
   generated_at: string;
   model_type: string;
+  mtf_conflict?: boolean;
   error?: string;
   message?: string;
 }
