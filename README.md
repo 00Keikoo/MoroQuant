@@ -1,4 +1,4 @@
-# CybxAI Trading
+# MoroQuant Trading
 > Self-learning ML trading intelligence system for crypto futures
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
@@ -376,6 +376,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built with ❤️ by CybxAI Team**
+**Built with ❤️ by MoroQuant Team**
 
 ⭐ Star this repo if you find it useful!
