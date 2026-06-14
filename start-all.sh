@@ -1,8 +1,8 @@
 #!/bin/bash
-# CybxAI Trading - Start All Services
+# MoroQuant - Start All Services
 # Launches ML backend and Next.js frontend together
 
-echo "🚀 Starting CybxAI Trading Platform..."
+echo "🚀 Starting MoroQuant Platform..."
 echo ""
 
 # Check if we're in the right directory

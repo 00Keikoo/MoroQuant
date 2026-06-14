@@ -191,20 +191,17 @@ def generate_signal(
         max_hold_candles = 12
         tp_sl_source = 'default'
 
-    stop_loss = None
-    take_profit = None
-    if atr > 0 and direction != 'neutral':
-        if direction == 'long':
-            stop_loss = current_price - (atr * sl_multiplier)
-            take_profit = current_price + (atr * tp_multiplier)
-        elif direction == 'short':
-            stop_loss = current_price + (atr * sl_multiplier)
-            take_profit = current_price - (atr * tp_multiplier)
+    take_profit, stop_loss = calculate_tp_sl(
+        current_price, atr, direction, tp_multiplier, sl_multiplier
+    )
 
     timeframe_hours = {'1h': 1, '4h': 4, '15m': 0.25, '30m': 0.5, '1d': 24}
     hours = timeframe_hours.get(timeframe, 1)
     from datetime import timedelta
     valid_until = (datetime.now() + timedelta(hours=max_hold_candles * hours)).isoformat()
+
+    # Use more precision for low-priced assets
+    decimal_places = 4 if current_price < 1.0 else 2
 
     signal = {
         'symbol': symbol,
@@ -212,9 +209,11 @@ def generate_signal(
         'direction': direction,
         'confidence': confidence,
         'price': current_price,
-        'stop_loss': round(stop_loss, 2) if stop_loss else None,
-        'take_profit': round(take_profit, 2) if take_profit else None,
+        'stop_loss': round(stop_loss, decimal_places) if stop_loss else None,
+        'take_profit': round(take_profit, decimal_places) if take_profit else None,
         'atr': round(atr, 2),
+        'tp_multiplier': tp_multiplier,
+        'sl_multiplier': sl_multiplier,
         'risk_reward': f'1:{round(tp_multiplier / sl_multiplier, 1)}' if direction != 'neutral' else None,
         'valid_until': valid_until,
         'max_hold_candles': max_hold_candles,
@@ -253,6 +252,53 @@ def generate_signal(
     logger.info(f"Signal generated: {direction} with {confidence}% confidence")
 
     return signal
+
+
+def calculate_tp_sl(
+    current_price: float,
+    atr: float,
+    direction: str,
+    tp_multiplier: float,
+    sl_multiplier: float,
+) -> tuple[Optional[float], Optional[float]]:
+    """
+    Calculate take profit and stop loss levels.
+
+    Args:
+        current_price: Current market price
+        atr: Average True Range
+        direction: Trade direction ('long', 'short', or 'neutral')
+        tp_multiplier: Take profit multiplier
+        sl_multiplier: Stop loss multiplier
+
+    Returns:
+        (take_profit, stop_loss) tuple
+    """
+    stop_loss = None
+    take_profit = None
+
+    if direction == 'neutral':
+        return take_profit, stop_loss
+
+    if atr > 0:
+        if direction == 'long':
+            stop_loss = current_price - (atr * sl_multiplier)
+            take_profit = current_price + (atr * tp_multiplier)
+        elif direction == 'short':
+            stop_loss = current_price + (atr * sl_multiplier)
+            take_profit = current_price - (atr * tp_multiplier)
+    else:
+        # Fallback to percentage-based TP/SL when ATR is zero
+        tp_pct = 0.02  # 2%
+        sl_pct = 0.015  # 1.5%
+        if direction == 'long':
+            stop_loss = current_price * (1 - sl_pct)
+            take_profit = current_price * (1 + tp_pct)
+        elif direction == 'short':
+            stop_loss = current_price * (1 + sl_pct)
+            take_profit = current_price * (1 - tp_pct)
+
+    return take_profit, stop_loss
 
 
 def save_signal_to_db(signal: Dict) -> None:

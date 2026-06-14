@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CybxAI Trading Dashboard",
+  title: "MoroQuant Dashboard",
   description: "Professional crypto & multi-asset trading analysis platform",
 };
 

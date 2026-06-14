@@ -20,7 +20,7 @@ export default function Sidebar() {
             <circle cx="16" cy="10" r="2" fill="#DBEAFE"/>
           </svg>
           <div>
-            <h1 className="text-xl font-extrabold text-white">CybxAI</h1>
+            <h1 className="text-xl font-extrabold text-white">MoroQuant</h1>
             <p className="text-xs text-blue-400 font-semibold">Trading Intelligence</p>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function Sidebar() {
 
       <div className="p-4 border-t border-gray-800 mt-auto">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500 font-medium">CybxAI Platform</span>
+          <span className="text-xs text-gray-500 font-medium">MoroQuant Platform</span>
           <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/30">
             v1.0 MVP
           </span>

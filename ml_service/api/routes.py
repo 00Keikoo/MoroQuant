@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from ml_service.models.predictor import generate_signal
+from ml_service.models.predictor import generate_signal, calculate_tp_sl
 from ml_service.data.database import get_database
 from ml_service.services.crypto_price_service import get_crypto_service
 from ml_service.services.proxy_price_service import get_proxy_service
@@ -50,12 +50,14 @@ async def get_signal(
             "message": "No trained model found or insufficient data"
         }
 
-    # Always fetch fresh price (signal from cache won't have price field)
+    # Always fetch fresh price and recalculate TP/SL based on live price
+    fresh_price = None
     if symbol in CRYPTO_SYMBOLS:
         crypto_service = get_crypto_service()
         price_data = crypto_service.get_price(symbol)
         if price_data:
-            signal['price'] = price_data['price']
+            fresh_price = price_data['price']
+            signal['price'] = fresh_price
             signal['price_live'] = price_data.get('live', False)
         else:
             signal['price'] = signal.get('price', 0)
@@ -64,7 +66,8 @@ async def get_signal(
         proxy_service = get_proxy_service()
         price_data = proxy_service.get_price(symbol)
         if price_data:
-            signal['price'] = price_data['price']
+            fresh_price = price_data['price']
+            signal['price'] = fresh_price
             signal['price_live'] = price_data.get('live', False)
         else:
             signal['price'] = signal.get('price', 0)
@@ -72,6 +75,20 @@ async def get_signal(
     else:
         signal['price'] = signal.get('price', 0)
         signal['price_live'] = False
+
+    # Recalculate TP/SL with fresh price to ensure consistency
+    if fresh_price and signal.get('atr') is not None and signal.get('direction') != 'neutral':
+        tp, sl = calculate_tp_sl(
+            fresh_price,
+            signal['atr'],
+            signal['direction'],
+            signal.get('tp_multiplier', 3.0),
+            signal.get('sl_multiplier', 1.5)
+        )
+        # Use more precision for low-priced assets
+        decimal_places = 4 if fresh_price < 1.0 else 2
+        signal['take_profit'] = round(tp, decimal_places) if tp else None
+        signal['stop_loss'] = round(sl, decimal_places) if sl else None
 
     return signal
 
