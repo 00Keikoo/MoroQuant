@@ -577,7 +577,7 @@ def sync_trades(continuous: bool, symbol: Optional[str]):
     import yaml
     from pathlib import Path
 
-    config_path = Path(__file__).parent.parent.parent / "config.yaml"
+    config_path = Path(__file__).parent.parent / "config.yaml"
 
     if not config_path.exists():
         click.echo("\n❌ config.yaml not found")
@@ -632,7 +632,7 @@ def open_positions():
     import yaml
     from pathlib import Path
 
-    config_path = Path(__file__).parent.parent.parent / "config.yaml"
+    config_path = Path(__file__).parent.parent / "config.yaml"
 
     if not config_path.exists():
         click.echo("\n❌ config.yaml not found")

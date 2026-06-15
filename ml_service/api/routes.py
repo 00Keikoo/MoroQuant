@@ -323,7 +323,7 @@ async def get_open_positions() -> Dict:
     import yaml
     from pathlib import Path
 
-    config_path = Path(__file__).parent.parent.parent / "config.yaml"
+    config_path = Path(__file__).parent.parent / "config.yaml"
 
     if not config_path.exists():
         return {
