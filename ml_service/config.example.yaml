@@ -51,7 +51,7 @@ features:
 model:
   type: "xgboost"  # xgboost or lightgbm
   target: "forward_return"  # forward_return or binary_signal
-  forward_periods: 10  # predict N candles ahead
+  forward_periods: 12  # predict N candles ahead (single source of truth — read via utils.config.get_forward_periods)
 
   train_test_split: 0.8
   validation_method: "walk_forward"

@@ -116,3 +116,30 @@ def get_config() -> Config:
     if not hasattr(get_config, "_config"):
         get_config._config = load_config()
     return get_config._config
+
+
+def get_forward_periods() -> int:
+    """Single source of truth for the label / prediction horizon H.
+
+    Every consumer (label generation, walk-forward purge/embargo, TP/SL
+    optimizer max-hold, backtester max-hold, predictor signal validity)
+    MUST go through this function. Hard-coded horizons elsewhere are bugs.
+
+    Logs the active value and source path the first time it is called so
+    drift between code and config is visible at startup.
+    """
+    cfg = get_config()
+    value = int(cfg.model.forward_periods)
+
+    if not getattr(get_forward_periods, "_announced", False):
+        try:
+            from .logger import get_logger
+            source = Path(__file__).parent.parent / "config.yaml"
+            get_logger().info(
+                f"[horizon] forward_periods={value} (source: {source})"
+            )
+        except Exception:
+            pass
+        get_forward_periods._announced = True
+
+    return value

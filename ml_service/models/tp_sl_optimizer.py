@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Dict, Optional, Tuple
 
 from ..utils.logger import get_logger
+from ..utils.config import get_forward_periods
 from ..data.database import get_database
 from ..models.trainer import prepare_features
 
@@ -198,7 +199,7 @@ def optimize_tp_sl(symbol: str, timeframe: str) -> Optional[Dict]:
 
     RR_OPTIONS = [1.0, 1.5, 2.0, 2.5, 3.0]
     SL_BASE = [0.8, 1.0, 1.2, 1.5]
-    MAX_HOLD_CANDLES = 12
+    MAX_HOLD_CANDLES = get_forward_periods()
 
     best_expectancy = -float('inf')
     best_params = None

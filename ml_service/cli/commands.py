@@ -152,7 +152,6 @@ def train(symbol: str, timeframe: str, retrain: bool):
             timeframe=timeframe,
             btc_df=btc_df if btc_df is not None and not btc_df.empty else None,
             spy_df=spy_df if spy_df is not None and not spy_df.empty else None,
-            forward_periods=12,
             long_threshold=0.005,
             short_threshold=-0.005,
         )

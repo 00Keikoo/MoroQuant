@@ -38,7 +38,6 @@ def get_class_distribution(df, symbol, btc_df, spy_df, threshold_pct):
     df_prep = prepare_features(df.copy(), symbol=symbol, btc_df=btc_df, spy_df=spy_df)
     df_target = create_target_variable(
         df_prep,
-        forward_periods=12,
         long_threshold=long_thresh,
         short_threshold=short_thresh
     )
@@ -92,7 +91,6 @@ def main():
                 timeframe,
                 btc_df=btc_df,
                 spy_df=spy_df,
-                forward_periods=12,
                 long_threshold=long_thresh,
                 short_threshold=short_thresh
             )

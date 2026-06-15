@@ -12,7 +12,7 @@ import lightgbm as lgb
 from sklearn.metrics import f1_score, classification_report
 
 from ..utils.logger import get_logger
-from ..utils.config import get_config
+from ..utils.config import get_config, get_forward_periods
 from ..features.price_action import add_price_action_features
 from ..features.indicators import add_all_indicators
 from ..features.regime import add_regime_features
@@ -23,7 +23,7 @@ logger = get_logger()
 
 def create_target_variable(
     df: pd.DataFrame,
-    forward_periods: int = 12,
+    forward_periods: int = None,
     long_threshold: float = 0.005,
     short_threshold: float = -0.005,
 ) -> pd.DataFrame:
@@ -42,6 +42,9 @@ def create_target_variable(
     Returns:
         DataFrame with target column (0=short, 1=neutral, 2=long)
     """
+    if forward_periods is None:
+        forward_periods = get_forward_periods()
+
     df = df.copy()
 
     future_close = df['close'].shift(-forward_periods)
@@ -178,6 +181,8 @@ def walk_forward_validation(
     step_size: int = 50,
     xgb_params: Dict = None,
     lgb_params: Dict = None,
+    forward_periods: int = 0,
+    purge: bool = False,
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """
     Perform walk-forward validation.
@@ -190,6 +195,10 @@ def walk_forward_validation(
         step_size: Step size for rolling window
         xgb_params: Optional custom XGBoost hyperparameters
         lgb_params: Optional custom LightGBM hyperparameters
+        forward_periods: Label horizon H. Used for purge/embargo when purge=True.
+        purge: If True, drop H rows between train and test (purge) and skip H
+            rows after each test window before the next fold begins (embargo).
+            Both prevent label-overlap leakage from forward-return targets.
 
     Returns:
         Tuple of (fold_results, feature_importance_df)
@@ -225,12 +234,20 @@ def walk_forward_validation(
     }
     lgb_config = {**lgb_default, **(lgb_params or {})}
 
+    purge_size = forward_periods if purge else 0
+    embargo_size = forward_periods if purge else 0
+
     while start_idx + test_size <= len(df_clean):
         fold_num += 1
 
-        train_end = start_idx
+        train_end = start_idx - purge_size
         test_start = start_idx
         test_end = start_idx + test_size
+
+        if train_end < 1:
+            logger.warning(f"Fold {fold_num}: train_end={train_end} after purge — skipping")
+            start_idx += step_size + embargo_size
+            continue
 
         X_train = df_clean[feature_cols].iloc[:train_end]
         y_train = df_clean['target'].iloc[:train_end]
@@ -238,7 +255,10 @@ def walk_forward_validation(
         X_test = df_clean[feature_cols].iloc[test_start:test_end]
         y_test = df_clean['target'].iloc[test_start:test_end]
 
-        logger.info(f"Fold {fold_num}: train={len(X_train)}, test={len(X_test)}")
+        logger.info(
+            f"Fold {fold_num}: train={len(X_train)}, test={len(X_test)}, "
+            f"purge={purge_size}, embargo={embargo_size}"
+        )
 
         xgb_model = xgb.XGBClassifier(**xgb_config)
         xgb_model.fit(X_train, y_train)
@@ -272,6 +292,8 @@ def walk_forward_validation(
             'f1_long': f1_per_class[2] if len(f1_per_class) > 2 else 0.0,
             'train_size': len(X_train),
             'test_size': len(X_test),
+            'purge_size': purge_size,
+            'embargo_size': embargo_size,
         })
 
         if model_type == 'xgboost':
@@ -281,7 +303,7 @@ def walk_forward_validation(
 
         all_feature_importance.append(importance)
 
-        start_idx += step_size
+        start_idx += step_size + embargo_size
 
     avg_importance = np.mean(all_feature_importance, axis=0)
     feature_importance_df = pd.DataFrame({
@@ -409,7 +431,7 @@ def train_model(
     eth_df: pd.DataFrame = None,
     spy_df: pd.DataFrame = None,
     dominance_df: pd.DataFrame = None,
-    forward_periods: int = 12,
+    forward_periods: int = None,
     long_threshold: float = 0.005,
     short_threshold: float = -0.005,
 ) -> Dict:
@@ -433,7 +455,10 @@ def train_model(
     """
     from .tuner import load_tuned_params
 
-    logger.info(f"Starting training for {symbol} {timeframe}")
+    if forward_periods is None:
+        forward_periods = get_forward_periods()
+
+    logger.info(f"Starting training for {symbol} {timeframe} (forward_periods={forward_periods})")
 
     tuned_config = load_tuned_params(symbol, timeframe)
     if tuned_config:
@@ -482,6 +507,8 @@ def train_model(
         step_size=step_size,
         xgb_params=xgb_params,
         lgb_params=lgb_params,
+        forward_periods=forward_periods,
+        purge=True,
     )
 
     if len(fold_results) == 0:

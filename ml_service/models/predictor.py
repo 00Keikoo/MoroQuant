@@ -9,6 +9,7 @@ import pickle
 import json
 
 from ..utils.logger import get_logger
+from ..utils.config import get_forward_periods
 from ..data.database import get_database
 from .trainer import prepare_features, get_feature_columns
 
@@ -188,7 +189,7 @@ def generate_signal(
     else:
         tp_multiplier = 3.0
         sl_multiplier = 1.5
-        max_hold_candles = 12
+        max_hold_candles = get_forward_periods()
         tp_sl_source = 'default'
 
     take_profit, stop_loss = calculate_tp_sl(

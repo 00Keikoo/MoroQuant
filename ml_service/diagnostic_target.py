@@ -14,6 +14,7 @@ from ml_service.features.regime import add_regime_features
 from ml_service.features.funding_rate import add_funding_rate_features
 from ml_service.features.time_features import add_time_features
 from ml_service.models.trainer import get_feature_columns
+from ml_service.utils.config import get_forward_periods
 from ml_service.utils.logger import setup_logger, get_logger
 
 setup_logger()
@@ -37,7 +38,9 @@ def load_data(symbol: str, timeframe: str, limit: int = 2000):
     return df
 
 
-def analyze_target_distribution(df, forward_periods=12):
+def analyze_target_distribution(df, forward_periods=None):
+    if forward_periods is None:
+        forward_periods = get_forward_periods()
     """Analyze target distribution with different thresholds."""
 
     print("\n" + "="*80)
@@ -170,7 +173,7 @@ def check_nan_impact(symbol='BTCUSDT', timeframe='1h'):
                     print(f"      {feat}: {nan_count} NaN values")
 
     # Analyze target with ATR
-    analyze_target_distribution(df_new, forward_periods=12)
+    analyze_target_distribution(df_new)
 
 
 if __name__ == "__main__":

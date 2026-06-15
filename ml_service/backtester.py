@@ -9,6 +9,7 @@ import json
 import pickle
 
 from .utils.logger import get_logger
+from .utils.config import get_forward_periods
 from .data.database import get_database
 from .models.trainer import prepare_features
 from .models.predictor import load_latest_model
@@ -25,13 +26,13 @@ class BacktestEngine:
         timeframe: str,
         initial_capital: float = 10000.0,
         fee_rate: float = 0.0004,
-        max_hold_candles: int = 10,
+        max_hold_candles: int = None,
     ):
         self.symbol = symbol
         self.timeframe = timeframe
         self.initial_capital = initial_capital
         self.fee_rate = fee_rate
-        self.max_hold_candles = max_hold_candles
+        self.max_hold_candles = max_hold_candles if max_hold_candles is not None else get_forward_periods()
 
         self.capital = initial_capital
         self.position = None
@@ -336,7 +337,6 @@ def run_backtest(symbol: str, timeframe: str) -> Optional[Dict]:
         timeframe=timeframe,
         initial_capital=10000.0,
         fee_rate=0.0004,
-        max_hold_candles=10,
     )
 
     results = engine.run()
