@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 import pickle
 
 import xgboost as xgb
@@ -183,6 +183,7 @@ def walk_forward_validation(
     lgb_params: Dict = None,
     forward_periods: int = 0,
     purge: bool = False,
+    collect_calibration_holdout: bool = False,
 ) -> Tuple[List[Dict], pd.DataFrame]:
     """
     Perform walk-forward validation.
@@ -199,6 +200,11 @@ def walk_forward_validation(
         purge: If True, drop H rows between train and test (purge) and skip H
             rows after each test window before the next fold begins (embargo).
             Both prevent label-overlap leakage from forward-return targets.
+        collect_calibration_holdout: If True, capture the LAST fold's
+            (predict_proba, y_test, model_type) and stash on the returned
+            list as fold_results[-1]['calibration_holdout']. Used by
+            train_model() to fit a probability calibrator on a temporally
+            honest hold-out slice. No effect on metrics or model selection.
 
     Returns:
         Tuple of (fold_results, feature_importance_df)
@@ -236,6 +242,7 @@ def walk_forward_validation(
 
     purge_size = forward_periods if purge else 0
     embargo_size = forward_periods if purge else 0
+    last_calibration_holdout: Dict = None
 
     while start_idx + test_size <= len(df_clean):
         fold_num += 1
@@ -283,6 +290,14 @@ def walk_forward_validation(
 
         f1_per_class = f1_score(y_test, best_pred, average=None, labels=[0, 1, 2], zero_division=0)
 
+        if collect_calibration_holdout:
+            last_calibration_holdout = {
+                'probas': best_model.predict_proba(X_test),
+                'y': y_test.to_numpy(),
+                'model_type': model_type,
+                'fold': fold_num,
+            }
+
         fold_results.append({
             'fold': fold_num,
             'model_type': model_type,
@@ -310,6 +325,9 @@ def walk_forward_validation(
         'feature': feature_cols,
         'importance': avg_importance
     }).sort_values('importance', ascending=False)
+
+    if collect_calibration_holdout and last_calibration_holdout and fold_results:
+        fold_results[-1]['calibration_holdout'] = last_calibration_holdout
 
     return fold_results, feature_importance_df
 
@@ -509,6 +527,7 @@ def train_model(
         lgb_params=lgb_params,
         forward_periods=forward_periods,
         purge=True,
+        collect_calibration_holdout=True,
     )
 
     if len(fold_results) == 0:
@@ -532,6 +551,8 @@ def train_model(
 
     model_path = save_model(final_model, metadata, symbol, timeframe)
 
+    calibration_summary = _fit_and_save_calibration(model_path, fold_results)
+
     results = {
         'symbol': symbol,
         'timeframe': timeframe,
@@ -545,6 +566,47 @@ def train_model(
         'model_path': model_path,
         'model_type': best_model_type,
         'used_tuned_params': custom_params is not None,
+        'calibration': calibration_summary,
     }
 
     return results
+
+
+def _fit_and_save_calibration(model_path: str, fold_results: List[Dict]) -> Optional[Dict]:
+    """Fit raw/Platt/isotonic on the last walk-forward fold's predictions and
+    save the artifact next to the model pkl. Returns a metrics summary or
+    None if no calibration hold-out was captured."""
+    from . import calibration as cal_mod
+
+    holdout = fold_results[-1].get('calibration_holdout') if fold_results else None
+    if not holdout:
+        logger.warning("No calibration hold-out captured; skipping calibration fit")
+        return None
+
+    probas = holdout['probas']
+    y = holdout['y']
+    if len(np.unique(y)) < 2:
+        logger.warning(
+            f"Calibration hold-out has only one class ({np.unique(y)}); skipping"
+        )
+        return None
+
+    calibrators, metrics, _ = cal_mod.fit_and_score_all(probas, y)
+    chosen = cal_mod.pick_best_method(metrics)
+    cal_mod.save_calibration_artifact(
+        model_path=model_path,
+        chosen_method=chosen,
+        calibrators=calibrators,
+        metrics=metrics,
+        holdout_size=len(y),
+    )
+    logger.info(
+        f"Calibration metrics (holdout={len(y)}): " +
+        " | ".join(
+            f"{m}: ECE={metrics[m]['ece']:.3f} LL={metrics[m]['log_loss']:.3f} "
+            f"Brier={metrics[m]['brier']:.3f}"
+            for m in ('raw', 'platt', 'isotonic')
+        ) +
+        f"  → chosen: {chosen}"
+    )
+    return {'chosen': chosen, 'metrics': metrics, 'holdout_size': len(y)}

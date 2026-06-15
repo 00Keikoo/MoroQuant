@@ -12,6 +12,7 @@ from ..utils.logger import get_logger
 from ..utils.config import get_forward_periods
 from ..data.database import get_database
 from .trainer import prepare_features, get_feature_columns
+from . import calibration as cal_mod
 
 logger = get_logger()
 
@@ -53,6 +54,17 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
 
     with open(latest_model, 'rb') as f:
         model_package = pickle.load(f)
+
+    model_package['model_path'] = str(latest_model)
+    cal_artifact = cal_mod.load_calibration_artifact(str(latest_model))
+    if cal_artifact:
+        model_package['calibration'] = cal_artifact
+        logger.info(
+            f"Loaded calibration artifact (method={cal_artifact['chosen_method']}, "
+            f"holdout={cal_artifact['holdout_size']})"
+        )
+    else:
+        logger.warning(f"No calibration artifact for {latest_model.name}; using raw probabilities")
 
     _model_cache[cache_key] = model_package
     return model_package
@@ -154,8 +166,7 @@ def generate_signal(
     if isinstance(model, dict) and 'xgb' in model and 'lgb' in model:
         xgb_proba = model['xgb'].predict_proba(X_latest)[0]
         lgb_proba = model['lgb'].predict_proba(X_latest)[0]
-        prediction_proba = (xgb_proba + lgb_proba) / 2
-        prediction = int(np.argmax(prediction_proba))
+        raw_proba = (xgb_proba + lgb_proba) / 2
 
         xgb_importance = model['xgb'].feature_importances_
         lgb_importance = model['lgb'].feature_importances_
@@ -163,9 +174,20 @@ def generate_signal(
         feature_importance = dict(zip(feature_cols, combined_importance))
         feature_importance = dict(sorted(feature_importance.items(), key=lambda x: x[1], reverse=True))
     else:
-        prediction = model.predict(X_latest)[0]
-        prediction_proba = model.predict_proba(X_latest)[0]
+        raw_proba = model.predict_proba(X_latest)[0]
         feature_importance = calculate_feature_importance(model, feature_cols, X_latest)
+
+    cal_artifact = model_package.get('calibration')
+    if cal_artifact:
+        chosen = cal_artifact['chosen_method']
+        cal = cal_artifact['calibrators'][chosen]
+        prediction_proba = cal_mod.apply_calibrator(cal, raw_proba.reshape(1, -1))[0]
+        calibration_method = chosen
+    else:
+        prediction_proba = raw_proba
+        calibration_method = 'raw'
+
+    prediction = int(np.argmax(prediction_proba))
 
     direction_map = {0: 'short', 1: 'neutral', 2: 'long'}
     direction = direction_map[prediction]
@@ -223,6 +245,7 @@ def generate_signal(
         'regime': regime,
         'generated_at': datetime.now().isoformat(),
         'model_type': metadata['model_type'],
+        'calibration_method': calibration_method,
         'mtf_conflict': False,
     }
 
