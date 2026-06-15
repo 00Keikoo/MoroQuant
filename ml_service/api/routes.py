@@ -314,3 +314,58 @@ async def get_trade_history() -> Dict:
                 "worst_trade": worst_trade,
             }
         }
+
+
+@router.get("/positions/open")
+async def get_open_positions() -> Dict:
+    """Get open positions from Binance Futures with ML signal comparison."""
+    from ..data.exchange_sync import fetch_open_positions, get_position_signal_comparison
+    import yaml
+    from pathlib import Path
+
+    config_path = Path(__file__).parent.parent.parent / "config.yaml"
+
+    if not config_path.exists():
+        return {
+            "error": "config_not_found",
+            "message": "config.yaml not found - exchange sync not configured"
+        }
+
+    with open(config_path) as f:
+        config_data = yaml.safe_load(f)
+
+    exchange_config = config_data.get('exchange_sync', {})
+
+    if not exchange_config.get('enabled'):
+        return {
+            "error": "exchange_sync_disabled",
+            "message": "Exchange sync is disabled in config.yaml"
+        }
+
+    api_key = exchange_config.get('binance_api_key')
+    api_secret = exchange_config.get('binance_api_secret')
+
+    if not api_key or not api_secret:
+        return {
+            "error": "credentials_missing",
+            "message": "Binance API credentials not configured"
+        }
+
+    positions = fetch_open_positions(api_key, api_secret)
+
+    if not positions:
+        return {
+            "positions": [],
+            "total_unrealized_pnl": 0,
+            "count": 0
+        }
+
+    enriched = get_position_signal_comparison(positions)
+
+    total_unrealized_pnl = sum(p['unrealized_pnl'] for p in enriched)
+
+    return {
+        "positions": enriched,
+        "total_unrealized_pnl": round(total_unrealized_pnl, 2),
+        "count": len(enriched)
+    }

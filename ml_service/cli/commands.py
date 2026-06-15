@@ -475,11 +475,12 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
 
                 save_optimized_params(result, sym, tf)
 
-                click.echo(f"  ✓ TP Multiplier:  {result['tp_multiplier']}x ATR (default: 3.0x)")
-                click.echo(f"  ✓ SL Multiplier:  {result['sl_multiplier']}x ATR (default: 1.5x)")
-                click.echo(f"  ✓ Optimal Hold:   {result['optimal_hold_candles']} candles (default: 12)")
-                click.echo(f"  ✓ Win Rate:       {result['win_rate_at_these_levels']:.1%}")
-                click.echo(f"  ✓ Sample Size:    {result['sample_size']} trades")
+                click.echo(f"  ✓ TP Multiplier:  {result['tp_multiplier']}x ATR")
+                click.echo(f"  ✓ SL Multiplier:  {result['sl_multiplier']}x ATR")
+                click.echo(f"  ✓ Risk:Reward:    1:{result['rr_ratio']}")
+                click.echo(f"  ✓ Win Rate:       {result['win_rate']:.1%}")
+                click.echo(f"  ✓ Expectancy:     {result['expectancy']:.3f}")
+                click.echo(f"  ✓ Sample Size:    {result['sample_size']} trades ({result['wins']}W/{result['losses']}L/{result['timeouts']}T)")
 
                 results_summary.append({
                     'symbol': sym,
@@ -487,8 +488,9 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
                     'status': 'success',
                     'tp_mult': result['tp_multiplier'],
                     'sl_mult': result['sl_multiplier'],
-                    'hold': result['optimal_hold_candles'],
-                    'win_rate': result['win_rate_at_these_levels'],
+                    'rr_ratio': result['rr_ratio'],
+                    'win_rate': result['win_rate'],
+                    'expectancy': result['expectancy'],
                 })
 
             except Exception as e:
@@ -502,15 +504,15 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
         click.echo("\n" + "=" * 80)
         click.echo("OPTIMIZATION SUMMARY")
         click.echo("=" * 80)
-        click.echo(f"{'Symbol':<12} {'TF':<4} {'TP Mult':<9} {'SL Mult':<9} {'Hold':<6} {'Win %':<8}")
+        click.echo(f"{'Symbol':<12} {'TF':<4} {'TP':<6} {'SL':<6} {'RR':<6} {'Win%':<7} {'Expect':<8}")
         click.echo("-" * 80)
 
         for r in results_summary:
             if r['status'] == 'success':
                 click.echo(
                     f"{r['symbol']:<12} {r['timeframe']:<4} "
-                    f"{r['tp_mult']:<9.2f} {r['sl_mult']:<9.2f} "
-                    f"{r['hold']:<6} {r['win_rate']*100:<7.1f}"
+                    f"{r['tp_mult']:<6.2f} {r['sl_mult']:<6.2f} "
+                    f"{r['rr_ratio']:<6.1f} {r['win_rate']*100:<6.1f} {r['expectancy']:<8.3f}"
                 )
             else:
                 click.echo(f"{r['symbol']:<12} {r['timeframe']:<4} {r['status'].upper()}")
@@ -543,15 +545,15 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
         click.echo("=" * 80)
         click.echo(f"Symbol:           {symbol} {timeframe}")
         click.echo(f"\nOptimized Values:")
-        click.echo(f"  TP Multiplier:  {result['tp_multiplier']}x ATR (default: 3.0x)")
-        click.echo(f"  SL Multiplier:  {result['sl_multiplier']}x ATR (default: 1.5x)")
-        click.echo(f"  Optimal Hold:   {result['optimal_hold_candles']} candles (default: 12)")
-        click.echo(f"  Risk:Reward:    1:{result['tp_multiplier']/result['sl_multiplier']:.1f}")
+        click.echo(f"  TP Multiplier:  {result['tp_multiplier']}x ATR")
+        click.echo(f"  SL Multiplier:  {result['sl_multiplier']}x ATR")
+        click.echo(f"  Risk:Reward:    1:{result['rr_ratio']}")
+        click.echo(f"  Optimal Hold:   {result['optimal_hold_candles']} candles")
         click.echo(f"\nStatistics:")
-        click.echo(f"  Win Rate:       {result['win_rate_at_these_levels']:.1%}")
+        click.echo(f"  Win Rate:       {result['win_rate']:.1%}")
+        click.echo(f"  Expectancy:     {result['expectancy']:.3f}")
         click.echo(f"  Sample Size:    {result['sample_size']} trades")
-        click.echo(f"  TP Range:       {result['tp_multiplier_p25']:.2f}x - {result['tp_multiplier_p75']:.2f}x (25th-75th percentile)")
-        click.echo(f"  SL Range:       {result['sl_multiplier_p25']:.2f}x - {result['sl_multiplier_p75']:.2f}x (25th-75th percentile)")
+        click.echo(f"  Wins/Losses:    {result['wins']}W / {result['losses']}L / {result['timeouts']}T")
         click.echo(f"\nLast Updated:   {result['last_updated']}")
         click.echo("=" * 80 + "\n")
 
@@ -559,6 +561,177 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
         click.echo(f"\n❌ Optimization failed: {str(e)}")
         import traceback
         traceback.print_exc()
+
+
+@cli.command("sync-trades")
+@click.option("--continuous", is_flag=True, help="Run continuously in background")
+@click.option("--symbol", help="Sync specific symbol only")
+def sync_trades(continuous: bool, symbol: Optional[str]):
+    """Sync trade history from Binance Futures exchange."""
+    from ..data.exchange_sync import (
+        fetch_user_trades,
+        save_trades_to_db,
+        enrich_trades_with_signals,
+    )
+    from ..utils.config import get_config
+    import yaml
+    from pathlib import Path
+
+    config_path = Path(__file__).parent.parent.parent / "config.yaml"
+
+    if not config_path.exists():
+        click.echo("\n❌ config.yaml not found")
+        click.echo("Add exchange_sync section to config.yaml:")
+        click.echo("exchange_sync:")
+        click.echo("  enabled: true")
+        click.echo("  binance_api_key: 'YOUR_READ_ONLY_API_KEY'")
+        click.echo("  binance_api_secret: 'YOUR_READ_ONLY_SECRET'")
+        return
+
+    with open(config_path) as f:
+        config_data = yaml.safe_load(f)
+
+    exchange_config = config_data.get('exchange_sync', {})
+
+    if not exchange_config.get('enabled'):
+        click.echo("\n❌ Exchange sync is disabled in config.yaml")
+        return
+
+    api_key = exchange_config.get('binance_api_key')
+    api_secret = exchange_config.get('binance_api_secret')
+
+    if not api_key or not api_secret:
+        click.echo("\n❌ Binance API credentials not configured")
+        return
+
+    click.echo(f"\nSyncing trades from Binance Futures...")
+
+    trades = fetch_user_trades(api_key, api_secret, symbol=symbol)
+
+    if not trades:
+        click.echo("❌ Failed to fetch trades (check API credentials)")
+        return
+
+    inserted = save_trades_to_db(trades)
+    click.echo(f"✓ Synced {len(trades)} trades ({inserted} new)")
+
+    click.echo("\nEnriching trades with signal data...")
+    matched = enrich_trades_with_signals()
+    click.echo(f"✓ Matched {matched} trades with ML signals")
+
+    if continuous:
+        click.echo("\n⚠️  Continuous mode not yet implemented")
+        click.echo("Run as cron job instead:")
+        click.echo("  0 */6 * * * cd /path/to/project && python cli.py sync-trades")
+
+
+@cli.command("open-positions")
+def open_positions():
+    """Show currently open positions from Binance Futures."""
+    from ..data.exchange_sync import fetch_open_positions, get_position_signal_comparison
+    import yaml
+    from pathlib import Path
+
+    config_path = Path(__file__).parent.parent.parent / "config.yaml"
+
+    if not config_path.exists():
+        click.echo("\n❌ config.yaml not found")
+        return
+
+    with open(config_path) as f:
+        config_data = yaml.safe_load(f)
+
+    exchange_config = config_data.get('exchange_sync', {})
+
+    if not exchange_config.get('enabled'):
+        click.echo("\n❌ Exchange sync is disabled in config.yaml")
+        return
+
+    api_key = exchange_config.get('binance_api_key')
+    api_secret = exchange_config.get('binance_api_secret')
+
+    if not api_key or not api_secret:
+        click.echo("\n❌ Binance API credentials not configured")
+        return
+
+    positions = fetch_open_positions(api_key, api_secret)
+
+    if not positions:
+        click.echo("\n✓ No open positions")
+        return
+
+    enriched = get_position_signal_comparison(positions)
+
+    click.echo("\n" + "=" * 80)
+    click.echo("OPEN POSITIONS")
+    click.echo("=" * 80)
+    click.echo(f"{'Symbol':<10} {'Side':<6} {'Entry':<10} {'Mark':<10} {'PnL':<10} {'PnL%':<8} {'Lev':<4} {'Signal':<8}")
+    click.echo("-" * 80)
+
+    for pos in enriched:
+        pnl_pct = (pos['unrealized_pnl'] / (pos['entry_price'] * pos['position_amt'])) * 100
+        signal_dir = pos['signal']['direction'] if pos['signal'] else 'n/a'
+        agreement_icon = {'match': '✓', 'conflict': '⚠', 'neutral': '~', 'unknown': '?'}[pos['agreement']]
+
+        click.echo(
+            f"{pos['symbol']:<10} {pos['side']:<6} "
+            f"{pos['entry_price']:<10.2f} {pos['mark_price']:<10.2f} "
+            f"{pos['unrealized_pnl']:<10.2f} {pnl_pct:>7.2f} "
+            f"{pos['leverage']:<4} {signal_dir:<8} {agreement_icon}"
+        )
+
+    click.echo("=" * 80)
+    click.echo("\nLegend: ✓=Match ⚠=Conflict ~=Neutral ?=Unknown")
+
+
+@cli.command("my-performance")
+def my_performance():
+    """Analyze performance of exchange trades vs ML signals."""
+    from ..data.exchange_sync import analyze_signal_performance
+
+    stats = analyze_signal_performance()
+
+    if stats['total_trades'] == 0:
+        click.echo("\n❌ No trade history found")
+        click.echo("Run: python cli.py sync-trades")
+        return
+
+    click.echo("\n" + "=" * 80)
+    click.echo("TRADING PERFORMANCE ANALYSIS")
+    click.echo("=" * 80)
+    click.echo(f"Total Trades: {stats['total_trades']}")
+    click.echo(f"Total PnL:    ${stats['total_pnl']}")
+
+    click.echo("\n" + "-" * 80)
+    click.echo("TRADES THAT MATCHED ML SIGNALS")
+    click.echo("-" * 80)
+    click.echo(f"Count:        {stats['matched_signal']['count']}")
+    click.echo(f"Avg PnL:      ${stats['matched_signal']['avg_pnl']}")
+    click.echo(f"Win Rate:     {stats['matched_signal']['win_rate_pct']:.1f}%")
+
+    click.echo("\n" + "-" * 80)
+    click.echo("TRADES WITHOUT MATCHING SIGNALS")
+    click.echo("-" * 80)
+    click.echo(f"Count:        {stats['unmatched_signal']['count']}")
+    click.echo(f"Avg PnL:      ${stats['unmatched_signal']['avg_pnl']}")
+    click.echo(f"Win Rate:     {stats['unmatched_signal']['win_rate_pct']:.1f}%")
+
+    click.echo("\n" + "=" * 80)
+
+    if stats['matched_signal']['count'] > 0 and stats['unmatched_signal']['count'] > 0:
+        pnl_diff = stats['matched_signal']['avg_pnl'] - stats['unmatched_signal']['avg_pnl']
+        wr_diff = stats['matched_signal']['win_rate_pct'] - stats['unmatched_signal']['win_rate_pct']
+
+        click.echo("\nINSIGHT:")
+        if pnl_diff > 0:
+            click.echo(f"✓ Following ML signals improved avg PnL by ${pnl_diff:.2f}")
+        else:
+            click.echo(f"⚠ ML signal trades underperformed by ${abs(pnl_diff):.2f}")
+
+        if wr_diff > 0:
+            click.echo(f"✓ Following ML signals improved win rate by {wr_diff:.1f}%")
+        else:
+            click.echo(f"⚠ ML signal trades had {abs(wr_diff):.1f}% lower win rate")
 
 
 @cli.command()

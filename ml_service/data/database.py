@@ -140,6 +140,30 @@ class Database:
                 ON market_dominance(timestamp DESC)
             """)
 
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS user_trade_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    side TEXT NOT NULL,
+                    price REAL NOT NULL,
+                    qty REAL NOT NULL,
+                    realized_pnl REAL NOT NULL,
+                    commission REAL NOT NULL,
+                    trade_time INTEGER NOT NULL,
+                    order_id TEXT UNIQUE NOT NULL,
+                    matched_signal_id INTEGER,
+                    market_regime TEXT,
+                    confidence_at_entry INTEGER,
+                    synced_at TEXT NOT NULL,
+                    FOREIGN KEY (matched_signal_id) REFERENCES signals(id)
+                )
+            """)
+
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_user_trade_history_symbol_time
+                ON user_trade_history(symbol, trade_time DESC)
+            """)
+
             conn.commit()
             logger.info("Database schema initialized")
 

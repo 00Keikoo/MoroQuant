@@ -90,9 +90,63 @@ def calculate_max_excursions(
     return max_favorable, max_adverse
 
 
+def simulate_trade_outcome(
+    ohlcv_df: pd.DataFrame,
+    trade_type: str,
+    entry_idx: int,
+    entry_price: float,
+    atr_at_entry: float,
+    tp_multiplier: float,
+    sl_multiplier: float,
+    max_hold_candles: int,
+) -> str:
+    """
+    Simulate whether a trade would hit TP or SL first with given parameters.
+
+    Args:
+        ohlcv_df: OHLCV DataFrame
+        trade_type: 'long' or 'short'
+        entry_idx: Entry candle index
+        entry_price: Entry price
+        atr_at_entry: ATR at entry
+        tp_multiplier: Take profit multiplier
+        sl_multiplier: Stop loss multiplier
+        max_hold_candles: Maximum candles to hold
+
+    Returns:
+        'win' if TP hit first, 'loss' if SL hit first, 'timeout' if neither hit
+    """
+    if trade_type == 'long':
+        tp_price = entry_price + (atr_at_entry * tp_multiplier)
+        sl_price = entry_price - (atr_at_entry * sl_multiplier)
+    else:
+        tp_price = entry_price - (atr_at_entry * tp_multiplier)
+        sl_price = entry_price + (atr_at_entry * sl_multiplier)
+
+    end_idx = min(entry_idx + max_hold_candles, len(ohlcv_df) - 1)
+
+    for idx in range(entry_idx + 1, end_idx + 1):
+        candle = ohlcv_df.iloc[idx]
+        high = candle['high']
+        low = candle['low']
+
+        if trade_type == 'long':
+            if high >= tp_price:
+                return 'win'
+            if low <= sl_price:
+                return 'loss'
+        else:
+            if low <= tp_price:
+                return 'win'
+            if high >= sl_price:
+                return 'loss'
+
+    return 'timeout'
+
+
 def optimize_tp_sl(symbol: str, timeframe: str) -> Optional[Dict]:
     """
-    Optimize TP/SL multipliers based on backtest history.
+    Optimize TP/SL multipliers using expectancy-based grid search.
 
     Args:
         symbol: Trading symbol
@@ -101,7 +155,7 @@ def optimize_tp_sl(symbol: str, timeframe: str) -> Optional[Dict]:
     Returns:
         Optimization results dict or None
     """
-    logger.info(f"Optimizing TP/SL for {symbol} {timeframe}")
+    logger.info(f"Optimizing TP/SL for {symbol} {timeframe} using expectancy-based grid search")
 
     trades_df = load_backtest_trades(symbol, timeframe)
     if trades_df is None or trades_df.empty:
@@ -115,84 +169,103 @@ def optimize_tp_sl(symbol: str, timeframe: str) -> Optional[Dict]:
     ohlcv_df['idx'] = range(len(ohlcv_df))
     timestamp_to_idx = dict(zip(ohlcv_df['timestamp'], ohlcv_df['idx']))
 
-    tp_multipliers = []
-    sl_multipliers = []
-    candles_to_target = []
-
-    winning_trades = 0
-    analyzed_trades = 0
-
+    valid_trades = []
     for _, trade in trades_df.iterrows():
         entry_ts = int(trade['entry_timestamp'])
-        exit_ts = int(trade['exit_timestamp'])
 
-        if entry_ts not in timestamp_to_idx or exit_ts not in timestamp_to_idx:
+        if entry_ts not in timestamp_to_idx:
             continue
 
         entry_idx = timestamp_to_idx[entry_ts]
-        exit_idx = timestamp_to_idx[exit_ts]
-
         entry_row = ohlcv_df.iloc[entry_idx]
         atr_at_entry = entry_row.get('atr', None)
 
         if pd.isna(atr_at_entry) or atr_at_entry <= 0:
             continue
 
-        max_favorable, max_adverse = calculate_max_excursions(
-            ohlcv_df,
-            trade['type'],
-            entry_idx,
-            exit_idx,
-            trade['entry_price']
-        )
+        valid_trades.append({
+            'type': trade['type'],
+            'entry_idx': entry_idx,
+            'entry_price': trade['entry_price'],
+            'atr': atr_at_entry,
+        })
 
-        if max_favorable > 0:
-            tp_mult = max_favorable / atr_at_entry
-            tp_multipliers.append(tp_mult)
-
-        if max_adverse > 0:
-            sl_mult = max_adverse / atr_at_entry
-            sl_multipliers.append(sl_mult)
-
-        if trade.get('pnl', 0) > 0 or trade.get('pnl_pct', 0) > 0:
-            winning_trades += 1
-            candles_held = trade.get('hold_candles', 0)
-            if candles_held > 0:
-                candles_to_target.append(candles_held)
-
-        analyzed_trades += 1
-
-    if not tp_multipliers or not sl_multipliers:
-        logger.warning("Insufficient data to calculate multipliers")
+    if not valid_trades:
+        logger.warning("No valid trades with ATR data for optimization")
         return None
 
-    optimal_tp = np.median(tp_multipliers)
-    optimal_sl = np.median(sl_multipliers) * 1.2
+    logger.info(f"Running grid search on {len(valid_trades)} valid trades")
 
-    if candles_to_target:
-        optimal_hold = int(np.percentile(candles_to_target, 75))
-    else:
-        optimal_hold = 12
+    RR_OPTIONS = [1.0, 1.5, 2.0, 2.5, 3.0]
+    SL_BASE = [0.8, 1.0, 1.2, 1.5]
+    MAX_HOLD_CANDLES = 12
 
-    win_rate = winning_trades / analyzed_trades if analyzed_trades > 0 else 0
+    best_expectancy = -float('inf')
+    best_params = None
 
-    results = {
-        'tp_multiplier': round(optimal_tp, 2),
-        'sl_multiplier': round(optimal_sl, 2),
-        'optimal_hold_candles': optimal_hold,
-        'win_rate_at_these_levels': round(win_rate, 4),
-        'sample_size': analyzed_trades,
-        'last_updated': datetime.now().isoformat(),
-        'tp_multiplier_p25': round(np.percentile(tp_multipliers, 25), 2),
-        'tp_multiplier_p75': round(np.percentile(tp_multipliers, 75), 2),
-        'sl_multiplier_p25': round(np.percentile(sl_multipliers, 25), 2),
-        'sl_multiplier_p75': round(np.percentile(sl_multipliers, 75), 2),
-    }
+    for sl_mult in SL_BASE:
+        for rr_ratio in RR_OPTIONS:
+            tp_mult = sl_mult * rr_ratio
 
-    logger.info(f"Optimization complete: TP={results['tp_multiplier']}x, SL={results['sl_multiplier']}x, "
-                f"Hold={results['optimal_hold_candles']} candles, WinRate={results['win_rate_at_these_levels']:.2%}")
+            wins = 0
+            losses = 0
+            timeouts = 0
 
-    return results
+            for trade in valid_trades:
+                outcome = simulate_trade_outcome(
+                    ohlcv_df,
+                    trade['type'],
+                    trade['entry_idx'],
+                    trade['entry_price'],
+                    trade['atr'],
+                    tp_mult,
+                    sl_mult,
+                    MAX_HOLD_CANDLES,
+                )
+
+                if outcome == 'win':
+                    wins += 1
+                elif outcome == 'loss':
+                    losses += 1
+                else:
+                    timeouts += 1
+
+            total_trades = wins + losses
+            if total_trades == 0:
+                continue
+
+            win_rate = wins / total_trades
+            expectancy = (win_rate * rr_ratio) - (1 - win_rate)
+
+            logger.debug(f"SL={sl_mult:.1f}x, RR={rr_ratio:.1f}x: "
+                        f"WinRate={win_rate:.2%}, Expectancy={expectancy:.3f}, "
+                        f"Wins={wins}, Losses={losses}, Timeouts={timeouts}")
+
+            if expectancy > best_expectancy:
+                best_expectancy = expectancy
+                best_params = {
+                    'tp_multiplier': round(tp_mult, 2),
+                    'sl_multiplier': round(sl_mult, 2),
+                    'rr_ratio': round(rr_ratio, 2),
+                    'win_rate': round(win_rate, 4),
+                    'expectancy': round(expectancy, 4),
+                    'optimal_hold_candles': MAX_HOLD_CANDLES,
+                    'sample_size': len(valid_trades),
+                    'wins': wins,
+                    'losses': losses,
+                    'timeouts': timeouts,
+                    'last_updated': datetime.now().isoformat(),
+                }
+
+    if best_params is None:
+        logger.warning("No valid parameter combinations found")
+        return None
+
+    logger.info(f"Optimization complete: TP={best_params['tp_multiplier']}x, "
+                f"SL={best_params['sl_multiplier']}x, RR={best_params['rr_ratio']}:1, "
+                f"WinRate={best_params['win_rate']:.2%}, Expectancy={best_params['expectancy']:.3f}")
+
+    return best_params
 
 
 def save_optimized_params(params: Dict, symbol: str, timeframe: str) -> str:
