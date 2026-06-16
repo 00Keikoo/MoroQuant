@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare labeling methods and confidence thresholds via backtesting.
+"""Compare labeling methods and confidence thresholds via walk-forward backtesting.
 
 Trains models with:
   - Fixed Horizon
@@ -8,6 +8,11 @@ Trains models with:
   - Triple Barrier (TP=3.0, SL=1.5)
 
 Tests each with confidence filters: None, >=60%, >=70%
+
+Uses percentage-based data splits (60/20/20):
+  - Training: 60% (initial model only)
+  - Calibration: 20% (split into train 60% / validation 40%)
+  - Test: 20% (walk-forward backtest with out-of-sample predictions)
 
 Reports: Return, Sharpe, Sortino, Profit Factor, Max DD, Win Rate, Trades, Avg Trade
 """
@@ -27,12 +32,14 @@ from ml_service.models.trainer import (
     create_target_variable_triple_barrier,
     get_feature_columns,
     prepare_features,
-    walk_forward_validation,
-    train_final_model,
 )
 from ml_service.models import calibration as cal_mod
 from ml_service.utils.config import get_forward_periods
 from ml_service.utils.logger import get_logger, setup_logger
+
+import xgboost as xgb
+import lightgbm as lgb
+from sklearn.metrics import f1_score
 
 setup_logger()
 logger = get_logger()
@@ -40,6 +47,7 @@ logger = get_logger()
 DEFAULT_SYMBOLS = ['BTCUSDT', 'ETHUSDT']
 DEFAULT_TIMEFRAMES = ['1h']
 DATA_LIMIT = 2000
+TEST_SIZE = 50
 
 
 def load_data(symbol: str, timeframe: str, limit: int = DATA_LIMIT):
@@ -58,131 +66,270 @@ def load_data(symbol: str, timeframe: str, limit: int = DATA_LIMIT):
     return df.sort_values('timestamp').reset_index(drop=True)
 
 
-def fold_split_for(clean_len: int):
-    if clean_len < 100:
-        return int(clean_len * 0.6), int(clean_len * 0.15), int(clean_len * 0.15)
-    if clean_len < 300:
-        return int(clean_len * 0.7), int(clean_len * 0.15), int(clean_len * 0.15)
-    return 400, 50, 50
+def calculate_regions(N: int, H: int) -> Dict:
+    """Calculate percentage-based region boundaries with purge gaps."""
+    train_end = int(N * 0.60)
+
+    cal_start = train_end + H
+    cal_end = int(N * 0.80) - H
+    cal_size = cal_end - cal_start
+
+    cal_train_end = cal_start + int(cal_size * 0.60)
+    cal_val_start = cal_train_end + H
+
+    test_start = int(N * 0.80) + H
+    test_end = N
+
+    return {
+        'train': (0, train_end),
+        'cal_train': (cal_start, cal_train_end),
+        'cal_val': (cal_val_start, cal_end),
+        'test': (test_start, test_end),
+        'purge_size': H,
+        'N': N,
+    }
 
 
-def train_with_labeling_method(
+def train_model_on_window(
     df: pd.DataFrame,
-    symbol: str,
-    labeling_config: Dict,
     feature_cols: List[str],
-    H: int,
-) -> Tuple[object, Dict, str]:
-    """Train model with specified labeling method and fit calibrator.
+    train_start: int,
+    train_end: int,
+) -> Tuple[object, str]:
+    """Train model on specified window."""
+    df_clean = df[feature_cols + ['target']].iloc[train_start:train_end].dropna()
 
-    Returns:
-        (model, calibrator, model_type)
-    """
-    method = labeling_config['method']
+    if len(df_clean) < 50:
+        return None, None
 
-    if method == 'fixed_horizon':
-        df_labeled = create_target_variable(
-            df.copy(),
-            forward_periods=H,
-            long_threshold=0.005,
-            short_threshold=-0.005,
-        )
+    X_train = df_clean[feature_cols]
+    y_train = df_clean['target']
+
+    xgb_params = {
+        'max_depth': 6,
+        'learning_rate': 0.1,
+        'n_estimators': 100,
+        'objective': 'multi:softmax',
+        'num_class': 3,
+        'random_state': 42,
+    }
+
+    lgb_params = {
+        'max_depth': 6,
+        'learning_rate': 0.1,
+        'n_estimators': 100,
+        'objective': 'multiclass',
+        'num_class': 3,
+        'random_state': 42,
+        'verbose': -1,
+    }
+
+    xgb_model = xgb.XGBClassifier(**xgb_params)
+    xgb_model.fit(X_train, y_train)
+
+    lgb_model = lgb.LGBMClassifier(**lgb_params)
+    lgb_model.fit(X_train, y_train)
+
+    xgb_pred = xgb_model.predict(X_train[-50:])
+    lgb_pred = lgb_model.predict(X_train[-50:])
+
+    xgb_f1 = f1_score(y_train[-50:], xgb_pred, average='weighted', zero_division=0)
+    lgb_f1 = f1_score(y_train[-50:], lgb_pred, average='weighted', zero_division=0)
+
+    if xgb_f1 >= lgb_f1:
+        return xgb_model, 'xgboost'
     else:
-        df_labeled = create_target_variable_triple_barrier(
-            df.copy(),
-            holding_horizon=H,
-            tp_atr_mult=labeling_config['tp_mult'],
-            sl_atr_mult=labeling_config['sl_mult'],
-        )
-
-    df_clean = df_labeled[feature_cols + ['target']].dropna()
-    clean_len = len(df_clean)
-
-    min_train, test_size, step_size = fold_split_for(clean_len)
-
-    if clean_len < min_train + test_size:
-        logger.warning(f"Insufficient clean data: {clean_len}")
-        return None, None, None
-
-    fold_results, _ = walk_forward_validation(
-        df_labeled, feature_cols,
-        min_train_size=min_train,
-        test_size=test_size,
-        step_size=step_size,
-        forward_periods=H,
-        purge=True,
-        collect_calibration_holdout=True,
-    )
-
-    if not fold_results:
-        return None, None, None
-
-    holdout = fold_results[-1].get('calibration_holdout')
-    if not holdout:
-        logger.warning("No calibration holdout captured")
-        return None, None, None
-
-    best_model_type = fold_results[-1]['model_type']
-    model, _ = train_final_model(df_labeled, feature_cols, model_type=best_model_type)
-
-    probas = holdout['probas']
-    y = holdout['y']
-    calibrators, metrics, _ = cal_mod.fit_and_score_all(probas, y)
-    chosen_method = cal_mod.pick_best_method(metrics)
-    calibrator = calibrators[chosen_method]
-
-    logger.info(f"{method} trained: {best_model_type}, calibrator: {chosen_method}")
-
-    return model, calibrator, best_model_type
+        return lgb_model, 'lightgbm'
 
 
-def run_backtest_with_confidence(
+def build_calibration_dataset(
     df: pd.DataFrame,
-    model: object,
-    calibrator: Dict,
     feature_cols: List[str],
+    regions: Dict,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Build calibration train and validation datasets."""
+    cal_train_start, cal_train_end = regions['cal_train']
+    cal_val_start, cal_val_end = regions['cal_val']
+    train_end = regions['train'][1]
+
+    logger.info(f"Training initial model on [0:{train_end}]")
+    initial_model, model_type = train_model_on_window(df, feature_cols, 0, train_end)
+
+    if initial_model is None:
+        return None, None, None, None
+
+    logger.info(f"Initial model: {model_type}")
+
+    cal_train_probas_list = []
+    cal_train_y_list = []
+
+    n_cal_train_folds = (cal_train_end - cal_train_start) // TEST_SIZE
+    logger.info(f"Generating {n_cal_train_folds} calibration-train folds [{cal_train_start}:{cal_train_end}]")
+
+    for i in range(n_cal_train_folds):
+        fold_start = cal_train_start + i * TEST_SIZE
+        fold_end = fold_start + TEST_SIZE
+
+        X_fold = df[feature_cols].iloc[fold_start:fold_end]
+        y_fold = df['target'].iloc[fold_start:fold_end]
+
+        valid_mask = X_fold.notna().all(axis=1) & y_fold.notna()
+        if valid_mask.sum() == 0:
+            continue
+
+        probas = initial_model.predict_proba(X_fold[valid_mask])
+        cal_train_probas_list.append(probas)
+        cal_train_y_list.append(y_fold[valid_mask].values)
+
+    cal_train_probas = np.vstack(cal_train_probas_list)
+    cal_train_y = np.concatenate(cal_train_y_list)
+
+    cal_val_probas_list = []
+    cal_val_y_list = []
+
+    n_cal_val_folds = (cal_val_end - cal_val_start) // TEST_SIZE
+    logger.info(f"Generating {n_cal_val_folds} calibration-val folds [{cal_val_start}:{cal_val_end}]")
+
+    for i in range(n_cal_val_folds):
+        fold_start = cal_val_start + i * TEST_SIZE
+        fold_end = fold_start + TEST_SIZE
+
+        X_fold = df[feature_cols].iloc[fold_start:fold_end]
+        y_fold = df['target'].iloc[fold_start:fold_end]
+
+        valid_mask = X_fold.notna().all(axis=1) & y_fold.notna()
+        if valid_mask.sum() == 0:
+            continue
+
+        probas = initial_model.predict_proba(X_fold[valid_mask])
+        cal_val_probas_list.append(probas)
+        cal_val_y_list.append(y_fold[valid_mask].values)
+
+    cal_val_probas = np.vstack(cal_val_probas_list)
+    cal_val_y = np.concatenate(cal_val_y_list)
+
+    logger.info(f"Calibration-train: {len(cal_train_y)} samples")
+    logger.info(f"Calibration-val: {len(cal_val_y)} samples")
+
+    return cal_train_probas, cal_train_y, cal_val_probas, cal_val_y
+
+
+def fit_and_select_calibrator(
+    cal_train_probas: np.ndarray,
+    cal_train_y: np.ndarray,
+    cal_val_probas: np.ndarray,
+    cal_val_y: np.ndarray,
+) -> Dict:
+    """Fit calibrators on train set, select best on validation set."""
+    logger.info("Fitting calibrators on calibration-train set")
+    calibrators = {}
+    for method in ['raw', 'platt', 'isotonic']:
+        calibrators[method] = cal_mod.fit_calibrator(method, cal_train_probas, cal_train_y)
+
+    logger.info("Evaluating calibrators on calibration-val set")
+    val_metrics = {}
+    for method, calibrator in calibrators.items():
+        probas_calibrated = cal_mod.apply_calibrator(calibrator, cal_val_probas)
+        val_metrics[method] = cal_mod.metric_bundle(probas_calibrated, cal_val_y)
+
+    chosen_method = cal_mod.pick_best_method(val_metrics)
+    logger.info(f"Selected calibrator: {chosen_method}")
+    logger.info(f"  Validation ECE: {val_metrics[chosen_method]['ece']:.4f}")
+
+    all_probas = np.vstack([cal_train_probas, cal_val_probas])
+    all_y = np.concatenate([cal_train_y, cal_val_y])
+    final_calibrator = cal_mod.fit_calibrator(chosen_method, all_probas, all_y)
+
+    return final_calibrator
+
+
+def generate_walk_forward_predictions(
+    df: pd.DataFrame,
+    feature_cols: List[str],
+    calibrator: Dict,
+    regions: Dict,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Generate out-of-sample predictions via walk-forward on test region."""
+    test_start, test_end = regions['test']
+    H = regions['purge_size']
+    N = regions['N']
+
+    predictions = np.full(N, np.nan)
+    probas = np.zeros((N, 3))
+    valid_mask = np.zeros(N, dtype=bool)
+
+    test_size = test_end - test_start
+    n_folds = (test_size - TEST_SIZE) // TEST_SIZE + 1
+
+    logger.info(f"Walk-forward test: {n_folds} folds on [{test_start}:{test_end}]")
+
+    for fold_idx in range(n_folds):
+        fold_test_start = test_start + fold_idx * TEST_SIZE
+        fold_test_end = min(fold_test_start + TEST_SIZE, test_end)
+
+        if fold_test_end - fold_test_start < TEST_SIZE:
+            break
+
+        train_end = fold_test_start - H
+
+        model, model_type = train_model_on_window(df, feature_cols, 0, train_end)
+        if model is None:
+            continue
+
+        X_test = df[feature_cols].iloc[fold_test_start:fold_test_end]
+        valid_rows = X_test.notna().all(axis=1)
+
+        if valid_rows.sum() == 0:
+            continue
+
+        probas_raw = model.predict_proba(X_test[valid_rows])
+        probas_calibrated = cal_mod.apply_calibrator(calibrator, probas_raw)
+        preds = np.argmax(probas_calibrated, axis=1)
+
+        valid_indices = X_test[valid_rows].index.values
+        predictions[valid_indices] = preds
+        probas[valid_indices] = probas_calibrated
+        valid_mask[valid_indices] = True
+
+        logger.info(f"  Fold {fold_idx + 1}/{n_folds}: [{fold_test_start}:{fold_test_end}] → {valid_rows.sum()} predictions")
+
+    return predictions, probas, valid_mask
+
+
+def run_backtest_simulation(
+    df: pd.DataFrame,
+    predictions: np.ndarray,
+    probas: np.ndarray,
+    valid_mask: np.ndarray,
     confidence_threshold: Optional[float],
+    regions: Dict,
     initial_capital: float = 10000.0,
     fee_rate: float = 0.0004,
-    max_hold_candles: int = None,
 ) -> Dict:
-    """Run backtest with optional confidence filtering."""
+    """Simulate backtest using out-of-sample predictions."""
+    test_start = regions['test'][0]
+    H = regions['purge_size']
 
-    warmup = 250
-    if len(df) < warmup:
-        return None
+    filtered_predictions = predictions.copy()
 
-    df_features_clean = df[feature_cols].copy()
-
-    valid_mask = df_features_clean.notna().all(axis=1)
-    predictions = np.full(len(df_features_clean), 1)
-    probas_all = np.zeros((len(df_features_clean), 3))
-
-    if valid_mask.any():
-        X_valid = df_features_clean[valid_mask]
-        probas_raw = model.predict_proba(X_valid)
-        probas_calibrated = cal_mod.apply_calibrator(calibrator, probas_raw)
-
-        if confidence_threshold is not None:
-            max_conf = probas_calibrated.max(axis=1)
-            high_conf_mask = max_conf >= confidence_threshold
-            predictions_temp = np.full(len(probas_calibrated), 1)
-            predictions_temp[high_conf_mask] = np.argmax(probas_calibrated[high_conf_mask], axis=1)
-            predictions[valid_mask] = predictions_temp
-        else:
-            predictions[valid_mask] = np.argmax(probas_calibrated, axis=1)
-
-        probas_all[valid_mask] = probas_calibrated
+    if confidence_threshold is not None:
+        max_conf = probas.max(axis=1)
+        low_conf_mask = (max_conf < confidence_threshold) & valid_mask
+        filtered_predictions[low_conf_mask] = 1
 
     direction_map = {0: 'short', 1: 'neutral', 2: 'long'}
-    signals = [direction_map.get(p, 'neutral') for p in predictions]
+    signals = [direction_map.get(p, 'neutral') if not np.isnan(p) else 'neutral'
+               for p in filtered_predictions]
 
     capital = initial_capital
     position = None
     trades = []
     equity_curve = []
 
-    for i in range(warmup, len(df)):
+    for i in range(test_start, len(df)):
+        if not valid_mask[i]:
+            continue
+
         row = df.iloc[i]
         signal = signals[i]
 
@@ -200,7 +347,7 @@ def run_backtest_with_confidence(
                 should_close = True
             elif position['type'] == 'short' and signal == 'long':
                 should_close = True
-            elif hold_duration >= max_hold_candles:
+            elif hold_duration >= H:
                 should_close = True
 
             if should_close:
@@ -279,9 +426,9 @@ def run_backtest_with_confidence(
     }
 
 
-def calculate_metrics(trades: List[Dict], equity_curve: List[Dict], initial_capital: float, final_capital: float) -> Dict:
-    """Calculate performance metrics including Sortino."""
-
+def calculate_metrics(trades: List[Dict], equity_curve: List[Dict],
+                     initial_capital: float, final_capital: float) -> Dict:
+    """Calculate performance metrics."""
     if not trades:
         return {
             'total_return_pct': 0,
@@ -349,7 +496,6 @@ def calculate_metrics(trades: List[Dict], equity_curve: List[Dict], initial_capi
 
 def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
     """Run full comparison across labeling methods and confidence thresholds."""
-
     df = load_data(symbol, timeframe)
     if df is None or len(df) < 100:
         logger.warning(f"{symbol} {timeframe}: insufficient data")
@@ -359,7 +505,6 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
 
     btc_arg = None if symbol == 'BTCUSDT' else btc_df
     df = prepare_features(df, symbol=symbol, btc_df=btc_arg, spy_df=spy_df)
-    feature_cols = get_feature_columns(df)
 
     labeling_configs = [
         {'method': 'fixed_horizon', 'name': 'Fixed Horizon'},
@@ -378,28 +523,68 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
 
     for config in labeling_configs:
         logger.info(f"\n{'='*80}")
-        logger.info(f"Training: {config['name']}")
+        logger.info(f"Labeling Method: {config['name']}")
         logger.info(f"{'='*80}")
 
-        model, calibrator, model_type = train_with_labeling_method(
-            df, symbol, config, feature_cols, H
+        if config['method'] == 'fixed_horizon':
+            df_labeled = create_target_variable(
+                df.copy(),
+                forward_periods=H,
+                long_threshold=0.005,
+                short_threshold=-0.005,
+            )
+        else:
+            df_labeled = create_target_variable_triple_barrier(
+                df.copy(),
+                holding_horizon=H,
+                tp_atr_mult=config['tp_mult'],
+                sl_atr_mult=config['sl_mult'],
+            )
+
+        feature_cols = get_feature_columns(df_labeled)
+        df_clean = df_labeled[feature_cols + ['target']].dropna()
+        N = len(df_clean)
+
+        if N < 200:
+            logger.warning(f"Insufficient clean data: {N} rows")
+            continue
+
+        regions = calculate_regions(N, H)
+        logger.info(f"Data regions (N={N}, H={H}):")
+        logger.info(f"  Training: {regions['train']}")
+        logger.info(f"  Cal-train: {regions['cal_train']}")
+        logger.info(f"  Cal-val: {regions['cal_val']}")
+        logger.info(f"  Test: {regions['test']}")
+
+        df_clean = df_clean.reset_index(drop=True)
+
+        cal_train_probas, cal_train_y, cal_val_probas, cal_val_y = build_calibration_dataset(
+            df_clean, feature_cols, regions
         )
 
-        if model is None:
-            logger.warning(f"Training failed for {config['name']}")
+        if cal_train_probas is None:
+            logger.warning("Failed to build calibration dataset")
             continue
+
+        calibrator = fit_and_select_calibrator(
+            cal_train_probas, cal_train_y, cal_val_probas, cal_val_y
+        )
+
+        predictions, probas, valid_mask = generate_walk_forward_predictions(
+            df_clean, feature_cols, calibrator, regions
+        )
+
+        n_predictions = valid_mask.sum()
+        logger.info(f"Generated {n_predictions} out-of-sample predictions")
 
         for threshold, threshold_name in confidence_thresholds:
             logger.info(f"  Running backtest: {threshold_name}")
 
-            backtest_result = run_backtest_with_confidence(
-                df, model, calibrator, feature_cols,
+            backtest_result = run_backtest_simulation(
+                df_clean, predictions, probas, valid_mask,
                 confidence_threshold=threshold,
-                max_hold_candles=H,
+                regions=regions,
             )
-
-            if backtest_result is None:
-                continue
 
             results.append({
                 'labeling': config['name'],
@@ -416,7 +601,6 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
 
 def print_comparison_report(comparison: Dict):
     """Print formatted comparison table with rankings."""
-
     if not comparison or not comparison.get('results'):
         print("\nNo results to compare.")
         return
@@ -444,13 +628,14 @@ def print_comparison_report(comparison: Dict):
 
     for r in results:
         m = r['metrics']
+        pf_display = f"{m['profit_factor']:.2f}" if m['profit_factor'] != float('inf') else 'inf'
         print(fmt_row([
             r['labeling'],
             r['confidence'],
             f"{m['total_return_pct']:.2f}",
             f"{m['sharpe_ratio']:.2f}",
             f"{m['sortino_ratio']:.2f}",
-            f"{m['profit_factor']:.2f}",
+            pf_display,
             f"{m['max_drawdown_pct']:.2f}",
             f"{m['win_rate_pct']:.2f}",
             m['total_trades'],
@@ -474,7 +659,9 @@ def print_comparison_report(comparison: Dict):
               f"{m['sortino_ratio']:7.2f}  {m['total_trades']:6d}")
 
     print()
-    ranked_by_pf = sorted(results, key=lambda x: x['metrics']['profit_factor'], reverse=True)
+
+    valid_pf_results = [r for r in results if r['metrics']['profit_factor'] != float('inf')]
+    ranked_by_pf = sorted(valid_pf_results, key=lambda x: x['metrics']['profit_factor'], reverse=True)
     print("BY PROFIT FACTOR:")
     print(fmt_row(['Rank', 'Labeling', 'Confidence', 'PF', 'Return%', 'WinRate%', 'Trades']))
     print('-' * 100)
