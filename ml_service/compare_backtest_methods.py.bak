@@ -105,12 +105,6 @@ def train_model_on_window(
     X_train = df_clean[feature_cols]
     y_train = df_clean['target']
 
-    logger.info(
-        f"Train target distribution: "
-        f"{y_train.value_counts().to_dict()}"
-    )
-
-
     xgb_params = {
         'max_depth': 6,
         'learning_rate': 0.1,
@@ -318,33 +312,9 @@ def run_backtest_simulation(
 
     filtered_predictions = predictions.copy()
 
-    valid_conf = probas[valid_mask].max(axis=1) if valid_mask.any() else np.array([0.0])
-
-
-    logger.info(
-        f"Confidence stats: "
-        f"mean={valid_conf.mean():.3f}, "
-        f"median={np.median(valid_conf):.3f}, "
-        f"max={valid_conf.max():.3f}, "
-        f"p95={np.percentile(valid_conf,95):.3f}"
-    )
-
-    logger.info(
-        f"Predictions >=60%: {(valid_conf >= 0.60).sum()}"
-    )
-
-    logger.info(
-        f"Predictions >=70%: {(valid_conf >= 0.70).sum()}"
-    )
-
     if confidence_threshold is not None:
-        low_conf_mask = np.zeros(len(valid_mask), dtype=bool)
-
-        if valid_mask.any():
-            low_conf_mask[valid_mask] = (
-                probas[valid_mask].max(axis=1) < confidence_threshold
-            )
-
+        max_conf = probas.max(axis=1)
+        low_conf_mask = (max_conf < confidence_threshold) & valid_mask
         filtered_predictions[low_conf_mask] = 1
 
     direction_map = {0: 'short', 1: 'neutral', 2: 'long'}
@@ -572,12 +542,8 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
             )
 
         feature_cols = get_feature_columns(df_labeled)
-
-        df_bt = df_labeled.dropna(
-            subset=feature_cols + ['target']
-        ).reset_index(drop=True)
-
-        N = len(df_bt)
+        df_clean = df_labeled[feature_cols + ['target']].dropna()
+        N = len(df_clean)
 
         if N < 200:
             logger.warning(f"Insufficient clean data: {N} rows")
@@ -590,8 +556,10 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
         logger.info(f"  Cal-val: {regions['cal_val']}")
         logger.info(f"  Test: {regions['test']}")
 
+        df_clean = df_clean.reset_index(drop=True)
+
         cal_train_probas, cal_train_y, cal_val_probas, cal_val_y = build_calibration_dataset(
-            df_bt, feature_cols, regions
+            df_clean, feature_cols, regions
         )
 
         if cal_train_probas is None:
@@ -603,27 +571,17 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
         )
 
         predictions, probas, valid_mask = generate_walk_forward_predictions(
-            df_bt, feature_cols, calibrator, regions
+            df_clean, feature_cols, calibrator, regions
         )
 
         n_predictions = valid_mask.sum()
         logger.info(f"Generated {n_predictions} out-of-sample predictions")
 
-        unique, counts = np.unique(
-            predictions[valid_mask],
-            return_counts=True
-        )
-
-        logger.info(
-            f"Prediction distribution: "
-            f"{dict(zip(unique.tolist(), counts.tolist()))}"
-        )
-
         for threshold, threshold_name in confidence_thresholds:
             logger.info(f"  Running backtest: {threshold_name}")
 
             backtest_result = run_backtest_simulation(
-                df_bt, predictions, probas, valid_mask,
+                df_clean, predictions, probas, valid_mask,
                 confidence_threshold=threshold,
                 regions=regions,
             )

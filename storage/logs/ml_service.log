@@ -1285,3 +1285,1230 @@
 2026-06-16 02:18:09 | ml_trading | INFO | Fold 21: train=1628, test=50, purge=12, embargo=12
 2026-06-16 02:18:10 | ml_trading | INFO | Fold 22: train=1690, test=50, purge=12, embargo=12
 2026-06-16 02:18:13 | ml_trading | INFO | wF1=0.387, Balance=24.42
+2026-06-16 04:17:49 | ml_trading | INFO | Loading reference data...
+2026-06-16 04:17:49 | ml_trading | INFO | Database schema initialized
+2026-06-16 04:17:49 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 04:17:49 | ml_trading | INFO | [horizon] forward_periods=10 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 04:18:07 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 04:18:07 | ml_trading | INFO | 
+================================================================================
+2026-06-16 04:18:07 | ml_trading | INFO | Training: Fixed Horizon
+2026-06-16 04:18:07 | ml_trading | INFO | ================================================================================
+2026-06-16 04:18:07 | ml_trading | INFO | Clean dataset: 1786 rows after dropping NaN
+2026-06-16 04:18:07 | ml_trading | INFO | Fold 1: train=390, test=50, purge=10, embargo=10
+2026-06-16 04:18:08 | ml_trading | INFO | Fold 2: train=450, test=50, purge=10, embargo=10
+2026-06-16 04:18:09 | ml_trading | INFO | Fold 3: train=510, test=50, purge=10, embargo=10
+2026-06-16 04:18:10 | ml_trading | INFO | Fold 4: train=570, test=50, purge=10, embargo=10
+2026-06-16 04:18:11 | ml_trading | INFO | Fold 5: train=630, test=50, purge=10, embargo=10
+2026-06-16 04:18:12 | ml_trading | INFO | Fold 6: train=690, test=50, purge=10, embargo=10
+2026-06-16 04:18:13 | ml_trading | INFO | Fold 7: train=750, test=50, purge=10, embargo=10
+2026-06-16 04:18:14 | ml_trading | INFO | Fold 8: train=810, test=50, purge=10, embargo=10
+2026-06-16 04:18:15 | ml_trading | INFO | Fold 9: train=870, test=50, purge=10, embargo=10
+2026-06-16 04:18:16 | ml_trading | INFO | Fold 10: train=930, test=50, purge=10, embargo=10
+2026-06-16 04:18:18 | ml_trading | INFO | Fold 11: train=990, test=50, purge=10, embargo=10
+2026-06-16 04:18:19 | ml_trading | INFO | Fold 12: train=1050, test=50, purge=10, embargo=10
+2026-06-16 04:18:20 | ml_trading | INFO | Fold 13: train=1110, test=50, purge=10, embargo=10
+2026-06-16 04:18:21 | ml_trading | INFO | Fold 14: train=1170, test=50, purge=10, embargo=10
+2026-06-16 04:18:22 | ml_trading | INFO | Fold 15: train=1230, test=50, purge=10, embargo=10
+2026-06-16 04:18:23 | ml_trading | INFO | Fold 16: train=1290, test=50, purge=10, embargo=10
+2026-06-16 04:18:25 | ml_trading | INFO | Fold 17: train=1350, test=50, purge=10, embargo=10
+2026-06-16 04:18:26 | ml_trading | INFO | Fold 18: train=1410, test=50, purge=10, embargo=10
+2026-06-16 04:18:27 | ml_trading | INFO | Fold 19: train=1470, test=50, purge=10, embargo=10
+2026-06-16 04:18:28 | ml_trading | INFO | Fold 20: train=1530, test=50, purge=10, embargo=10
+2026-06-16 04:18:29 | ml_trading | INFO | Fold 21: train=1590, test=50, purge=10, embargo=10
+2026-06-16 04:18:31 | ml_trading | INFO | Fold 22: train=1650, test=50, purge=10, embargo=10
+2026-06-16 04:18:32 | ml_trading | INFO | Fold 23: train=1710, test=50, purge=10, embargo=10
+2026-06-16 04:18:33 | ml_trading | INFO | Training final lightgbm model on 1786 samples
+2026-06-16 04:18:33 | ml_trading | INFO | fixed_horizon trained: lightgbm, calibrator: platt
+2026-06-16 04:18:33 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 04:18:52 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 04:18:52 | ml_trading | ERROR | BTCUSDT 1h comparison failed: Columns must be same length as key
+Traceback (most recent call last):
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/compare_backtest_methods.py", line 507, in main
+    comparison = run_comparison(symbol, tf, btc_by_tf.get(tf), spy_by_tf.get(tf))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/compare_backtest_methods.py", line 396, in run_comparison
+    backtest_result = run_backtest_with_confidence(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/compare_backtest_methods.py", line 155, in run_backtest_with_confidence
+    df_features = prepare_features(df, symbol='BTCUSDT')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/models/trainer.py", line 164, in prepare_features
+    df = add_funding_rate_features(df, symbol=symbol)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/features/funding_rate.py", line 108, in add_funding_rate_features
+    df['funding_rate_ma'] = df['funding_rate'].rolling(window=ma_period, min_periods=1).mean()
+    ~~^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/frame.py", line 4662, in __setitem__
+    self._set_item_frame_value(key, value)
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/frame.py", line 4786, in _set_item_frame_value
+    raise ValueError("Columns must be same length as key")
+ValueError: Columns must be same length as key
+2026-06-16 04:30:23 | ml_trading | INFO | Loading reference data...
+2026-06-16 04:30:23 | ml_trading | INFO | Database schema initialized
+2026-06-16 04:30:23 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 04:30:23 | ml_trading | INFO | [horizon] forward_periods=10 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 04:30:40 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 04:30:40 | ml_trading | INFO | 
+================================================================================
+2026-06-16 04:30:40 | ml_trading | INFO | Training: Fixed Horizon
+2026-06-16 04:30:40 | ml_trading | INFO | ================================================================================
+2026-06-16 04:30:40 | ml_trading | INFO | Clean dataset: 1786 rows after dropping NaN
+2026-06-16 04:30:40 | ml_trading | INFO | Fold 1: train=390, test=50, purge=10, embargo=10
+2026-06-16 04:30:41 | ml_trading | INFO | Fold 2: train=450, test=50, purge=10, embargo=10
+2026-06-16 04:30:42 | ml_trading | INFO | Fold 3: train=510, test=50, purge=10, embargo=10
+2026-06-16 04:30:43 | ml_trading | INFO | Fold 4: train=570, test=50, purge=10, embargo=10
+2026-06-16 04:30:44 | ml_trading | INFO | Fold 5: train=630, test=50, purge=10, embargo=10
+2026-06-16 04:30:45 | ml_trading | INFO | Fold 6: train=690, test=50, purge=10, embargo=10
+2026-06-16 04:30:47 | ml_trading | INFO | Fold 7: train=750, test=50, purge=10, embargo=10
+2026-06-16 04:30:48 | ml_trading | INFO | Fold 8: train=810, test=50, purge=10, embargo=10
+2026-06-16 04:30:49 | ml_trading | INFO | Fold 9: train=870, test=50, purge=10, embargo=10
+2026-06-16 04:30:51 | ml_trading | INFO | Fold 10: train=930, test=50, purge=10, embargo=10
+2026-06-16 04:30:52 | ml_trading | INFO | Fold 11: train=990, test=50, purge=10, embargo=10
+2026-06-16 04:30:53 | ml_trading | INFO | Fold 12: train=1050, test=50, purge=10, embargo=10
+2026-06-16 04:30:55 | ml_trading | INFO | Fold 13: train=1110, test=50, purge=10, embargo=10
+2026-06-16 04:30:56 | ml_trading | INFO | Fold 14: train=1170, test=50, purge=10, embargo=10
+2026-06-16 04:30:57 | ml_trading | INFO | Fold 15: train=1230, test=50, purge=10, embargo=10
+2026-06-16 04:30:59 | ml_trading | INFO | Fold 16: train=1290, test=50, purge=10, embargo=10
+2026-06-16 04:31:00 | ml_trading | INFO | Fold 17: train=1350, test=50, purge=10, embargo=10
+2026-06-16 04:31:01 | ml_trading | INFO | Fold 18: train=1410, test=50, purge=10, embargo=10
+2026-06-16 04:31:03 | ml_trading | INFO | Fold 19: train=1470, test=50, purge=10, embargo=10
+2026-06-16 04:31:05 | ml_trading | INFO | Fold 20: train=1530, test=50, purge=10, embargo=10
+2026-06-16 04:31:06 | ml_trading | INFO | Fold 21: train=1590, test=50, purge=10, embargo=10
+2026-06-16 04:31:08 | ml_trading | INFO | Fold 22: train=1650, test=50, purge=10, embargo=10
+2026-06-16 04:31:10 | ml_trading | INFO | Fold 23: train=1710, test=50, purge=10, embargo=10
+2026-06-16 04:31:12 | ml_trading | INFO | Training final lightgbm model on 1786 samples
+2026-06-16 04:31:12 | ml_trading | INFO | fixed_horizon trained: lightgbm, calibrator: platt
+2026-06-16 04:31:12 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 04:31:12 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 04:31:13 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 04:31:13 | ml_trading | INFO | 
+================================================================================
+2026-06-16 04:31:13 | ml_trading | INFO | Training: Triple TP=2.0 SL=2.0
+2026-06-16 04:31:13 | ml_trading | INFO | ================================================================================
+2026-06-16 04:31:14 | ml_trading | INFO | Clean dataset: 1786 rows after dropping NaN
+2026-06-16 04:31:14 | ml_trading | INFO | Fold 1: train=390, test=50, purge=10, embargo=10
+2026-06-16 04:31:15 | ml_trading | INFO | Fold 2: train=450, test=50, purge=10, embargo=10
+2026-06-16 04:31:17 | ml_trading | INFO | Fold 3: train=510, test=50, purge=10, embargo=10
+2026-06-16 04:31:18 | ml_trading | INFO | Fold 4: train=570, test=50, purge=10, embargo=10
+2026-06-16 04:31:20 | ml_trading | INFO | Fold 5: train=630, test=50, purge=10, embargo=10
+2026-06-16 04:31:21 | ml_trading | INFO | Fold 6: train=690, test=50, purge=10, embargo=10
+2026-06-16 04:31:22 | ml_trading | INFO | Fold 7: train=750, test=50, purge=10, embargo=10
+2026-06-16 04:31:24 | ml_trading | INFO | Fold 8: train=810, test=50, purge=10, embargo=10
+2026-06-16 04:31:29 | ml_trading | INFO | Fold 9: train=870, test=50, purge=10, embargo=10
+2026-06-16 04:31:31 | ml_trading | INFO | Fold 10: train=930, test=50, purge=10, embargo=10
+2026-06-16 04:31:32 | ml_trading | INFO | Fold 11: train=990, test=50, purge=10, embargo=10
+2026-06-16 04:31:33 | ml_trading | INFO | Fold 12: train=1050, test=50, purge=10, embargo=10
+2026-06-16 04:31:34 | ml_trading | INFO | Fold 13: train=1110, test=50, purge=10, embargo=10
+2026-06-16 04:31:35 | ml_trading | INFO | Fold 14: train=1170, test=50, purge=10, embargo=10
+2026-06-16 04:31:37 | ml_trading | INFO | Fold 15: train=1230, test=50, purge=10, embargo=10
+2026-06-16 04:31:38 | ml_trading | INFO | Fold 16: train=1290, test=50, purge=10, embargo=10
+2026-06-16 04:31:40 | ml_trading | INFO | Fold 17: train=1350, test=50, purge=10, embargo=10
+2026-06-16 04:31:41 | ml_trading | INFO | Fold 18: train=1410, test=50, purge=10, embargo=10
+2026-06-16 04:31:43 | ml_trading | INFO | Fold 19: train=1470, test=50, purge=10, embargo=10
+2026-06-16 04:31:44 | ml_trading | INFO | Fold 20: train=1530, test=50, purge=10, embargo=10
+2026-06-16 04:31:45 | ml_trading | INFO | Fold 21: train=1590, test=50, purge=10, embargo=10
+2026-06-16 04:31:47 | ml_trading | INFO | Fold 22: train=1650, test=50, purge=10, embargo=10
+2026-06-16 04:31:48 | ml_trading | INFO | Fold 23: train=1710, test=50, purge=10, embargo=10
+2026-06-16 04:31:50 | ml_trading | INFO | Training final lightgbm model on 1786 samples
+2026-06-16 04:31:50 | ml_trading | INFO | triple_barrier trained: lightgbm, calibrator: platt
+2026-06-16 04:31:50 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 04:31:51 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 04:31:51 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 04:31:51 | ml_trading | INFO | 
+================================================================================
+2026-06-16 04:31:51 | ml_trading | INFO | Training: Triple TP=2.5 SL=1.5
+2026-06-16 04:31:51 | ml_trading | INFO | ================================================================================
+2026-06-16 04:31:52 | ml_trading | INFO | Clean dataset: 1786 rows after dropping NaN
+2026-06-16 04:31:52 | ml_trading | INFO | Fold 1: train=390, test=50, purge=10, embargo=10
+2026-06-16 04:31:53 | ml_trading | INFO | Fold 2: train=450, test=50, purge=10, embargo=10
+2026-06-16 04:31:54 | ml_trading | INFO | Fold 3: train=510, test=50, purge=10, embargo=10
+2026-06-16 04:31:56 | ml_trading | INFO | Fold 4: train=570, test=50, purge=10, embargo=10
+2026-06-16 04:31:57 | ml_trading | INFO | Fold 5: train=630, test=50, purge=10, embargo=10
+2026-06-16 04:31:59 | ml_trading | INFO | Fold 6: train=690, test=50, purge=10, embargo=10
+2026-06-16 04:32:00 | ml_trading | INFO | Fold 7: train=750, test=50, purge=10, embargo=10
+2026-06-16 04:32:01 | ml_trading | INFO | Fold 8: train=810, test=50, purge=10, embargo=10
+2026-06-16 04:32:03 | ml_trading | INFO | Fold 9: train=870, test=50, purge=10, embargo=10
+2026-06-16 04:32:04 | ml_trading | INFO | Fold 10: train=930, test=50, purge=10, embargo=10
+2026-06-16 04:32:05 | ml_trading | INFO | Fold 11: train=990, test=50, purge=10, embargo=10
+2026-06-16 04:32:09 | ml_trading | INFO | Fold 12: train=1050, test=50, purge=10, embargo=10
+2026-06-16 04:32:16 | ml_trading | INFO | Fold 13: train=1110, test=50, purge=10, embargo=10
+2026-06-16 04:32:23 | ml_trading | INFO | Fold 14: train=1170, test=50, purge=10, embargo=10
+2026-06-16 04:32:28 | ml_trading | INFO | Fold 15: train=1230, test=50, purge=10, embargo=10
+2026-06-16 04:32:37 | ml_trading | INFO | Fold 16: train=1290, test=50, purge=10, embargo=10
+2026-06-16 04:32:40 | ml_trading | INFO | Fold 17: train=1350, test=50, purge=10, embargo=10
+2026-06-16 04:32:48 | ml_trading | INFO | Fold 18: train=1410, test=50, purge=10, embargo=10
+2026-06-16 04:32:53 | ml_trading | INFO | Fold 19: train=1470, test=50, purge=10, embargo=10
+2026-06-16 04:32:56 | ml_trading | INFO | Fold 20: train=1530, test=50, purge=10, embargo=10
+2026-06-16 04:33:06 | ml_trading | INFO | Fold 21: train=1590, test=50, purge=10, embargo=10
+2026-06-16 04:33:08 | ml_trading | INFO | Fold 22: train=1650, test=50, purge=10, embargo=10
+2026-06-16 04:33:09 | ml_trading | INFO | Fold 23: train=1710, test=50, purge=10, embargo=10
+2026-06-16 04:33:11 | ml_trading | INFO | Training final xgboost model on 1786 samples
+2026-06-16 04:33:12 | ml_trading | INFO | triple_barrier trained: xgboost, calibrator: platt
+2026-06-16 04:33:12 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 04:33:12 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 04:33:12 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 04:33:13 | ml_trading | INFO | 
+================================================================================
+2026-06-16 04:33:13 | ml_trading | INFO | Training: Triple TP=3.0 SL=1.5
+2026-06-16 04:33:13 | ml_trading | INFO | ================================================================================
+2026-06-16 04:33:14 | ml_trading | INFO | Clean dataset: 1786 rows after dropping NaN
+2026-06-16 04:33:14 | ml_trading | INFO | Fold 1: train=390, test=50, purge=10, embargo=10
+2026-06-16 04:33:15 | ml_trading | INFO | Fold 2: train=450, test=50, purge=10, embargo=10
+2026-06-16 04:33:16 | ml_trading | INFO | Fold 3: train=510, test=50, purge=10, embargo=10
+2026-06-16 04:33:17 | ml_trading | INFO | Fold 4: train=570, test=50, purge=10, embargo=10
+2026-06-16 04:33:18 | ml_trading | INFO | Fold 5: train=630, test=50, purge=10, embargo=10
+2026-06-16 04:33:20 | ml_trading | INFO | Fold 6: train=690, test=50, purge=10, embargo=10
+2026-06-16 04:33:21 | ml_trading | INFO | Fold 7: train=750, test=50, purge=10, embargo=10
+2026-06-16 04:33:23 | ml_trading | INFO | Fold 8: train=810, test=50, purge=10, embargo=10
+2026-06-16 04:33:24 | ml_trading | INFO | Fold 9: train=870, test=50, purge=10, embargo=10
+2026-06-16 04:33:25 | ml_trading | INFO | Fold 10: train=930, test=50, purge=10, embargo=10
+2026-06-16 04:33:26 | ml_trading | INFO | Fold 11: train=990, test=50, purge=10, embargo=10
+2026-06-16 04:33:28 | ml_trading | INFO | Fold 12: train=1050, test=50, purge=10, embargo=10
+2026-06-16 04:33:29 | ml_trading | INFO | Fold 13: train=1110, test=50, purge=10, embargo=10
+2026-06-16 04:33:30 | ml_trading | INFO | Fold 14: train=1170, test=50, purge=10, embargo=10
+2026-06-16 04:33:31 | ml_trading | INFO | Fold 15: train=1230, test=50, purge=10, embargo=10
+2026-06-16 04:33:32 | ml_trading | INFO | Fold 16: train=1290, test=50, purge=10, embargo=10
+2026-06-16 04:33:34 | ml_trading | INFO | Fold 17: train=1350, test=50, purge=10, embargo=10
+2026-06-16 04:33:35 | ml_trading | INFO | Fold 18: train=1410, test=50, purge=10, embargo=10
+2026-06-16 04:33:36 | ml_trading | INFO | Fold 19: train=1470, test=50, purge=10, embargo=10
+2026-06-16 04:33:38 | ml_trading | INFO | Fold 20: train=1530, test=50, purge=10, embargo=10
+2026-06-16 04:33:39 | ml_trading | INFO | Fold 21: train=1590, test=50, purge=10, embargo=10
+2026-06-16 04:33:41 | ml_trading | INFO | Fold 22: train=1650, test=50, purge=10, embargo=10
+2026-06-16 04:33:42 | ml_trading | INFO | Fold 23: train=1710, test=50, purge=10, embargo=10
+2026-06-16 04:33:43 | ml_trading | INFO | Training final lightgbm model on 1786 samples
+2026-06-16 04:33:44 | ml_trading | INFO | triple_barrier trained: lightgbm, calibrator: isotonic
+2026-06-16 04:33:44 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 04:33:44 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 04:33:44 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 05:38:01 | ml_trading | INFO | Loading reference data...
+2026-06-16 05:38:01 | ml_trading | INFO | Database schema initialized
+2026-06-16 05:38:01 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 05:38:01 | ml_trading | INFO | [horizon] forward_periods=12 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 05:38:17 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 05:38:17 | ml_trading | INFO | 
+================================================================================
+2026-06-16 05:38:17 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 05:38:17 | ml_trading | INFO | ================================================================================
+2026-06-16 05:38:17 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 05:38:17 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 05:38:17 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 05:38:17 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 05:38:17 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 05:38:17 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 05:38:18 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 05:38:18 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 05:38:18 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 05:38:18 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 05:38:18 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 05:38:18 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 05:38:18 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 05:38:18 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 05:38:18 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 05:38:18 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 05:38:20 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 05:38:21 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 05:38:23 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 05:38:24 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 05:38:26 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 05:38:27 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 05:38:27 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 05:38:27 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 05:38:27 | ml_trading | ERROR | BTCUSDT 1h comparison failed: 'timestamp'
+Traceback (most recent call last):
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3641, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/index.pyx", line 168, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 197, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'timestamp'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/compare_backtest_methods.py", line 693, in main
+    comparison = run_comparison(symbol, tf, btc_by_tf.get(tf), spy_by_tf.get(tf))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/compare_backtest_methods.py", line 583, in run_comparison
+    backtest_result = run_backtest_simulation(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/compare_backtest_methods.py", line 337, in run_backtest_simulation
+    'timestamp': int(row['timestamp']),
+                     ~~~^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/series.py", line 959, in __getitem__
+    return self._get_value(key)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/series.py", line 1046, in _get_value
+    loc = self.index.get_loc(label)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/app/ml-project/ml-trading-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3648, in get_loc
+    raise KeyError(key) from err
+KeyError: 'timestamp'
+2026-06-16 07:12:14 | ml_trading | INFO | Loading reference data...
+2026-06-16 07:12:14 | ml_trading | INFO | Database schema initialized
+2026-06-16 07:12:14 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 07:12:14 | ml_trading | INFO | [horizon] forward_periods=12 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 07:12:29 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 07:12:29 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:12:29 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 07:12:29 | ml_trading | INFO | ================================================================================
+2026-06-16 07:12:29 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:12:29 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:12:29 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:12:29 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:12:29 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:12:29 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:12:30 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:12:30 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:12:30 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:12:30 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:12:30 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:12:30 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:12:30 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:12:30 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:12:30 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 07:12:30 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:12:32 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:12:33 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:12:34 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:12:35 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:12:37 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:12:38 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:12:38 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:12:38 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:12:38 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:12:38 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:12:38 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:12:38 | ml_trading | INFO | Labeling Method: Triple TP=2.0 SL=2.0
+2026-06-16 07:12:38 | ml_trading | INFO | ================================================================================
+2026-06-16 07:12:39 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:12:39 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:12:39 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:12:39 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:12:40 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:12:40 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:12:40 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:12:40 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:12:40 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:12:41 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:12:41 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:12:41 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:12:41 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:12:41 | ml_trading | INFO | Selected calibrator: isotonic
+2026-06-16 07:12:41 | ml_trading | INFO |   Validation ECE: 0.1137
+2026-06-16 07:12:41 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:12:42 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:12:43 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:12:44 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:12:46 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:12:47 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:12:49 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:12:49 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:12:49 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:12:49 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:12:49 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:12:49 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:12:49 | ml_trading | INFO | Labeling Method: Triple TP=2.5 SL=1.5
+2026-06-16 07:12:49 | ml_trading | INFO | ================================================================================
+2026-06-16 07:12:50 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:12:50 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:12:50 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:12:50 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:12:50 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:12:50 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:12:51 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:12:51 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:12:51 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:12:51 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:12:51 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:12:51 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:12:51 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:12:51 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:12:51 | ml_trading | INFO |   Validation ECE: 0.0747
+2026-06-16 07:12:51 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:12:53 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:12:54 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:12:56 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:12:57 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:12:58 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:12:59 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:12:59 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:12:59 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:12:59 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:12:59 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:12:59 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:12:59 | ml_trading | INFO | Labeling Method: Triple TP=3.0 SL=1.5
+2026-06-16 07:12:59 | ml_trading | INFO | ================================================================================
+2026-06-16 07:13:01 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:13:01 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:13:01 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:13:01 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:13:01 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:13:01 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:13:02 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:13:02 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:13:02 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:13:02 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:13:02 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:13:02 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:13:02 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:13:02 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:13:02 | ml_trading | INFO |   Validation ECE: 0.0997
+2026-06-16 07:13:02 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:13:04 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:13:05 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:13:07 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:13:08 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:13:09 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:13:11 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:13:11 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:13:11 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:13:11 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:13:11 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:15:47 | ml_trading | INFO | Loading reference data...
+2026-06-16 07:15:47 | ml_trading | INFO | Database schema initialized
+2026-06-16 07:15:47 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 07:15:47 | ml_trading | INFO | [horizon] forward_periods=12 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 07:16:04 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 07:16:04 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:16:04 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 07:16:04 | ml_trading | INFO | ================================================================================
+2026-06-16 07:16:04 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:16:04 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:16:04 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:16:04 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:16:04 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:16:04 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:16:05 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:16:05 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:16:05 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:16:05 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:16:05 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:16:05 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:16:05 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:16:05 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:16:05 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 07:16:05 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:16:07 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:16:08 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:16:09 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:16:11 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:16:13 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:16:14 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:16:14 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:16:14 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:16:14 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.467, p95=0.428
+2026-06-16 07:16:14 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:14 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:14 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:16:14 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.467, p95=0.428
+2026-06-16 07:16:14 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:14 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:14 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:16:14 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.467, p95=0.428
+2026-06-16 07:16:14 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:14 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:14 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:16:14 | ml_trading | INFO | Labeling Method: Triple TP=2.0 SL=2.0
+2026-06-16 07:16:14 | ml_trading | INFO | ================================================================================
+2026-06-16 07:16:16 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:16:16 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:16:16 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:16:16 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:16:16 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:16:16 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:16:17 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:16:17 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:16:17 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:16:17 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:16:17 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:16:17 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:16:17 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:16:17 | ml_trading | INFO | Selected calibrator: isotonic
+2026-06-16 07:16:17 | ml_trading | INFO |   Validation ECE: 0.1137
+2026-06-16 07:16:17 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:16:18 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:16:19 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:16:20 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:16:21 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:16:23 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:16:24 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:16:24 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:16:24 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:16:24 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.683, p95=0.404
+2026-06-16 07:16:24 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:16:24 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:24 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:16:24 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.683, p95=0.404
+2026-06-16 07:16:24 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:16:24 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:24 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:16:24 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.683, p95=0.404
+2026-06-16 07:16:24 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:16:24 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:24 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:16:24 | ml_trading | INFO | Labeling Method: Triple TP=2.5 SL=1.5
+2026-06-16 07:16:24 | ml_trading | INFO | ================================================================================
+2026-06-16 07:16:25 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:16:25 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:16:25 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:16:25 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:16:25 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:16:25 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:16:26 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:16:26 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:16:26 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:16:26 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:16:26 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:16:26 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:16:26 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:16:26 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:16:26 | ml_trading | INFO |   Validation ECE: 0.0747
+2026-06-16 07:16:26 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:16:28 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:16:29 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:16:30 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:16:32 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:16:33 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:16:35 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:16:35 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:16:35 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:16:35 | ml_trading | INFO | Confidence stats: mean=0.093, median=0.000, max=0.567, p95=0.559
+2026-06-16 07:16:35 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:35 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:35 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:16:35 | ml_trading | INFO | Confidence stats: mean=0.093, median=0.000, max=0.567, p95=0.559
+2026-06-16 07:16:35 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:35 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:35 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:16:35 | ml_trading | INFO | Confidence stats: mean=0.093, median=0.000, max=0.567, p95=0.559
+2026-06-16 07:16:35 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:35 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:35 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:16:35 | ml_trading | INFO | Labeling Method: Triple TP=3.0 SL=1.5
+2026-06-16 07:16:35 | ml_trading | INFO | ================================================================================
+2026-06-16 07:16:36 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:16:36 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:16:36 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:16:36 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:16:36 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:16:36 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:16:37 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:16:37 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:16:37 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:16:37 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:16:37 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:16:37 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:16:37 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:16:37 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:16:37 | ml_trading | INFO |   Validation ECE: 0.0997
+2026-06-16 07:16:37 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:16:39 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:16:40 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:16:41 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:16:43 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:16:45 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:16:46 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:16:46 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:16:46 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:16:46 | ml_trading | INFO | Confidence stats: mean=0.092, median=0.000, max=0.569, p95=0.552
+2026-06-16 07:16:46 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:46 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:46 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:16:46 | ml_trading | INFO | Confidence stats: mean=0.092, median=0.000, max=0.569, p95=0.552
+2026-06-16 07:16:46 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:46 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:16:46 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:16:46 | ml_trading | INFO | Confidence stats: mean=0.092, median=0.000, max=0.569, p95=0.552
+2026-06-16 07:16:46 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:16:46 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:17:19 | ml_trading | INFO | Loading reference data...
+2026-06-16 07:17:19 | ml_trading | INFO | Database schema initialized
+2026-06-16 07:17:19 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 07:17:19 | ml_trading | INFO | [horizon] forward_periods=12 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 07:17:36 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 07:17:36 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:17:36 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 07:17:36 | ml_trading | INFO | ================================================================================
+2026-06-16 07:17:36 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:17:36 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:17:36 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:17:36 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:17:36 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:17:36 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:17:37 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:17:37 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:17:38 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:17:38 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:17:38 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:17:38 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:17:38 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:17:38 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:17:38 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 07:17:38 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:17:39 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:17:40 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:17:42 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:17:43 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:17:44 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:17:46 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:17:46 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:17:46 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:17:46 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.467, p95=0.428
+2026-06-16 07:17:46 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:17:46 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:17:46 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:17:46 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.467, p95=0.428
+2026-06-16 07:17:46 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:17:46 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:17:46 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:17:46 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.467, p95=0.428
+2026-06-16 07:17:46 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:17:46 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:17:46 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:17:46 | ml_trading | INFO | Labeling Method: Triple TP=2.0 SL=2.0
+2026-06-16 07:17:46 | ml_trading | INFO | ================================================================================
+2026-06-16 07:17:48 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:17:48 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:17:48 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:17:48 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:17:48 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:17:48 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:17:49 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:17:49 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:17:49 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:17:49 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:17:49 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:17:49 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:17:49 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:17:49 | ml_trading | INFO | Selected calibrator: isotonic
+2026-06-16 07:17:49 | ml_trading | INFO |   Validation ECE: 0.1137
+2026-06-16 07:17:49 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:17:50 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:17:52 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:17:53 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:17:54 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:17:57 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:17:58 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:17:58 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:17:58 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:17:58 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.683, p95=0.404
+2026-06-16 07:17:58 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:17:58 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:17:59 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:17:59 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.683, p95=0.404
+2026-06-16 07:17:59 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:17:59 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:17:59 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:17:59 | ml_trading | INFO | Confidence stats: mean=0.070, median=0.000, max=0.683, p95=0.404
+2026-06-16 07:17:59 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:17:59 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:17:59 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:17:59 | ml_trading | INFO | Labeling Method: Triple TP=2.5 SL=1.5
+2026-06-16 07:17:59 | ml_trading | INFO | ================================================================================
+2026-06-16 07:18:00 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:18:00 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:18:00 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:18:00 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:18:00 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:18:00 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:18:02 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:18:02 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:18:02 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:18:02 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:18:02 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:18:02 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:18:02 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:18:02 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:18:02 | ml_trading | INFO |   Validation ECE: 0.0747
+2026-06-16 07:18:02 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:18:03 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:18:05 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:18:06 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:18:08 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:18:09 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:18:10 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:18:10 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:18:10 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:18:10 | ml_trading | INFO | Confidence stats: mean=0.093, median=0.000, max=0.567, p95=0.559
+2026-06-16 07:18:10 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:18:10 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:18:10 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:18:10 | ml_trading | INFO | Confidence stats: mean=0.093, median=0.000, max=0.567, p95=0.559
+2026-06-16 07:18:10 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:18:10 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:18:10 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:18:10 | ml_trading | INFO | Confidence stats: mean=0.093, median=0.000, max=0.567, p95=0.559
+2026-06-16 07:18:10 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:18:10 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:18:11 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:18:11 | ml_trading | INFO | Labeling Method: Triple TP=3.0 SL=1.5
+2026-06-16 07:18:11 | ml_trading | INFO | ================================================================================
+2026-06-16 07:18:12 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:18:12 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:18:12 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:18:12 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:18:12 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:18:12 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:18:13 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:18:13 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:18:13 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:18:13 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:18:13 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:18:13 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:18:13 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:18:13 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:18:13 | ml_trading | INFO |   Validation ECE: 0.0997
+2026-06-16 07:18:13 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:18:14 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:18:16 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:18:17 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:18:18 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:18:20 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:18:21 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:18:21 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:18:21 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:18:21 | ml_trading | INFO | Confidence stats: mean=0.092, median=0.000, max=0.569, p95=0.552
+2026-06-16 07:18:21 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:18:21 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:18:21 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:18:21 | ml_trading | INFO | Confidence stats: mean=0.092, median=0.000, max=0.569, p95=0.552
+2026-06-16 07:18:21 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:18:21 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:18:21 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:18:21 | ml_trading | INFO | Confidence stats: mean=0.092, median=0.000, max=0.569, p95=0.552
+2026-06-16 07:18:21 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:18:21 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:25:52 | ml_trading | INFO | Loading reference data...
+2026-06-16 07:25:52 | ml_trading | INFO | Database schema initialized
+2026-06-16 07:25:52 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 07:25:52 | ml_trading | INFO | [horizon] forward_periods=12 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 07:26:09 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 07:26:09 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:26:09 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 07:26:09 | ml_trading | INFO | ================================================================================
+2026-06-16 07:26:09 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:26:09 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:26:09 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:26:09 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:26:09 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:26:09 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:26:11 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:26:11 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:26:11 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:26:11 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:26:11 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:26:11 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:26:11 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:26:11 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:26:11 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 07:26:11 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:26:13 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:26:14 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:26:16 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:26:18 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:26:20 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:26:21 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:26:21 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:26:21 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:26:21 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:26:21 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:21 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:21 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:26:21 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:26:21 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:21 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:21 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:26:21 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:26:21 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:21 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:21 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:26:21 | ml_trading | INFO | Labeling Method: Triple TP=2.0 SL=2.0
+2026-06-16 07:26:21 | ml_trading | INFO | ================================================================================
+2026-06-16 07:26:23 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:26:23 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:26:23 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:26:23 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:26:23 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:26:23 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:26:24 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:26:24 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:26:24 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:26:24 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:26:24 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:26:24 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:26:24 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:26:24 | ml_trading | INFO | Selected calibrator: isotonic
+2026-06-16 07:26:24 | ml_trading | INFO |   Validation ECE: 0.1137
+2026-06-16 07:26:24 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:26:25 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:26:27 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:26:28 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:26:30 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:26:32 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:26:33 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:26:33 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:26:33 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:26:33 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:26:33 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:26:33 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:33 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:26:33 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:26:33 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:26:33 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:33 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:26:33 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:26:33 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:26:33 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:33 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:26:33 | ml_trading | INFO | Labeling Method: Triple TP=2.5 SL=1.5
+2026-06-16 07:26:33 | ml_trading | INFO | ================================================================================
+2026-06-16 07:26:35 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:26:35 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:26:35 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:26:35 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:26:35 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:26:35 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:26:36 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:26:36 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:26:36 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:26:36 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:26:36 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:26:36 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:26:36 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:26:36 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:26:36 | ml_trading | INFO |   Validation ECE: 0.0747
+2026-06-16 07:26:36 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:26:37 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:26:39 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:26:40 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:26:41 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:26:42 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:26:44 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:26:44 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:26:44 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:26:44 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:26:44 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:44 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:44 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:26:44 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:26:44 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:44 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:44 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:26:44 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:26:44 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:44 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:44 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:26:44 | ml_trading | INFO | Labeling Method: Triple TP=3.0 SL=1.5
+2026-06-16 07:26:44 | ml_trading | INFO | ================================================================================
+2026-06-16 07:26:45 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:26:45 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:26:45 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:26:45 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:26:45 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:26:45 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:26:47 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:26:47 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:26:47 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:26:47 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:26:47 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:26:47 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:26:47 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:26:47 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:26:47 | ml_trading | INFO |   Validation ECE: 0.0997
+2026-06-16 07:26:47 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:26:48 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:26:50 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:26:51 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:26:52 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:26:53 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:26:55 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:26:55 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:26:55 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:26:55 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:26:55 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:55 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:55 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:26:55 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:26:55 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:55 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:26:55 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:26:55 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:26:55 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:26:55 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:33:54 | ml_trading | INFO | Loading reference data...
+2026-06-16 07:33:54 | ml_trading | INFO | Database schema initialized
+2026-06-16 07:33:54 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 07:33:54 | ml_trading | INFO | [horizon] forward_periods=12 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 07:34:11 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 07:34:11 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:34:11 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 07:34:11 | ml_trading | INFO | ================================================================================
+2026-06-16 07:34:11 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:34:11 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:34:11 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:34:11 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:34:11 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:34:11 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:34:12 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:34:12 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:34:12 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:34:12 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:34:12 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:34:12 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:34:12 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:34:12 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:34:12 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 07:34:12 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:34:14 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:34:15 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:34:18 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:34:19 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:34:21 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:34:22 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:34:22 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:34:22 | ml_trading | INFO | Prediction distribution: {0.0: 33, 1.0: 267}
+2026-06-16 07:34:22 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:34:22 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:34:22 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:22 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:22 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:34:22 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:34:22 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:22 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:23 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:34:23 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:34:23 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:23 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:23 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:34:23 | ml_trading | INFO | Labeling Method: Triple TP=2.0 SL=2.0
+2026-06-16 07:34:23 | ml_trading | INFO | ================================================================================
+2026-06-16 07:34:24 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:34:24 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:34:24 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:34:24 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:34:24 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:34:24 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:34:25 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:34:25 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:34:25 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:34:25 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:34:25 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:34:25 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:34:25 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:34:25 | ml_trading | INFO | Selected calibrator: isotonic
+2026-06-16 07:34:25 | ml_trading | INFO |   Validation ECE: 0.1137
+2026-06-16 07:34:25 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:34:27 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:34:28 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:34:29 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:34:31 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:34:33 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:34:34 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:34:34 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:34:34 | ml_trading | INFO | Prediction distribution: {0.0: 78, 1.0: 176, 2.0: 46}
+2026-06-16 07:34:34 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:34:34 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:34:34 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:34:34 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:34 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:34:34 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:34:34 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:34:34 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:35 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:34:35 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:34:35 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:34:35 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:35 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:34:35 | ml_trading | INFO | Labeling Method: Triple TP=2.5 SL=1.5
+2026-06-16 07:34:35 | ml_trading | INFO | ================================================================================
+2026-06-16 07:34:36 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:34:36 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:34:36 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:34:36 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:34:36 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:34:36 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:34:37 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:34:37 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:34:37 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:34:37 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:34:37 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:34:37 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:34:37 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:34:37 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:34:37 | ml_trading | INFO |   Validation ECE: 0.0747
+2026-06-16 07:34:37 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:34:39 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:34:40 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:34:42 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:34:43 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:34:45 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:34:47 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:34:47 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:34:47 | ml_trading | INFO | Prediction distribution: {0.0: 300}
+2026-06-16 07:34:47 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:34:47 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:34:47 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:47 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:47 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:34:47 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:34:47 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:47 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:47 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:34:47 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:34:47 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:47 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:47 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:34:47 | ml_trading | INFO | Labeling Method: Triple TP=3.0 SL=1.5
+2026-06-16 07:34:47 | ml_trading | INFO | ================================================================================
+2026-06-16 07:34:48 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:34:48 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:34:48 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:34:48 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:34:48 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:34:48 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:34:50 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:34:50 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:34:50 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:34:50 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:34:50 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:34:50 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:34:50 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:34:50 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:34:50 | ml_trading | INFO |   Validation ECE: 0.0997
+2026-06-16 07:34:50 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:34:51 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:34:52 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:34:54 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:34:55 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:34:56 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:34:58 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:34:58 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:34:58 | ml_trading | INFO | Prediction distribution: {0.0: 300}
+2026-06-16 07:34:58 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:34:58 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:34:58 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:58 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:58 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:34:58 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:34:58 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:58 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:34:58 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:34:58 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:34:58 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:34:58 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:04 | ml_trading | INFO | Loading reference data...
+2026-06-16 07:38:04 | ml_trading | INFO | Database schema initialized
+2026-06-16 07:38:04 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-16 07:38:04 | ml_trading | INFO | [horizon] forward_periods=12 (source: /root/app/ml-project/ml-trading-dashboard/ml_service/config.yaml)
+2026-06-16 07:38:21 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 07:38:21 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:38:21 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 07:38:21 | ml_trading | INFO | ================================================================================
+2026-06-16 07:38:21 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:38:21 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:38:21 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:38:21 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:38:21 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:38:21 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:38:21 | ml_trading | INFO | Train target distribution: {1: 420, 2: 372, 0: 278}
+2026-06-16 07:38:23 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:38:23 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:38:23 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:38:23 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:38:23 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:38:23 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:38:23 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:38:23 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:38:23 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 07:38:23 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:38:23 | ml_trading | INFO | Train target distribution: {1: 571, 2: 444, 0: 412}
+2026-06-16 07:38:24 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:38:24 | ml_trading | INFO | Train target distribution: {1: 605, 2: 455, 0: 417}
+2026-06-16 07:38:26 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:38:26 | ml_trading | INFO | Train target distribution: {1: 618, 2: 455, 0: 454}
+2026-06-16 07:38:27 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:38:27 | ml_trading | INFO | Train target distribution: {1: 625, 0: 493, 2: 459}
+2026-06-16 07:38:28 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:38:28 | ml_trading | INFO | Train target distribution: {1: 639, 0: 523, 2: 465}
+2026-06-16 07:38:29 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:38:29 | ml_trading | INFO | Train target distribution: {1: 650, 0: 528, 2: 499}
+2026-06-16 07:38:31 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:38:31 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:38:31 | ml_trading | INFO | Prediction distribution: {0.0: 33, 1.0: 267}
+2026-06-16 07:38:31 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:38:31 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:38:31 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:38:31 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:31 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:38:31 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:38:31 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:38:31 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:31 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:38:31 | ml_trading | INFO | Confidence stats: mean=0.418, median=0.414, max=0.467, p95=0.455
+2026-06-16 07:38:31 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:38:31 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:31 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:38:31 | ml_trading | INFO | Labeling Method: Triple TP=2.0 SL=2.0
+2026-06-16 07:38:31 | ml_trading | INFO | ================================================================================
+2026-06-16 07:38:32 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:38:32 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:38:32 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:38:32 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:38:32 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:38:32 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:38:32 | ml_trading | INFO | Train target distribution: {2: 427, 1: 363, 0: 280}
+2026-06-16 07:38:33 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:38:33 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:38:34 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:38:34 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:38:34 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:38:34 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:38:34 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:38:34 | ml_trading | INFO | Selected calibrator: isotonic
+2026-06-16 07:38:34 | ml_trading | INFO |   Validation ECE: 0.1137
+2026-06-16 07:38:34 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:38:34 | ml_trading | INFO | Train target distribution: {2: 519, 1: 478, 0: 430}
+2026-06-16 07:38:35 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:38:35 | ml_trading | INFO | Train target distribution: {2: 522, 1: 515, 0: 440}
+2026-06-16 07:38:37 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:38:37 | ml_trading | INFO | Train target distribution: {2: 530, 1: 516, 0: 481}
+2026-06-16 07:38:39 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:38:39 | ml_trading | INFO | Train target distribution: {2: 532, 0: 525, 1: 520}
+2026-06-16 07:38:40 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:38:40 | ml_trading | INFO | Train target distribution: {0: 546, 1: 546, 2: 535}
+2026-06-16 07:38:42 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:38:42 | ml_trading | INFO | Train target distribution: {1: 566, 2: 560, 0: 551}
+2026-06-16 07:38:43 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:38:43 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:38:43 | ml_trading | INFO | Prediction distribution: {0.0: 78, 1.0: 176, 2.0: 46}
+2026-06-16 07:38:43 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:38:43 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:38:43 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:38:43 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:43 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:38:43 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:38:43 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:38:43 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:43 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:38:43 | ml_trading | INFO | Confidence stats: mean=0.416, median=0.401, max=0.683, p95=0.537
+2026-06-16 07:38:43 | ml_trading | INFO | Predictions >=60%: 8
+2026-06-16 07:38:43 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:44 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:38:44 | ml_trading | INFO | Labeling Method: Triple TP=2.5 SL=1.5
+2026-06-16 07:38:44 | ml_trading | INFO | ================================================================================
+2026-06-16 07:38:45 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:38:45 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:38:45 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:38:45 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:38:45 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:38:45 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:38:45 | ml_trading | INFO | Train target distribution: {0: 406, 2: 332, 1: 332}
+2026-06-16 07:38:47 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:38:47 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:38:47 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:38:47 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:38:47 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:38:47 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:38:47 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:38:47 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:38:47 | ml_trading | INFO |   Validation ECE: 0.0747
+2026-06-16 07:38:47 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:38:47 | ml_trading | INFO | Train target distribution: {0: 603, 1: 439, 2: 385}
+2026-06-16 07:38:48 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:38:48 | ml_trading | INFO | Train target distribution: {0: 620, 1: 471, 2: 386}
+2026-06-16 07:38:50 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:38:50 | ml_trading | INFO | Train target distribution: {0: 664, 1: 472, 2: 391}
+2026-06-16 07:38:51 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:38:51 | ml_trading | INFO | Train target distribution: {0: 709, 1: 476, 2: 392}
+2026-06-16 07:38:53 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:38:53 | ml_trading | INFO | Train target distribution: {0: 744, 1: 491, 2: 392}
+2026-06-16 07:38:54 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:38:54 | ml_trading | INFO | Train target distribution: {0: 754, 1: 517, 2: 406}
+2026-06-16 07:38:55 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:38:55 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:38:55 | ml_trading | INFO | Prediction distribution: {0.0: 300}
+2026-06-16 07:38:55 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:38:55 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:38:55 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:38:55 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:56 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:38:56 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:38:56 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:38:56 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:56 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:38:56 | ml_trading | INFO | Confidence stats: mean=0.551, median=0.553, max=0.567, p95=0.565
+2026-06-16 07:38:56 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:38:56 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:38:56 | ml_trading | INFO | 
+================================================================================
+2026-06-16 07:38:56 | ml_trading | INFO | Labeling Method: Triple TP=3.0 SL=1.5
+2026-06-16 07:38:56 | ml_trading | INFO | ================================================================================
+2026-06-16 07:38:57 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 07:38:57 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 07:38:57 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 07:38:57 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 07:38:57 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 07:38:57 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 07:38:57 | ml_trading | INFO | Train target distribution: {0: 421, 1: 417, 2: 232}
+2026-06-16 07:38:58 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 07:38:58 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 07:38:58 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 07:38:58 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 07:38:58 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 07:38:58 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 07:38:58 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 07:38:58 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 07:38:58 | ml_trading | INFO |   Validation ECE: 0.0997
+2026-06-16 07:38:58 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 07:38:58 | ml_trading | INFO | Train target distribution: {0: 620, 1: 537, 2: 270}
+2026-06-16 07:39:01 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 07:39:01 | ml_trading | INFO | Train target distribution: {0: 637, 1: 569, 2: 271}
+2026-06-16 07:39:04 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 07:39:04 | ml_trading | INFO | Train target distribution: {0: 684, 1: 570, 2: 273}
+2026-06-16 07:39:06 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 07:39:06 | ml_trading | INFO | Train target distribution: {0: 729, 1: 574, 2: 274}
+2026-06-16 07:39:15 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 07:39:15 | ml_trading | INFO | Train target distribution: {0: 764, 1: 589, 2: 274}
+2026-06-16 07:39:23 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 07:39:23 | ml_trading | INFO | Train target distribution: {0: 774, 1: 618, 2: 285}
+2026-06-16 07:39:29 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 07:39:29 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 07:39:29 | ml_trading | INFO | Prediction distribution: {0.0: 300}
+2026-06-16 07:39:29 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 07:39:29 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:39:29 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:39:29 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:39:29 | ml_trading | INFO |   Running backtest: Conf >= 60%
+2026-06-16 07:39:29 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:39:29 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:39:29 | ml_trading | INFO | Predictions >=70%: 0
+2026-06-16 07:39:29 | ml_trading | INFO |   Running backtest: Conf >= 70%
+2026-06-16 07:39:29 | ml_trading | INFO | Confidence stats: mean=0.547, median=0.548, max=0.569, p95=0.558
+2026-06-16 07:39:29 | ml_trading | INFO | Predictions >=60%: 0
+2026-06-16 07:39:29 | ml_trading | INFO | Predictions >=70%: 0

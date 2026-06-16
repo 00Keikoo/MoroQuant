@@ -51,3 +51,4 @@ ml_service/test_*.py
 ml_service/debug_*.py
 *.pyc
 *.db
+ml_service/training_log.txt
