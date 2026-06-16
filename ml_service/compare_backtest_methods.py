@@ -255,7 +255,13 @@ def generate_walk_forward_predictions(
     calibrator: Dict,
     regions: Dict,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Generate out-of-sample predictions via walk-forward on test region."""
+    """Generate out-of-sample predictions via walk-forward on test region.
+
+    NOTE: Uses RAW probabilities from walk-forward models.
+    Calibrator is NOT applied because it was fitted on a different model's
+    probability distribution, which causes severe distortion when applied to
+    new models with different characteristics.
+    """
     test_start, test_end = regions['test']
     H = regions['purge_size']
     N = regions['N']
@@ -268,6 +274,10 @@ def generate_walk_forward_predictions(
     n_folds = (test_size - TEST_SIZE) // TEST_SIZE + 1
 
     logger.info(f"Walk-forward test: {n_folds} folds on [{test_start}:{test_end}]")
+    logger.info("Using RAW probabilities (calibrator not applied to avoid distribution mismatch)")
+
+    all_raw_preds = []
+    all_raw_probs_max = []
 
     for fold_idx in range(n_folds):
         fold_test_start = test_start + fold_idx * TEST_SIZE
@@ -289,15 +299,26 @@ def generate_walk_forward_predictions(
             continue
 
         probas_raw = model.predict_proba(X_test[valid_rows])
-        probas_calibrated = cal_mod.apply_calibrator(calibrator, probas_raw)
-        preds = np.argmax(probas_calibrated, axis=1)
+        preds = np.argmax(probas_raw, axis=1)
+
+        all_raw_preds.extend(preds)
+        all_raw_probs_max.extend(probas_raw.max(axis=1))
 
         valid_indices = X_test[valid_rows].index.values
         predictions[valid_indices] = preds
-        probas[valid_indices] = probas_calibrated
+        probas[valid_indices] = probas_raw
         valid_mask[valid_indices] = True
 
         logger.info(f"  Fold {fold_idx + 1}/{n_folds}: [{fold_test_start}:{fold_test_end}] → {valid_rows.sum()} predictions")
+
+    if all_raw_preds:
+        from collections import Counter
+        pred_dist = Counter(all_raw_preds)
+        logger.info(f"Raw prediction distribution: {dict(pred_dist)}")
+        logger.info(f"Raw confidence stats: mean={np.mean(all_raw_probs_max):.3f}, "
+                   f"median={np.median(all_raw_probs_max):.3f}, "
+                   f"min={np.min(all_raw_probs_max):.3f}, "
+                   f"max={np.max(all_raw_probs_max):.3f}")
 
     return predictions, probas, valid_mask
 
@@ -572,12 +593,16 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
             )
 
         feature_cols = get_feature_columns(df_labeled)
+	
+	# Preserve timestamp and close for backtest simulation
+	required_cols = ['timestamp', 'close'] + feature_cols + ['target']
+	missing_cols = [c for c in required_cols if c not in df_labeled.columns]
+	if missings_cols:
+		raise ValueError(f"Missing required columns: {missing_cols}")
 
-        df_bt = df_labeled.dropna(
-            subset=feature_cols + ['target']
-        ).reset_index(drop=True)
+	df_bt = df_labeled[required_cols].dropna().reset_index(drop=True)
 
-        N = len(df_bt)
+	N = len(df_bt)
 
         if N < 200:
             logger.warning(f"Insufficient clean data: {N} rows")
@@ -589,6 +614,11 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
         logger.info(f"  Cal-train: {regions['cal_train']}")
         logger.info(f"  Cal-val: {regions['cal_val']}")
         logger.info(f"  Test: {regions['test']}")
+
+
+        # Validate required columns after reset 
+	if 'timestamp' not in df_bt.columns or 'close' not in df_bt.columns:
+		raise ValueError("DataFrame missing required columns after processing")
 
         cal_train_probas, cal_train_y, cal_val_probas, cal_val_y = build_calibration_dataset(
             df_bt, feature_cols, regions

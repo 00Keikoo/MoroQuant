@@ -1,0 +1,69 @@
+2026-06-16 12:49:00 | ml_trading | INFO | Loading reference data...
+2026-06-16 12:49:00 | ml_trading | INFO | Database schema initialized
+2026-06-16 12:49:00 | ml_trading | INFO | Database initialized at /home/zafka/trade-dashboard/ml_service/storage/database.db
+2026-06-16 12:49:00 | ml_trading | INFO | [horizon] forward_periods=12 (source: /home/zafka/trade-dashboard/ml_service/config.yaml)
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-16 12:49:10 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+2026-06-16 12:49:10 | ml_trading | INFO | 
+================================================================================
+2026-06-16 12:49:10 | ml_trading | INFO | Labeling Method: Fixed Horizon
+2026-06-16 12:49:10 | ml_trading | INFO | ================================================================================
+2026-06-16 12:49:10 | ml_trading | INFO | Data regions (N=1784, H=12):
+2026-06-16 12:49:10 | ml_trading | INFO |   Training: (0, 1070)
+2026-06-16 12:49:10 | ml_trading | INFO |   Cal-train: (1082, 1281)
+2026-06-16 12:49:10 | ml_trading | INFO |   Cal-val: (1293, 1415)
+2026-06-16 12:49:10 | ml_trading | INFO |   Test: (1439, 1784)
+2026-06-16 12:49:10 | ml_trading | INFO | Training initial model on [0:1070]
+2026-06-16 12:49:11 | ml_trading | INFO | Initial model: xgboost
+2026-06-16 12:49:11 | ml_trading | INFO | Generating 3 calibration-train folds [1082:1281]
+2026-06-16 12:49:11 | ml_trading | INFO | Generating 2 calibration-val folds [1293:1415]
+2026-06-16 12:49:11 | ml_trading | INFO | Calibration-train: 150 samples
+2026-06-16 12:49:11 | ml_trading | INFO | Calibration-val: 100 samples
+2026-06-16 12:49:11 | ml_trading | INFO | Fitting calibrators on calibration-train set
+2026-06-16 12:49:11 | ml_trading | INFO | Evaluating calibrators on calibration-val set
+2026-06-16 12:49:11 | ml_trading | INFO | Selected calibrator: platt
+2026-06-16 12:49:11 | ml_trading | INFO |   Validation ECE: 0.1890
+2026-06-16 12:49:11 | ml_trading | INFO | Walk-forward test: 6 folds on [1439:1784]
+2026-06-16 12:49:11 | ml_trading | INFO | Using RAW probabilities (calibrator not applied to avoid distribution mismatch)
+2026-06-16 12:49:16 | ml_trading | INFO |   Fold 1/6: [1439:1489] → 50 predictions
+2026-06-16 12:49:17 | ml_trading | INFO |   Fold 2/6: [1489:1539] → 50 predictions
+2026-06-16 12:49:18 | ml_trading | INFO |   Fold 3/6: [1539:1589] → 50 predictions
+2026-06-16 12:49:20 | ml_trading | INFO |   Fold 4/6: [1589:1639] → 50 predictions
+2026-06-16 12:49:22 | ml_trading | INFO |   Fold 5/6: [1639:1689] → 50 predictions
+2026-06-16 12:49:26 | ml_trading | INFO |   Fold 6/6: [1689:1739] → 50 predictions
+2026-06-16 12:49:26 | ml_trading | INFO | Raw prediction distribution: {np.int64(1): 42, np.int64(2): 214, np.int64(0): 44}
+2026-06-16 12:49:26 | ml_trading | INFO | Raw confidence stats: mean=0.649, median=0.628, min=0.350, max=0.979
+2026-06-16 12:49:26 | ml_trading | INFO | Generated 300 out-of-sample predictions
+2026-06-16 12:49:26 | ml_trading | INFO |   Running backtest: No Filter
+2026-06-16 12:49:26 | ml_trading | ERROR | BTCUSDT 1h comparison failed: 'timestamp'
+Traceback (most recent call last):
+  File "/home/zafka/trade-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3641, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/index.pyx", line 168, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 197, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'timestamp'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/zafka/trade-dashboard/ml_service/compare_backtest_methods.py", line 714, in main
+    comparison = run_comparison(symbol, tf, btc_by_tf.get(tf), spy_by_tf.get(tf))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zafka/trade-dashboard/ml_service/compare_backtest_methods.py", line 604, in run_comparison
+    backtest_result = run_backtest_simulation(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zafka/trade-dashboard/ml_service/compare_backtest_methods.py", line 358, in run_backtest_simulation
+    'timestamp': int(row['timestamp']),
+                     ~~~^^^^^^^^^^^^^
+  File "/home/zafka/trade-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/series.py", line 959, in __getitem__
+    return self._get_value(key)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/zafka/trade-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/series.py", line 1046, in _get_value
+    loc = self.index.get_loc(label)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zafka/trade-dashboard/ml_service/venv/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3648, in get_loc
+    raise KeyError(key) from err
+KeyError: 'timestamp'
