@@ -9,7 +9,7 @@ import pickle
 import json
 
 from ..utils.logger import get_logger
-from ..utils.config import get_forward_periods
+from ..utils.config import get_forward_periods, get_config
 from ..data.database import get_database
 from .trainer import prepare_features, get_feature_columns
 from . import calibration as cal_mod
@@ -43,7 +43,10 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
         return None
 
     pattern = f"{symbol}_{timeframe}_*.pkl"
-    model_files = list(models_dir.glob(pattern))
+    model_files = [
+        f for f in models_dir.glob(pattern)
+        if not f.name.endswith("_calibration.pkl")
+    ]
 
     if not model_files:
         logger.warning(f"No model found for {symbol} {timeframe}")
@@ -202,13 +205,13 @@ def generate_signal(
     confidence = float(prediction_proba[prediction])
     confidence_pct = int(confidence * 100)
 
-    # Log prediction details
-    logger.info(f"Raw probability distribution: {[round(float(p), 3) for p in raw_proba]}")
-    logger.info(f"Predicted class: {prediction} ({direction_map.get(prediction, 'unknown')})")
-    logger.info(f"Confidence: {confidence_pct}%")
-
     direction_map = {0: 'short', 1: 'neutral', 2: 'long'}
     direction = direction_map[prediction]
+
+    # Log prediction details
+    logger.info(f"Raw probability distribution: {[round(float(p), 3) for p in raw_proba]}")
+    logger.info(f"Predicted class: {prediction} ({direction})")
+    logger.info(f"Confidence: {confidence_pct}%")
 
     # Apply confidence threshold filter
     filtered_by_confidence = False
@@ -251,9 +254,6 @@ def generate_signal(
 
     # Get labeling method from metadata or config
     labeling_method = metadata.get('labeling_method', 'unknown')
-    if labeling_method == 'unknown':
-        config = get_config()
-        labeling_method = config.model.labeling_method
 
     # Get model trained timestamp
     trained_at = metadata.get('trained_at', 'unknown')
