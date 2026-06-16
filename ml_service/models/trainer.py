@@ -28,7 +28,7 @@ def create_target_variable(
     short_threshold: float = -0.005,
 ) -> pd.DataFrame:
     """
-    Create target variable: forward return classification.
+    Create target variable: forward return classification (fixed-horizon method).
 
     CRITICAL: This uses FUTURE data, so must be shifted correctly.
     Target at row N = return from N to N+forward_periods.
@@ -55,6 +55,73 @@ def create_target_variable(
     df.loc[forward_return < short_threshold, 'target'] = 0  # short
 
     df = df[:-forward_periods]
+
+    return df
+
+
+def create_target_variable_triple_barrier(
+    df: pd.DataFrame,
+    holding_horizon: int = None,
+    tp_atr_mult: float = 3.0,
+    sl_atr_mult: float = 1.5,
+) -> pd.DataFrame:
+    """
+    Create target variable using Triple Barrier Labeling method.
+
+    Labels are determined by which barrier is touched first:
+    - Upper barrier (TP): entry_price + (ATR * tp_atr_mult) → long (2)
+    - Lower barrier (SL): entry_price - (ATR * sl_atr_mult) → short (0)
+    - Vertical barrier (time): holding_horizon candles → neutral (1)
+
+    This method is path-dependent and aligns labels with actual trade execution.
+
+    Args:
+        df: DataFrame with OHLCV data and ATR column
+        holding_horizon: Maximum holding period (default: forward_periods from config)
+        tp_atr_mult: ATR multiplier for take-profit barrier
+        sl_atr_mult: ATR multiplier for stop-loss barrier
+
+    Returns:
+        DataFrame with target column (0=short, 1=neutral, 2=long)
+    """
+    if holding_horizon is None:
+        holding_horizon = get_forward_periods()
+
+    if 'atr' not in df.columns:
+        raise ValueError("ATR column required for triple barrier labeling. Run add_atr() first.")
+
+    df = df.copy()
+    n = len(df)
+    labels = np.full(n, 1, dtype=int)  # default: neutral
+
+    for i in range(n - 1):
+        if pd.isna(df['atr'].iloc[i]) or df['atr'].iloc[i] == 0:
+            labels[i] = 1
+            continue
+
+        entry_price = df['close'].iloc[i]
+        atr_val = df['atr'].iloc[i]
+
+        upper_barrier = entry_price + (atr_val * tp_atr_mult)
+        lower_barrier = entry_price - (atr_val * sl_atr_mult)
+
+        max_idx = min(i + 1 + holding_horizon, n)
+
+        for j in range(i + 1, max_idx):
+            high_price = df['high'].iloc[j]
+            low_price = df['low'].iloc[j]
+
+            if high_price >= upper_barrier:
+                labels[i] = 2  # long
+                break
+            elif low_price <= lower_barrier:
+                labels[i] = 0  # short
+                break
+        # else: label remains neutral (vertical barrier hit)
+
+    df['target'] = labels
+
+    df = df[:-holding_horizon]
 
     return df
 
