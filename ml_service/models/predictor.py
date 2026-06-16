@@ -50,21 +50,30 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
         return None
 
     latest_model = max(model_files, key=lambda p: p.stat().st_mtime)
-    logger.info(f"Loading model from disk: {latest_model.name}")
 
     with open(latest_model, 'rb') as f:
         model_package = pickle.load(f)
 
     model_package['model_path'] = str(latest_model)
+
+    # Load metadata
+    metadata = model_package.get('metadata', {})
+    labeling_method = metadata.get('labeling_method', 'UNKNOWN')
+    trained_at = metadata.get('trained_at', 'UNKNOWN')
+
+    # Load calibration artifact (for diagnostics only, NOT applied to predictions)
     cal_artifact = cal_mod.load_calibration_artifact(str(latest_model))
     if cal_artifact:
         model_package['calibration'] = cal_artifact
-        logger.info(
-            f"Loaded calibration artifact (method={cal_artifact['chosen_method']}, "
-            f"holdout={cal_artifact['holdout_size']})"
-        )
-    else:
-        logger.warning(f"No calibration artifact for {latest_model.name}; using raw probabilities")
+
+    # Startup log showing model configuration
+    logger.info(f"{'='*60}")
+    logger.info(f"LOADED MODEL: {latest_model.name}")
+    logger.info(f"  Trained at: {trained_at}")
+    logger.info(f"  Labeling method: {labeling_method}")
+    logger.info(f"  Calibration available: {cal_artifact is not None}")
+    logger.info(f"  Calibration applied: False (using raw probabilities)")
+    logger.info(f"{'='*60}")
 
     _model_cache[cache_key] = model_package
     return model_package
@@ -178,19 +187,25 @@ def generate_signal(
         raw_proba = model.predict_proba(X_latest)[0]
         feature_importance = calculate_feature_importance(model, feature_cols, X_latest)
 
+    # Use raw probabilities (research validated approach)
+    # Calibration artifacts loaded for diagnostics but NOT applied
     cal_artifact = model_package.get('calibration')
-    if cal_artifact:
-        chosen = cal_artifact['chosen_method']
-        cal = cal_artifact['calibrators'][chosen]
-        prediction_proba = cal_mod.apply_calibrator(cal, raw_proba.reshape(1, -1))[0]
-        calibration_method = chosen
+    calibration_available = cal_artifact is not None
+    if calibration_available:
+        calibration_method = cal_artifact['chosen_method']
     else:
-        prediction_proba = raw_proba
-        calibration_method = 'raw'
+        calibration_method = 'none'
 
+    # Always use raw probabilities (no calibration applied)
+    prediction_proba = raw_proba
     prediction = int(np.argmax(prediction_proba))
     confidence = float(prediction_proba[prediction])
     confidence_pct = int(confidence * 100)
+
+    # Log prediction details
+    logger.info(f"Raw probability distribution: {[round(float(p), 3) for p in raw_proba]}")
+    logger.info(f"Predicted class: {prediction} ({direction_map.get(prediction, 'unknown')})")
+    logger.info(f"Confidence: {confidence_pct}%")
 
     direction_map = {0: 'short', 1: 'neutral', 2: 'long'}
     direction = direction_map[prediction]
@@ -258,6 +273,9 @@ def generate_signal(
         'confidence_raw': round(confidence, 3),
         'confidence_threshold': int(confidence_threshold * 100),
         'filtered_by_confidence': filtered_by_confidence,
+        'calibration_applied': False,
+        'calibration_available': calibration_available,
+        'calibration_method': calibration_method,
         'price': current_price,
         'stop_loss': round(stop_loss, decimal_places) if stop_loss else None,
         'take_profit': round(take_profit, decimal_places) if take_profit else None,
@@ -274,7 +292,6 @@ def generate_signal(
         'model_type': metadata['model_type'],
         'labeling_method': labeling_method,
         'trained_at': trained_at,
-        'calibration_method': calibration_method,
         'prediction_distribution': pred_distribution,
         'mtf_conflict': False,
     }
