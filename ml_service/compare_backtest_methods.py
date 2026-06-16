@@ -152,8 +152,7 @@ def run_backtest_with_confidence(
     if len(df) < warmup:
         return None
 
-    df_features = prepare_features(df, symbol='BTCUSDT')
-    df_features_clean = df_features[feature_cols].copy()
+    df_features_clean = df[feature_cols].copy()
 
     valid_mask = df_features_clean.notna().all(axis=1)
     predictions = np.full(len(df_features_clean), 1)
