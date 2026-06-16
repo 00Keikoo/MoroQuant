@@ -37,10 +37,15 @@ PROXY_SYMBOLS = ['ES_proxy', 'NQ_proxy', 'GC_proxy', 'CL_proxy', 'ZB_proxy']
 @router.get("/signals")
 async def get_signal(
     symbol: str = Query(..., description="Trading symbol (e.g., BTCUSDT)"),
-    timeframe: str = Query(..., description="Timeframe (e.g., 1h)")
+    timeframe: str = Query(..., description="Timeframe (e.g., 1h)"),
+    confidence_threshold: float = Query(0.60, description="Minimum confidence threshold (0.0-1.0)", ge=0.0, le=1.0)
 ) -> Dict:
-    """Generate fresh trading signal for a symbol/timeframe."""
-    signal = generate_signal(symbol=symbol, timeframe=timeframe)
+    """Generate fresh trading signal for a symbol/timeframe with confidence filtering."""
+    signal = generate_signal(
+        symbol=symbol,
+        timeframe=timeframe,
+        confidence_threshold=confidence_threshold
+    )
 
     if signal is None:
         return {

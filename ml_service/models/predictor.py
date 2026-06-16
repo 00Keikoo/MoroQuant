@@ -101,6 +101,7 @@ def generate_signal(
     timeframe: str,
     n_candles: int = 300,
     skip_mtf: bool = False,
+    confidence_threshold: float = 0.0,
 ) -> Optional[Dict]:
     """
     Generate trading signal for a symbol/timeframe.
@@ -188,11 +189,18 @@ def generate_signal(
         calibration_method = 'raw'
 
     prediction = int(np.argmax(prediction_proba))
+    confidence = float(prediction_proba[prediction])
+    confidence_pct = int(confidence * 100)
 
     direction_map = {0: 'short', 1: 'neutral', 2: 'long'}
     direction = direction_map[prediction]
 
-    confidence = int(prediction_proba[prediction] * 100)
+    # Apply confidence threshold filter
+    filtered_by_confidence = False
+    if confidence < confidence_threshold and direction != 'neutral':
+        direction = 'neutral'
+        filtered_by_confidence = True
+        logger.info(f"Signal filtered by confidence threshold: {confidence_pct}% < {int(confidence_threshold*100)}%")
 
     top_features = dict(list(feature_importance.items())[:5])
 
@@ -226,11 +234,30 @@ def generate_signal(
     # Use more precision for low-priced assets
     decimal_places = 4 if current_price < 1.0 else 2
 
+    # Get labeling method from metadata or config
+    labeling_method = metadata.get('labeling_method', 'unknown')
+    if labeling_method == 'unknown':
+        config = get_config()
+        labeling_method = config.model.labeling_method
+
+    # Get model trained timestamp
+    trained_at = metadata.get('trained_at', 'unknown')
+
+    # Calculate prediction distribution for diagnostics
+    pred_distribution = {
+        'class0_short': round(float(prediction_proba[0]), 3),
+        'class1_neutral': round(float(prediction_proba[1]), 3),
+        'class2_long': round(float(prediction_proba[2]), 3),
+    }
+
     signal = {
         'symbol': symbol,
         'timeframe': timeframe,
         'direction': direction,
-        'confidence': confidence,
+        'confidence': confidence_pct,
+        'confidence_raw': round(confidence, 3),
+        'confidence_threshold': int(confidence_threshold * 100),
+        'filtered_by_confidence': filtered_by_confidence,
         'price': current_price,
         'stop_loss': round(stop_loss, decimal_places) if stop_loss else None,
         'take_profit': round(take_profit, decimal_places) if take_profit else None,
@@ -245,20 +272,31 @@ def generate_signal(
         'regime': regime,
         'generated_at': datetime.now().isoformat(),
         'model_type': metadata['model_type'],
+        'labeling_method': labeling_method,
+        'trained_at': trained_at,
         'calibration_method': calibration_method,
+        'prediction_distribution': pred_distribution,
         'mtf_conflict': False,
     }
 
     if timeframe == '1h' and not skip_mtf:
         try:
-            higher_tf_signal = generate_signal(symbol=symbol, timeframe='4h', n_candles=n_candles, skip_mtf=True)
+            higher_tf_signal = generate_signal(
+                symbol=symbol,
+                timeframe='4h',
+                n_candles=n_candles,
+                skip_mtf=True,
+                confidence_threshold=confidence_threshold
+            )
 
             if higher_tf_signal is not None:
                 if higher_tf_signal['direction'] == signal['direction']:
                     signal['confidence'] = min(100, int(signal['confidence'] * 1.15))
+                    signal['confidence_raw'] = min(1.0, signal['confidence_raw'] * 1.15)
                     logger.info(f"MTF confirmation: 1h and 4h agree, boosted confidence to {signal['confidence']}%")
                 else:
                     signal['confidence'] = max(0, int(signal['confidence'] * 0.80))
+                    signal['confidence_raw'] = max(0.0, signal['confidence_raw'] * 0.80)
                     signal['mtf_conflict'] = True
                     logger.info(f"MTF conflict: 1h={signal['direction']}, 4h={higher_tf_signal['direction']}, reduced confidence to {signal['confidence']}%")
         except Exception as e:
