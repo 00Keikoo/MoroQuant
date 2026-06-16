@@ -31,6 +31,9 @@ class ModelConfig:
     type: str
     target: str
     forward_periods: int
+    labeling_method: str
+    tp_atr_mult: float
+    sl_atr_mult: float
     train_test_split: float
     validation_method: str
     xgboost_params: Dict[str, Any]
@@ -93,6 +96,9 @@ def load_config(config_path: str = None) -> Config:
         type=raw_config["model"]["type"],
         target=raw_config["model"]["target"],
         forward_periods=raw_config["model"]["forward_periods"],
+        labeling_method=raw_config["model"].get("labeling_method", "fixed_horizon"),
+        tp_atr_mult=raw_config["model"].get("tp_atr_mult", 3.0),
+        sl_atr_mult=raw_config["model"].get("sl_atr_mult", 1.5),
         train_test_split=raw_config["model"]["train_test_split"],
         validation_method=raw_config["model"]["validation_method"],
         xgboost_params=raw_config["model"]["xgboost_params"],

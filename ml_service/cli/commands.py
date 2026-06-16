@@ -269,7 +269,25 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
                         continue
 
                     df = prepare_features(df, symbol=sym)
-                    df = create_target_variable(df)
+
+                    # Use labeling method from config
+                    config = get_config()
+                    labeling_method = config.model.labeling_method
+
+                    if labeling_method == 'triple_barrier':
+                        from ..models.trainer import create_target_variable_triple_barrier
+                        tp_atr_mult = config.model.tp_atr_mult
+                        sl_atr_mult = config.model.sl_atr_mult
+                        forward_periods = config.model.forward_periods
+                        df = create_target_variable_triple_barrier(
+                            df,
+                            holding_horizon=forward_periods,
+                            tp_atr_mult=tp_atr_mult,
+                            sl_atr_mult=sl_atr_mult,
+                        )
+                    else:
+                        df = create_target_variable(df)
+
                     feature_cols = get_feature_columns(df)
 
                     df_clean = df[feature_cols + ['target']].dropna()
@@ -368,7 +386,25 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
         click.echo(f"Loaded {len(df)} candles")
 
         df = prepare_features(df, symbol=symbol)
-        df = create_target_variable(df)
+
+        # Use labeling method from config
+        config = get_config()
+        labeling_method = config.model.labeling_method
+
+        if labeling_method == 'triple_barrier':
+            from ..models.trainer import create_target_variable_triple_barrier
+            tp_atr_mult = config.model.tp_atr_mult
+            sl_atr_mult = config.model.sl_atr_mult
+            forward_periods = config.model.forward_periods
+            df = create_target_variable_triple_barrier(
+                df,
+                holding_horizon=forward_periods,
+                tp_atr_mult=tp_atr_mult,
+                sl_atr_mult=sl_atr_mult,
+            )
+        else:
+            df = create_target_variable(df)
+
         feature_cols = get_feature_columns(df)
 
         df_clean = df[feature_cols + ['target']].dropna()

@@ -63,6 +63,8 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     metadata = model_package.get('metadata', {})
     labeling_method = metadata.get('labeling_method', 'UNKNOWN')
     trained_at = metadata.get('trained_at', 'UNKNOWN')
+    tp_mult = metadata.get('tp_mult', 'N/A')
+    sl_mult = metadata.get('sl_mult', 'N/A')
 
     # Load calibration artifact (for diagnostics only, NOT applied to predictions)
     cal_artifact = cal_mod.load_calibration_artifact(str(latest_model))
@@ -72,8 +74,12 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     # Startup log showing model configuration
     logger.info(f"{'='*60}")
     logger.info(f"LOADED MODEL: {latest_model.name}")
+    logger.info(f"  Model path: {latest_model}")
     logger.info(f"  Trained at: {trained_at}")
     logger.info(f"  Labeling method: {labeling_method}")
+    if labeling_method == 'triple_barrier':
+        logger.info(f"  TP multiplier: {tp_mult}x ATR")
+        logger.info(f"  SL multiplier: {sl_mult}x ATR")
     logger.info(f"  Calibration available: {cal_artifact is not None}")
     logger.info(f"  Calibration applied: False (using raw probabilities)")
     logger.info(f"{'='*60}")

@@ -458,6 +458,12 @@ def train_final_model(
 
     model.fit(X, y)
 
+    config = get_config()
+    labeling_method = config.model.labeling_method
+    tp_atr_mult = config.model.tp_atr_mult
+    sl_atr_mult = config.model.sl_atr_mult
+    forward_periods = config.model.forward_periods
+
     metadata = {
         'model_type': model_type,
         'feature_cols': feature_cols,
@@ -465,6 +471,10 @@ def train_final_model(
         'class_distribution': y.value_counts().to_dict(),
         'trained_at': datetime.now().isoformat(),
         'hyperparameters': params if custom_params else 'default',
+        'labeling_method': labeling_method,
+        'tp_mult': tp_atr_mult,
+        'sl_mult': sl_atr_mult,
+        'forward_periods': forward_periods,
     }
 
     return model, metadata
@@ -543,7 +553,23 @@ def train_model(
     if forward_periods is None:
         forward_periods = get_forward_periods()
 
-    logger.info(f"Starting training for {symbol} {timeframe} (forward_periods={forward_periods})")
+    config = get_config()
+    labeling_method = config.model.labeling_method
+    tp_atr_mult = config.model.tp_atr_mult
+    sl_atr_mult = config.model.sl_atr_mult
+
+    if labeling_method not in ['fixed_horizon', 'triple_barrier']:
+        raise ValueError(
+            f"Unknown labeling_method '{labeling_method}' in config.yaml. "
+            f"Must be 'fixed_horizon' or 'triple_barrier'."
+        )
+
+    logger.info(f"Starting training for {symbol} {timeframe}")
+    logger.info(f"  Labeling method: {labeling_method}")
+    logger.info(f"  Forward periods: {forward_periods}")
+    if labeling_method == 'triple_barrier':
+        logger.info(f"  TP multiplier: {tp_atr_mult}x ATR")
+        logger.info(f"  SL multiplier: {sl_atr_mult}x ATR")
 
     tuned_config = load_tuned_params(symbol, timeframe)
     if tuned_config:
@@ -552,12 +578,20 @@ def train_model(
 
     df = prepare_features(df, symbol=symbol, btc_df=btc_df, eth_df=eth_df, spy_df=spy_df, dominance_df=dominance_df)
 
-    df = create_target_variable(
-        df,
-        forward_periods=forward_periods,
-        long_threshold=long_threshold,
-        short_threshold=short_threshold,
-    )
+    if labeling_method == 'triple_barrier':
+        df = create_target_variable_triple_barrier(
+            df,
+            holding_horizon=forward_periods,
+            tp_atr_mult=tp_atr_mult,
+            sl_atr_mult=sl_atr_mult,
+        )
+    else:
+        df = create_target_variable(
+            df,
+            forward_periods=forward_periods,
+            long_threshold=long_threshold,
+            short_threshold=short_threshold,
+        )
 
     feature_cols = get_feature_columns(df)
 
