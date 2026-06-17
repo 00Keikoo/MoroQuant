@@ -8,9 +8,9 @@ from typing import Dict, List, Optional
 from datetime import datetime
 import json
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config
-from .database import get_database
+from utils.logger import get_logger
+from utils.config import get_config
+from data.database import get_database
 
 logger = get_logger()
 

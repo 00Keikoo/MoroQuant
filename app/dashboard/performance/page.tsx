@@ -66,11 +66,16 @@ export default function PerformanceDashboard() {
 
   const fetchAllData = async () => {
     try {
-      const [metricsRes, positionsRes, regimesRes, confidenceRes] = await Promise.all([
-        fetch('http://localhost:8000/api/analytics/live-performance'),
-        fetch('http://localhost:8000/api/positions/open'),
-        fetch('http://localhost:8000/api/analytics/regimes'),
-        fetch('http://localhost:8000/api/analytics/confidence'),
+      const API_BASE =
+  	process.env.NEXT_PUBLIC_API_URL ||
+  	`http://${window.location.hostname}:8000/api`;
+
+      const [metricsRes, positionsRes, regimesRes, confidenceRes] =
+  	await Promise.all([
+     	 fetch(`${API_BASE}/analytics/live-performance`),
+    	 fetch(`${API_BASE}/positions/open`),
+    	 fetch(`${API_BASE}/analytics/regimes`),
+ 	 fetch(`${API_BASE}/analytics/confidence`)
       ]);
 
       if (!metricsRes.ok) {

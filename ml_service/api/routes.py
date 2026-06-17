@@ -324,7 +324,10 @@ async def get_trade_history() -> Dict:
 @router.get("/positions/open")
 async def get_open_positions() -> Dict:
     """Get open positions from Binance Futures with ML signal comparison."""
-    from ..data.exchange_sync import fetch_open_positions, get_position_signal_comparison
+    from data.exchange_sync import (
+	fetch_open_positions,
+	get_position_signal_comparison
+    )
     import yaml
     from pathlib import Path
 

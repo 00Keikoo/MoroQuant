@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 from contextlib import contextmanager
 
-from ..utils.logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger()
 

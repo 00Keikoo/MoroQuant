@@ -2496,3 +2496,8 @@
 2026-06-17 13:34:19 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
 2026-06-17 13:34:19 | ml_trading | INFO | Inserted 13 new trades into database
 2026-06-17 13:34:19 | ml_trading | INFO | Enriched 13 trades with signal data
+2026-06-17 20:19:32 | ml_trading | INFO | Fetched 35 trades from Binance Futures
+2026-06-17 20:19:32 | ml_trading | INFO | Database schema initialized
+2026-06-17 20:19:32 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+2026-06-17 20:19:32 | ml_trading | INFO | Inserted 7 new trades into database
+2026-06-17 20:19:32 | ml_trading | INFO | Enriched 6 trades with signal data
