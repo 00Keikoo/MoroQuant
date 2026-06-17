@@ -593,17 +593,17 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
             )
 
         feature_cols = get_feature_columns(df_labeled)
-    
-        # Preserve timestamp and close for backtest simulation
-        required_cols = ['timestamp', 'close'] + feature_cols + ['target']
-        missing_cols = [c for c in required_cols if c not in df_labeled.columns]
-        if missing_cols:
-            raise ValueError(f"Missing required columns: {missing_cols}")
-        
-        df_bt = df_labeled[required_cols].dropna().reset_index(drop=True)
-        
-        N = len(df_bt)
-        
+	
+	# Preserve timestamp and close for backtest simulation
+	required_cols = ['timestamp', 'close'] + feature_cols + ['target']
+	missing_cols = [c for c in required_cols if c not in df_labeled.columns]
+	if missings_cols:
+		raise ValueError(f"Missing required columns: {missing_cols}")
+
+	df_bt = df_labeled[required_cols].dropna().reset_index(drop=True)
+
+	N = len(df_bt)
+
         if N < 200:
             logger.warning(f"Insufficient clean data: {N} rows")
             continue
@@ -617,8 +617,8 @@ def run_comparison(symbol: str, timeframe: str, btc_df, spy_df):
 
 
         # Validate required columns after reset 
-        if 'timestamp' not in df_bt.columns or 'close' not in df_bt.columns:
-            raise ValueError("DataFrame missing required columns after processing")
+	if 'timestamp' not in df_bt.columns or 'close' not in df_bt.columns:
+		raise ValueError("DataFrame missing required columns after processing")
 
         cal_train_probas, cal_train_y, cal_val_probas, cal_val_y = build_calibration_dataset(
             df_bt, feature_cols, regions

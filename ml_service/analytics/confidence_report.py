@@ -103,7 +103,7 @@ def compute_confidence_performance(
         pnls_arr = np.array(pnls)
 
         total_trades = len(pnls)
-        winning_trades = np.sum(pnls_arr > 0)
+        winning_trades = int(np.sum(pnls_arr > 0))
         win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
 
         total_pnl = float(np.sum(pnls_arr))

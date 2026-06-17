@@ -382,7 +382,7 @@ async def get_live_performance(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get live trading performance metrics from synced Binance trades."""
-    from ..analytics.live_metrics import compute_live_metrics, get_equity_curve
+    from analytics.live_metrics import compute_live_metrics, get_equity_curve
 
     metrics = compute_live_metrics(symbol=symbol, days_back=days_back)
 
@@ -399,7 +399,7 @@ async def get_regime_performance(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get performance metrics grouped by market regime."""
-    from ..analytics.regime_performance import compute_regime_performance, get_regime_distribution
+    from analytics.regime_performance import compute_regime_performance, get_regime_distribution
 
     metrics = compute_regime_performance(symbol=symbol, days_back=days_back)
 
@@ -416,7 +416,7 @@ async def get_confidence_performance(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get performance metrics grouped by confidence buckets."""
-    from ..analytics.confidence_report import compute_confidence_performance, analyze_confidence_correlation
+    from analytics.confidence_report import compute_confidence_performance, analyze_confidence_correlation
 
     metrics = compute_confidence_performance(symbol=symbol, days_back=days_back)
 

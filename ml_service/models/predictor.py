@@ -14,7 +14,12 @@ from ..data.database import get_database
 from .trainer import prepare_features, get_feature_columns
 from . import calibration as cal_mod
 
-logger = get_logger()
+logger = get_logger(__name__)
+
+def get_metadata_value(metadata, key, default=None):
+	if isinstance(metadata, dict):
+		return metadata.get(key, default)
+	return getattr(metadata, key, default)
 
 _model_cache = {}
 _signal_cache = {}
@@ -61,10 +66,10 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
 
     # Load metadata
     metadata = model_package.get('metadata', {})
-    labeling_method = metadata.get('labeling_method', 'UNKNOWN')
-    trained_at = metadata.get('trained_at', 'UNKNOWN')
-    tp_mult = metadata.get('tp_mult', 'N/A')
-    sl_mult = metadata.get('sl_mult', 'N/A')
+    labeling_method = get_metadata_value(metadata, 'labeling_method', 'UNKNOWN')
+    trained_at = get_metadata_value(metadata, 'trained_at', 'UNKNOWN')
+    tp_mult = get_metadata_value(metadata, 'tp_mult', 'N/A')
+    sl_mult = get_metadata_value(metadata, 'sl_mult', 'N/A')
 
     # Load calibration artifact (for diagnostics only, NOT applied to predictions)
     cal_artifact = cal_mod.load_calibration_artifact(str(latest_model))
@@ -259,10 +264,10 @@ def generate_signal(
     decimal_places = 4 if current_price < 1.0 else 2
 
     # Get labeling method from metadata or config
-    labeling_method = metadata.get('labeling_method', 'unknown')
+    labeling_method = get_metadata_value(metadata, 'labeling_method', 'unknown')
 
     # Get model trained timestamp
-    trained_at = metadata.get('trained_at', 'unknown')
+    trained_at = get_metadata_value(metadata, 'trained_at', 'unknown')
 
     # Calculate prediction distribution for diagnostics
     pred_distribution = {
