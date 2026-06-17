@@ -67,11 +67,28 @@ export default function PerformanceDashboard() {
   const fetchAllData = async () => {
     try {
       const [metricsRes, positionsRes, regimesRes, confidenceRes] = await Promise.all([
-        fetch('http://localhost:8000/analytics/live-performance'),
-        fetch('http://localhost:8000/positions/open'),
-        fetch('http://localhost:8000/analytics/regimes'),
-        fetch('http://localhost:8000/analytics/confidence'),
+        fetch('http://localhost:8000/api/analytics/live-performance'),
+        fetch('http://localhost:8000/api/positions/open'),
+        fetch('http://localhost:8000/api/analytics/regimes'),
+        fetch('http://localhost:8000/api/analytics/confidence'),
       ]);
+
+      if (!metricsRes.ok) {
+        console.error('Live performance API failed:', metricsRes.status, metricsRes.statusText);
+        throw new Error(`API error: ${metricsRes.status} ${metricsRes.statusText}`);
+      }
+      if (!positionsRes.ok) {
+        console.error('Positions API failed:', positionsRes.status, positionsRes.statusText);
+        throw new Error(`API error: ${positionsRes.status} ${positionsRes.statusText}`);
+      }
+      if (!regimesRes.ok) {
+        console.error('Regimes API failed:', regimesRes.status, regimesRes.statusText);
+        throw new Error(`API error: ${regimesRes.status} ${regimesRes.statusText}`);
+      }
+      if (!confidenceRes.ok) {
+        console.error('Confidence API failed:', confidenceRes.status, confidenceRes.statusText);
+        throw new Error(`API error: ${confidenceRes.status} ${confidenceRes.statusText}`);
+      }
 
       const metricsData = await metricsRes.json();
       const positionsData = await positionsRes.json();
@@ -81,6 +98,8 @@ export default function PerformanceDashboard() {
       if (metricsData.status === 'success') {
         setMetrics(metricsData.metrics);
         setEquityCurve(metricsData.equity_curve || []);
+      } else if (metricsData.status === 'no_data') {
+        console.warn('No trade data available yet');
       }
 
       if (positionsData.positions) {
@@ -98,7 +117,9 @@ export default function PerformanceDashboard() {
       setLoading(false);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch analytics data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch analytics data';
+      console.error('Analytics fetch error:', err);
+      setError(`Backend error: ${errorMessage}. Ensure ml_service is running on port 8000.`);
       setLoading(false);
     }
   };
