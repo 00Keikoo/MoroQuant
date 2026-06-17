@@ -374,3 +374,127 @@ async def get_open_positions() -> Dict:
         "total_unrealized_pnl": round(total_unrealized_pnl, 2),
         "count": len(enriched)
     }
+
+
+@router.get("/analytics/live-performance")
+async def get_live_performance(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    days_back: Optional[int] = Query(None, description="Days to look back")
+) -> Dict:
+    """Get live trading performance metrics from synced Binance trades."""
+    from ..analytics.live_metrics import compute_live_metrics, get_equity_curve
+
+    metrics = compute_live_metrics(symbol=symbol, days_back=days_back)
+
+    if metrics['status'] == 'success':
+        equity_curve = get_equity_curve(symbol=symbol, days_back=days_back)
+        metrics['equity_curve'] = equity_curve
+
+    return metrics
+
+
+@router.get("/analytics/regimes")
+async def get_regime_performance(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    days_back: Optional[int] = Query(None, description="Days to look back")
+) -> Dict:
+    """Get performance metrics grouped by market regime."""
+    from ..analytics.regime_performance import compute_regime_performance, get_regime_distribution
+
+    metrics = compute_regime_performance(symbol=symbol, days_back=days_back)
+
+    if metrics['status'] == 'success':
+        distribution = get_regime_distribution(symbol=symbol, days_back=days_back)
+        metrics['distribution'] = distribution
+
+    return metrics
+
+
+@router.get("/analytics/confidence")
+async def get_confidence_performance(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    days_back: Optional[int] = Query(None, description="Days to look back")
+) -> Dict:
+    """Get performance metrics grouped by confidence buckets."""
+    from ..analytics.confidence_report import compute_confidence_performance, analyze_confidence_correlation
+
+    metrics = compute_confidence_performance(symbol=symbol, days_back=days_back)
+
+    if metrics['status'] == 'success':
+        correlation = analyze_confidence_correlation(symbol=symbol, days_back=days_back)
+        metrics['correlation_analysis'] = correlation
+
+    return metrics
+
+
+@router.get("/analytics/trade-history")
+async def get_enhanced_trade_history(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    limit: int = Query(100, description="Number of trades to return")
+) -> Dict:
+    """Get enhanced trade history with signal attribution."""
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+
+        query = """
+            SELECT
+                uth.id,
+                uth.symbol,
+                uth.side,
+                uth.price,
+                uth.qty,
+                uth.realized_pnl,
+                uth.commission,
+                uth.trade_time,
+                uth.matched_signal_id,
+                uth.market_regime,
+                uth.confidence_at_entry,
+                s.direction as signal_direction,
+                s.tp_multiplier,
+                s.sl_multiplier,
+                s.labeling_method
+            FROM user_trade_history uth
+            LEFT JOIN signals s ON uth.matched_signal_id = s.id
+            WHERE 1=1
+        """
+        params = []
+
+        if symbol:
+            query += " AND uth.symbol = ?"
+            params.append(symbol)
+
+        query += " ORDER BY uth.trade_time DESC LIMIT ?"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+
+        trades = []
+        for row in rows:
+            trade = {
+                "id": row[0],
+                "symbol": row[1],
+                "side": row[2],
+                "price": row[3],
+                "qty": row[4],
+                "realized_pnl": row[5],
+                "commission": row[6],
+                "net_pnl": row[5] - row[6],
+                "trade_time": row[7],
+                "matched_signal_id": row[8],
+                "market_regime": row[9],
+                "confidence_at_entry": row[10],
+                "signal_direction": row[11],
+                "tp_multiplier": row[12],
+                "sl_multiplier": row[13],
+                "labeling_method": row[14],
+            }
+            trades.append(trade)
+
+    return {
+        "trades": trades,
+        "count": len(trades),
+        "timestamp": datetime.now().isoformat()
+    }

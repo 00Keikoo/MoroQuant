@@ -402,8 +402,11 @@ def save_signal_to_db(signal: Dict) -> None:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO signals (symbol, timeframe, timestamp, direction, confidence, features_json)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO signals (
+                symbol, timeframe, timestamp, direction, confidence, features_json,
+                tp_multiplier, sl_multiplier, labeling_method, atr, regime
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 signal['symbol'],
@@ -412,6 +415,11 @@ def save_signal_to_db(signal: Dict) -> None:
                 signal['direction'],
                 signal['confidence'],
                 features_json,
+                signal.get('tp_multiplier'),
+                signal.get('sl_multiplier'),
+                signal.get('labeling_method'),
+                signal.get('atr'),
+                signal.get('regime'),
             )
         )
 

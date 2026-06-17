@@ -70,6 +70,16 @@ export default function Sidebar() {
             >
               My Trades
             </Link>
+            <Link
+              href="/dashboard/performance"
+              className={`block w-full text-left px-3 py-2 rounded transition-all duration-200 text-sm font-semibold ${
+                pathname === '/dashboard/performance'
+                  ? 'bg-blue-600 text-white border-l-4 border-blue-400 pl-2'
+                  : 'hover:bg-gray-800 text-gray-300 hover:border-l-4 hover:border-gray-600 hover:pl-2'
+              }`}
+            >
+              Live Analytics
+            </Link>
           </div>
         </div>
 
