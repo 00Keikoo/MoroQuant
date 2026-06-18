@@ -5,8 +5,8 @@ import requests
 from typing import Optional, Dict
 import pandas as pd
 
-from ..utils.logger import get_logger
-from .database import get_database
+from utils.logger import get_logger
+from data.database import get_database
 
 logger = get_logger()
 

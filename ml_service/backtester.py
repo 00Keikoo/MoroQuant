@@ -8,11 +8,11 @@ from typing import Dict, List, Tuple, Optional
 import json
 import pickle
 
-from .utils.logger import get_logger
-from .utils.config import get_forward_periods
-from .data.database import get_database
-from .models.trainer import prepare_features
-from .models.predictor import load_latest_model
+from utils.logger import get_logger
+from utils.config import get_forward_periods
+from data.database import get_database
+from models.trainer import prepare_features
+from models.predictor import load_latest_model
 
 logger = get_logger()
 

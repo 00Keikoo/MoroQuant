@@ -11,8 +11,8 @@ import json
 from utils.logger import get_logger
 from utils.config import get_forward_periods, get_config
 from data.database import get_database
-from .trainer import prepare_features, get_feature_columns
-from . import calibration as cal_mod
+from models.trainer import prepare_features, get_feature_columns
+from models import calibration as cal_mod
 
 logger = get_logger(__name__)
 

@@ -7,9 +7,9 @@ import requests
 import yfinance as yf
 import pandas as pd
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config
-from .database import get_database
+from utils.logger import get_logger
+from utils.config import get_config
+from data.database import get_database
 
 logger = get_logger()
 

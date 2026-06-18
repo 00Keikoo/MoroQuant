@@ -11,12 +11,12 @@ import xgboost as xgb
 import lightgbm as lgb
 from sklearn.metrics import f1_score, classification_report
 
-from ..utils.logger import get_logger
-from ..utils.config import get_config, get_forward_periods
-from ..features.price_action import add_price_action_features
-from ..features.indicators import add_all_indicators
-from ..features.regime import add_regime_features
-from ..features.funding_rate import add_funding_rate_features
+from utils.logger import get_logger
+from utils.config import get_config, get_forward_periods
+from features.price_action import add_price_action_features
+from features.indicators import add_all_indicators
+from features.regime import add_regime_features
+from features.funding_rate import add_funding_rate_features
 
 logger = get_logger()
 
@@ -404,6 +404,7 @@ def train_final_model(
     feature_cols: List[str],
     model_type: str = 'xgboost',
     custom_params: Dict = None,
+    validation_metrics: Optional[Dict] = None,
 ) -> Tuple[object, Dict]:
     """
     Train final model on all available data.
@@ -413,6 +414,7 @@ def train_final_model(
         feature_cols: List of feature column names
         model_type: 'xgboost' or 'lightgbm'
         custom_params: Optional custom hyperparameters (from tuning)
+        validation_metrics: Optional validation metrics from walk-forward validation
 
     Returns:
         Tuple of (trained_model, metadata)
@@ -476,6 +478,9 @@ def train_final_model(
         'sl_mult': sl_atr_mult,
         'forward_periods': forward_periods,
     }
+
+    if validation_metrics:
+        metadata['validation'] = validation_metrics
 
     return model, metadata
 
@@ -642,13 +647,36 @@ def train_model(
     logger.info(f"Walk-forward validation complete: {len(fold_results)} folds")
     logger.info(f"Avg F1 - Short: {avg_f1_short:.3f}, Neutral: {avg_f1_neutral:.3f}, Long: {avg_f1_long:.3f}")
 
+    validation_metrics = {
+        'purge_enabled': True,
+        'purge_size': forward_periods,
+        'embargo_size': forward_periods,
+        'n_folds': len(fold_results),
+        'avg_f1_weighted': float(avg_f1_weighted),
+        'avg_f1_short': float(avg_f1_short),
+        'avg_f1_neutral': float(avg_f1_neutral),
+        'avg_f1_long': float(avg_f1_long),
+        'fold_summary': [{
+            'fold': r['fold'],
+            'model_type': r['model_type'],
+            'f1_weighted': float(r['f1_weighted']),
+            'train_size': r['train_size'],
+            'test_size': r['test_size'],
+        } for r in fold_results]
+    }
+
     best_model_type = fold_results[-1]['model_type']
 
     custom_params = None
     if tuned_config and tuned_config['model_type'] == best_model_type:
         custom_params = tuned_config['best_params']
 
-    final_model, metadata = train_final_model(df, feature_cols, model_type=best_model_type, custom_params=custom_params)
+    final_model, metadata = train_final_model(
+        df, feature_cols,
+        model_type=best_model_type,
+        custom_params=custom_params,
+        validation_metrics=validation_metrics
+    )
 
     model_path = save_model(final_model, metadata, symbol, timeframe)
 

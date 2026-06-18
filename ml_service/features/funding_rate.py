@@ -5,7 +5,7 @@ import numpy as np
 import requests
 from typing import Optional
 
-from ..utils.logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger()
 

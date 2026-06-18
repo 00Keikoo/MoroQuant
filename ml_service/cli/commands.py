@@ -3,10 +3,10 @@
 import click
 from typing import Optional
 
-from ..utils.logger import setup_logger, get_logger
-from ..utils.config import get_config
-from ..data.database import get_database
-from ..data.ingestion import (
+from utils.logger import setup_logger, get_logger
+from utils.config import get_config
+from data.database import get_database
+from data.ingestion import (
     ingest_binance_symbol,
     ingest_yfinance_symbol,
     fetch_all,
@@ -93,8 +93,8 @@ def db_info():
 @click.option("--retrain", is_flag=True, help="Force retrain even if model exists")
 def train(symbol: str, timeframe: str, retrain: bool):
     """Train ML model for a symbol/timeframe."""
-    from ..models.trainer import train_model as train_ml_model
-    from ..data.database import get_database
+    from models.trainer import train_model as train_ml_model
+    from data.database import get_database
     import pandas as pd
 
     click.echo(f"\nTraining model for {symbol} {timeframe}...")
@@ -181,7 +181,7 @@ def train(symbol: str, timeframe: str, retrain: bool):
 @click.option("--explain", is_flag=True, help="Show feature importance")
 def signal(symbol: str, timeframe: str, explain: bool):
     """Generate trading signal for a symbol/timeframe."""
-    from ..models.predictor import generate_signal as gen_signal
+    from models.predictor import generate_signal as gen_signal
     import json
 
     click.echo(f"\nGenerating signal for {symbol} {timeframe}...")
@@ -221,14 +221,14 @@ def signal(symbol: str, timeframe: str, explain: bool):
 @click.option("--all", "tune_all", is_flag=True, help="Tune all configured symbols")
 def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all: bool):
     """Tune hyperparameters for XGBoost and LightGBM models."""
-    from ..models.tuner import (
+    from models.tuner import (
         tune_hyperparameters,
         save_tuned_params,
         get_baseline_f1,
     )
-    from ..models.trainer import prepare_features, create_target_variable, get_feature_columns
-    from ..data.database import get_database
-    from ..utils.config import get_config
+    from models.trainer import prepare_features, create_target_variable, get_feature_columns
+    from data.database import get_database
+    from utils.config import get_config
     import pandas as pd
 
     if tune_all:
@@ -275,7 +275,7 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
                     labeling_method = config.model.labeling_method
 
                     if labeling_method == 'triple_barrier':
-                        from ..models.trainer import create_target_variable_triple_barrier
+                        from models.trainer import create_target_variable_triple_barrier
                         tp_atr_mult = config.model.tp_atr_mult
                         sl_atr_mult = config.model.sl_atr_mult
                         forward_periods = config.model.forward_periods
@@ -392,7 +392,7 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
         labeling_method = config.model.labeling_method
 
         if labeling_method == 'triple_barrier':
-            from ..models.trainer import create_target_variable_triple_barrier
+            from models.trainer import create_target_variable_triple_barrier
             tp_atr_mult = config.model.tp_atr_mult
             sl_atr_mult = config.model.sl_atr_mult
             forward_periods = config.model.forward_periods
@@ -465,8 +465,8 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
 @click.option("--all", "optimize_all", is_flag=True, help="Optimize all symbols with backtest data")
 def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all: bool):
     """Optimize TP/SL multipliers based on backtest history."""
-    from ..models.tp_sl_optimizer import optimize_tp_sl, save_optimized_params
-    from ..utils.config import get_config
+    from models.tp_sl_optimizer import optimize_tp_sl, save_optimized_params
+    from utils.config import get_config
     from pathlib import Path
 
     if optimize_all:
@@ -603,12 +603,12 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
 @click.option("--symbol", help="Sync specific symbol only")
 def sync_trades(continuous: bool, symbol: Optional[str]):
     """Sync trade history from Binance Futures exchange."""
-    from ..data.exchange_sync import (
+    from data.exchange_sync import (
         fetch_user_trades,
         save_trades_to_db,
         enrich_trades_with_signals,
     )
-    from ..utils.config import get_config
+    from utils.config import get_config
     import yaml
     from pathlib import Path
 
@@ -663,7 +663,7 @@ def sync_trades(continuous: bool, symbol: Optional[str]):
 @cli.command("open-positions")
 def open_positions():
     """Show currently open positions from Binance Futures."""
-    from ..data.exchange_sync import fetch_open_positions, get_position_signal_comparison
+    from data.exchange_sync import fetch_open_positions, get_position_signal_comparison
     import yaml
     from pathlib import Path
 
@@ -722,7 +722,7 @@ def open_positions():
 @cli.command("my-performance")
 def my_performance():
     """Analyze performance of exchange trades vs ML signals."""
-    from ..data.exchange_sync import analyze_signal_performance
+    from data.exchange_sync import analyze_signal_performance
 
     stats = analyze_signal_performance()
 
@@ -774,7 +774,7 @@ def my_performance():
 @click.option("--status", "action", flag_value="status", help="Show scheduler status")
 def scheduler(action: str):
     """Manage the auto-retrain scheduler."""
-    from ..scheduler import start_scheduler, get_scheduler_status
+    from scheduler import start_scheduler, get_scheduler_status
     import json
 
     if action == "start":
@@ -789,7 +789,7 @@ def scheduler(action: str):
                 time.sleep(1)
         except KeyboardInterrupt:
             click.echo("\n\nStopping scheduler...")
-            from ..scheduler import stop_scheduler
+            from scheduler import stop_scheduler
             stop_scheduler()
             click.echo("✓ Scheduler stopped")
 
@@ -828,8 +828,8 @@ def scheduler(action: str):
 @click.option("--all", "backtest_all", is_flag=True, help="Backtest all trained models")
 def backtest(symbol: Optional[str], timeframe: Optional[str], backtest_all: bool):
     """Run backtests on historical data with walk-forward validation."""
-    from ..backtester import run_backtest, print_backtest_summary
-    from ..utils.config import get_config
+    from backtester import run_backtest, print_backtest_summary
+    from utils.config import get_config
 
     if backtest_all:
         config = get_config()

@@ -7,12 +7,10 @@ from datetime import datetime
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from ml_service.models.predictor import generate_signal, calculate_tp_sl
-from ml_service.data.database import get_database
-from ml_service.services.crypto_price_service import get_crypto_service
-from ml_service.services.proxy_price_service import get_proxy_service
+from models.predictor import generate_signal, calculate_tp_sl
+from data.database import get_database
+from services.crypto_price_service import get_crypto_service
+from services.proxy_price_service import get_proxy_service
 
 router = APIRouter()
 
@@ -499,5 +497,45 @@ async def get_enhanced_trade_history(
     return {
         "trades": trades,
         "count": len(trades),
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@router.get("/models/{symbol}/{timeframe}/validation")
+async def get_model_validation(symbol: str, timeframe: str) -> Dict:
+    """Get validation metrics from trained model for a symbol/timeframe."""
+    from models.predictor import load_latest_model
+
+    model_package = load_latest_model(symbol, timeframe)
+
+    if model_package is None:
+        return {
+            "error": "model_not_found",
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "message": f"No trained model found for {symbol} {timeframe}"
+        }
+
+    metadata = model_package.get('metadata', {})
+    validation = metadata.get('validation')
+
+    if validation is None:
+        return {
+            "status": "no_validation_data",
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "message": "Model was trained before purged validation integration",
+            "trained_at": metadata.get('trained_at', 'unknown'),
+            "model_type": metadata.get('model_type', 'unknown')
+        }
+
+    return {
+        "status": "success",
+        "symbol": symbol,
+        "timeframe": timeframe,
+        "model_type": metadata.get('model_type'),
+        "trained_at": metadata.get('trained_at'),
+        "labeling_method": metadata.get('labeling_method'),
+        "validation": validation,
         "timestamp": datetime.now().isoformat()
     }
