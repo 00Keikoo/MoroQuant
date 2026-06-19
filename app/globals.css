@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  --color-mq-bg: #030303;
+  --color-mq-panel: #09090b;
+  --color-mq-panel-border: rgba(255, 255, 255, 0.05);
+  --color-mq-accent: #00f0ff;
+  --color-mq-accent-dim: rgba(0, 240, 255, 0.1);
+  --color-mq-long: #00ff87;
+  --color-mq-long-dim: rgba(0, 255, 135, 0.1);
+  --color-mq-short: #ff0055;
+  --color-mq-short-dim: rgba(255, 0, 85, 0.1);
+  --color-mq-warning: #ffaa00;
+  --color-mq-warning-dim: rgba(255, 170, 0, 0.1);
+  --color-mq-muted: #8e8e93;
+}
+
 @layer utilities {
   @keyframes shimmer {
     0% {
