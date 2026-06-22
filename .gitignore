@@ -52,3 +52,19 @@ ml_service/debug_*.py
 *.pyc
 *.db
 ml_service/training_log.txt
+
+# audit reports
+*_AUDIT.md
+*_REPORT.md
+*_VERIFICATION.md
+
+# runtime artifacts
+storage/logs/
+*.json
+
+# validation outputs
+validation_results.json
+registry_validation_results.json
+production_model_audit_results.json
+storage/logs/*.log
+ml_service/scratch/

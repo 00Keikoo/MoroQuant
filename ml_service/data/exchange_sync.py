@@ -171,7 +171,7 @@ def enrich_trades_with_signals():
 
         cursor.execute(
             """
-            SELECT id, symbol, side, trade_time
+            SELECT id, symbol, side, realized_pnl, trade_time
             FROM user_trade_history
             WHERE matched_signal_id IS NULL
             """
@@ -180,14 +180,42 @@ def enrich_trades_with_signals():
         unmatched_trades = cursor.fetchall()
         matched = 0
 
-        for trade_id, symbol, side, trade_time in unmatched_trades:
-            # Convert trade side to signal direction
-            trade_direction = 'long' if side == 'BUY' else 'short'
-
+        for trade_id, symbol, side, realized_pnl, trade_time in unmatched_trades:
             best_signal = None
             best_confidence = -1
 
-            # Check each timeframe with its specific window
+            # 1. Try parent entry match for exit trades (realized_pnl != 0)
+            if realized_pnl != 0:
+                cursor.execute(
+                    """
+                    SELECT matched_signal_id, market_regime, confidence_at_entry
+                    FROM user_trade_history
+                    WHERE symbol = ?
+                      AND trade_time < ?
+                      AND matched_signal_id IS NOT NULL
+                    ORDER BY trade_time DESC
+                    LIMIT 1
+                    """,
+                    (symbol, trade_time)
+                )
+                parent = cursor.fetchone()
+                if parent and parent[0] is not None:
+                    parent_signal_id, parent_regime, parent_confidence = parent
+                    cursor.execute(
+                        """
+                        UPDATE user_trade_history
+                        SET matched_signal_id = ?,
+                            market_regime = ?,
+                            confidence_at_entry = ?
+                        WHERE id = ?
+                        """,
+                        (parent_signal_id, parent_regime, parent_confidence, trade_id)
+                    )
+                    matched += 1
+                    continue
+
+            # 2. Try strict match (same symbol, same direction, within window)
+            trade_direction = 'long' if side == 'BUY' else 'short'
             for timeframe, window_ms in timeframe_windows.items():
                 time_window_start = trade_time - window_ms
                 time_window_end = trade_time + window_ms
@@ -207,16 +235,39 @@ def enrich_trades_with_signals():
                     """,
                     (symbol, timeframe, trade_direction, time_window_start, time_window_end, trade_time)
                 )
-
                 signal = cursor.fetchone()
-
                 if signal:
                     signal_id, direction, confidence, features_json, sig_timeframe = signal
-
-                    # Keep the highest confidence signal across all timeframes
                     if confidence > best_confidence:
                         best_confidence = confidence
                         best_signal = signal
+
+            # 3. Try relaxed match (same symbol, ignoring direction, within window)
+            if not best_signal:
+                for timeframe, window_ms in timeframe_windows.items():
+                    time_window_start = trade_time - window_ms
+                    time_window_end = trade_time + window_ms
+
+                    cursor.execute(
+                        """
+                        SELECT id, direction, confidence, features_json, timeframe
+                        FROM signals
+                        WHERE symbol = ?
+                          AND timeframe = ?
+                          AND direction != 'neutral'
+                          AND timestamp >= ?
+                          AND timestamp <= ?
+                        ORDER BY ABS(timestamp - ?) ASC
+                        LIMIT 1
+                        """,
+                        (symbol, timeframe, time_window_start, time_window_end, trade_time)
+                    )
+                    signal = cursor.fetchone()
+                    if signal:
+                        signal_id, direction, confidence, features_json, sig_timeframe = signal
+                        if confidence > best_confidence:
+                            best_confidence = confidence
+                            best_signal = signal
 
             if best_signal:
                 signal_id, direction, confidence, features_json, sig_timeframe = best_signal

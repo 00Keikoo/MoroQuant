@@ -130,6 +130,7 @@ def generate_signal(
     n_candles: int = 300,
     skip_mtf: bool = False,
     confidence_threshold: float = 0.0,
+    override_timestamp: Optional[int] = None,
 ) -> Optional[Dict]:
     """
     Generate trading signal for a symbol/timeframe.
@@ -145,13 +146,14 @@ def generate_signal(
     from .tp_sl_optimizer import load_optimized_params
 
     cache_key = f"{symbol}_{timeframe}"
-    cached = _signal_cache.get(cache_key)
-    if cached:
-        age = (datetime.now() - cached['cached_at']).total_seconds()
-        if age < 300:
-            logger.info(f"Using cached signal for {symbol} {timeframe} (age: {age:.1f}s)")
-            # Return cached signal without price - routes.py will add fresh price
-            return cached['signal']
+    if not override_timestamp:
+        cached = _signal_cache.get(cache_key)
+        if cached:
+            age = (datetime.now() - cached['cached_at']).total_seconds()
+            if age < 300:
+                logger.info(f"Using cached signal for {symbol} {timeframe} (age: {age:.1f}s)")
+                # Return cached signal without price - routes.py will add fresh price
+                return cached['signal']
 
     logger.info(f"Generating signal for {symbol} {timeframe}")
 
@@ -170,10 +172,17 @@ def generate_signal(
             SELECT timestamp, open, high, low, close, volume
             FROM ohlcv
             WHERE symbol = ? AND timeframe = ?
+        """
+        params = [symbol, timeframe]
+        if override_timestamp:
+            query += " AND timestamp <= ?"
+            params.append(override_timestamp)
+        query += """
             ORDER BY timestamp DESC
             LIMIT ?
         """
-        df = pd.read_sql_query(query, conn, params=(symbol, timeframe, n_candles))
+        params.append(n_candles)
+        df = pd.read_sql_query(query, conn, params=params)
 
     if df.empty:
         logger.error(f"No data found for {symbol} {timeframe}")
@@ -279,7 +288,8 @@ def generate_signal(
     timeframe_hours = {'1h': 1, '4h': 4, '15m': 0.25, '30m': 0.5, '1d': 24}
     hours = timeframe_hours.get(timeframe, 1)
     from datetime import timedelta
-    valid_until = (datetime.now() + timedelta(hours=max_hold_candles * hours)).isoformat()
+    dt_base = datetime.fromtimestamp(override_timestamp / 1000) if override_timestamp else datetime.now()
+    valid_until = (dt_base + timedelta(hours=max_hold_candles * hours)).isoformat()
 
     # Use more precision for low-priced assets
     decimal_places = 4 if current_price < 1.0 else 2
@@ -330,13 +340,16 @@ def generate_signal(
         'tp_sl_source': tp_sl_source,
         'top_features': {k: float(v) for k, v in top_features.items()},
         'regime': regime,
-        'generated_at': datetime.now().isoformat(),
+        'generated_at': dt_base.isoformat(),
         'model_type': metadata['model_type'],
         'labeling_method': labeling_method,
         'trained_at': trained_at,
         'prediction_distribution': pred_distribution,
         'mtf_alignment': 'NEUTRAL',
     }
+
+    if override_timestamp:
+        signal['timestamp'] = override_timestamp
 
     if timeframe == '1h' and not skip_mtf:
         try:
@@ -345,7 +358,8 @@ def generate_signal(
                 timeframe='4h',
                 n_candles=n_candles,
                 skip_mtf=True,
-                confidence_threshold=confidence_threshold
+                confidence_threshold=confidence_threshold,
+                override_timestamp=override_timestamp
             )
 
             if higher_tf_signal is not None:
@@ -431,7 +445,7 @@ def save_signal_to_db(signal: Dict) -> None:
     """
     db = get_database()
 
-    timestamp = int(datetime.now().timestamp() * 1000)
+    timestamp = signal.get('timestamp') or int(datetime.now().timestamp() * 1000)
     features_json = json.dumps(signal['top_features'])
 
     with db.get_connection() as conn:

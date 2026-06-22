@@ -134,6 +134,17 @@ def compute_live_metrics(
     # Peak drawdown percentage
     max_drawdown_pct = (max_drawdown / running_max[np.argmax(drawdowns)] * 100) if np.max(running_max) > 0 else 0
 
+    # ROI Calculation
+    from ml_service.utils.config import get_config
+    try:
+        config = get_config()
+        initial_capital = float(config.backtest.get('initial_capital', 10000.0))
+    except Exception as e:
+        logger.error(f"Error loading initial capital from config: {e}")
+        initial_capital = 10000.0
+    
+    roi = (total_pnl / initial_capital) * 100
+
     metrics = {
         "total_trades": total_trades,
         "winning_trades": winning_trades,
@@ -145,6 +156,7 @@ def compute_live_metrics(
         "avg_loss": round(avg_loss, 2),
         "profit_factor": round(profit_factor, 2) if profit_factor != float('inf') else "inf",
         "expectancy": round(expectancy, 2),
+        "roi": round(roi, 4),
         "gross_profit": round(gross_profit, 2),
         "gross_loss": round(gross_loss, 2),
         "sharpe_ratio": round(sharpe_ratio, 2) if sharpe_ratio is not None else None,

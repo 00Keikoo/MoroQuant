@@ -409,6 +409,23 @@ async def get_live_performance(
     return metrics
 
 
+@router.get("/analytics/live-performance-report")
+async def get_live_performance_report(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    days_back: Optional[int] = Query(None, description="Days to look back")
+) -> Dict:
+    """Get comprehensive live trading performance report."""
+    from analytics.live_metrics import compute_live_metrics, get_equity_curve
+
+    metrics = compute_live_metrics(symbol=symbol, days_back=days_back)
+
+    if metrics['status'] == 'success':
+        equity_curve = get_equity_curve(symbol=symbol, days_back=days_back)
+        metrics['equity_curve'] = equity_curve
+
+    return metrics
+
+
 @router.get("/analytics/regimes")
 async def get_regime_performance(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
