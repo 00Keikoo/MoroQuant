@@ -19,7 +19,8 @@ Configuration (environment variables):
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
 import requests
 
@@ -65,6 +66,131 @@ def _get_chat_id() -> Optional[str]:
 def is_configured() -> bool:
     """Return True iff both TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set."""
     return bool(_get_bot_token() and _get_chat_id())
+
+
+# ---------------------------------------------------------------------------
+# Quality-filter configuration
+# ---------------------------------------------------------------------------
+
+# Defaults applied when the ``telegram:`` section is absent from config.yaml.
+# These are intentionally module-level constants so tests and operators can
+# reason about the out-of-the-box behaviour.
+DEFAULT_MIN_CONFIDENCE = 70
+DEFAULT_REQUIRE_MTF_AGREEMENT = True
+DEFAULT_ALLOW_NEUTRAL = False
+
+
+def _load_telegram_filter_config() -> Dict[str, Any]:
+    """Load the ``telegram:`` section from config.yaml.
+
+    Returns a dict with keys ``min_confidence``, ``require_mtf_agreement``,
+    ``allow_neutral``. Never raises: any error (missing file, missing section,
+    bad types) returns the defaults so existing deployments keep working and
+    the scheduler is never interrupted.
+    """
+    defaults: Dict[str, Any] = {
+        "min_confidence": DEFAULT_MIN_CONFIDENCE,
+        "require_mtf_agreement": DEFAULT_REQUIRE_MTF_AGREEMENT,
+        "allow_neutral": DEFAULT_ALLOW_NEUTRAL,
+    }
+
+    try:
+        import yaml  # local import: yaml is a core requirement (pyyaml)
+
+        # config.yaml lives next to the ml_service package root.
+        config_path = Path(__file__).resolve().parent.parent.parent / "config.yaml"
+        if not config_path.exists():
+            return defaults
+
+        with open(config_path, "r") as f:
+            raw = yaml.safe_load(f) or {}
+
+        tg_section = raw.get("telegram")
+        if not isinstance(tg_section, dict):
+            # Section missing entirely -> defaults. This is the normal case
+            # for existing deployments that haven't added the section yet.
+            return defaults
+
+        # Coerce each value defensively; ignore bad types and fall back.
+        min_conf = tg_section.get("min_confidence", defaults["min_confidence"])
+        try:
+            defaults["min_confidence"] = int(min_conf)
+        except (TypeError, ValueError):
+            pass  # keep default
+
+        require_mtf = tg_section.get("require_mtf_agreement", defaults["require_mtf_agreement"])
+        if isinstance(require_mtf, bool):
+            defaults["require_mtf_agreement"] = require_mtf
+
+        allow_neutral = tg_section.get("allow_neutral", defaults["allow_neutral"])
+        if isinstance(allow_neutral, bool):
+            defaults["allow_neutral"] = allow_neutral
+
+        return defaults
+    except Exception as e:
+        logger.debug(f"Telegram filter config load failed, using defaults: {e}")
+        return defaults
+
+
+def should_send_telegram_alert(signal: Dict) -> Tuple[bool, str]:
+    """Apply quality filters to decide whether a signal is alert-worthy.
+
+    Returns ``(True, "passed")`` if the signal should trigger a Telegram
+    alert, otherwise ``(False, reason)`` where ``reason`` is a short stable
+    code identifying which filter rejected it.
+
+    Reasons:
+        "passed"          - all filters passed
+        "neutral_signal"  - direction is neutral and allow_neutral is False
+        "mtf_disagree"    - mtf_alignment is not AGREE (and agreement required)
+        "low_confidence"  - confidence is below min_confidence
+
+    Evaluation order is deliberate: neutral is the cheapest/most decisive
+    reject, then MTF alignment, then confidence. The function never raises;
+    a malformed signal (missing keys, wrong types) is treated as a reject
+    with reason "neutral_signal" as a safe default — it is never sent.
+
+    Args:
+        signal: Signal dictionary from ``predictor.generate_signal``.
+
+    Returns:
+        Tuple of (should_send: bool, reason: str).
+    """
+    try:
+        if not isinstance(signal, dict):
+            return False, "neutral_signal"
+
+        cfg = _load_telegram_filter_config()
+
+        # --- direction filter -------------------------------------------------
+        direction = signal.get("direction")
+        if not cfg["allow_neutral"]:
+            if direction is None or str(direction).lower() == "neutral":
+                return False, "neutral_signal"
+
+        # --- MTF alignment filter --------------------------------------------
+        if cfg["require_mtf_agreement"]:
+            mtf = signal.get("mtf_alignment")
+            if mtf is None or str(mtf).upper() != "AGREE":
+                return False, "mtf_disagree"
+
+        # --- confidence filter -----------------------------------------------
+        confidence = signal.get("confidence")
+        try:
+            conf_val = float(confidence)
+        except (TypeError, ValueError):
+            # Missing or unparseable confidence -> treat as below threshold.
+            return False, "low_confidence"
+
+        if conf_val < cfg["min_confidence"]:
+            return False, "low_confidence"
+
+        return True, "passed"
+    except Exception as e:
+        # Absolute safety net: a bug in the filter must never interrupt the
+        # scheduler. Reject (do not send) and surface the reason.
+        logger.error(f"should_send_telegram_alert failed unexpectedly: {e}")
+        return False, "neutral_signal"
 
 
 def _require_config() -> tuple[str, str]:

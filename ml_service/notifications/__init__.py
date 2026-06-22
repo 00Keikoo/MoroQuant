@@ -9,6 +9,7 @@ from .telegram_notifier import (
     is_configured,
     send_signal_alert,
     send_telegram_message,
+    should_send_telegram_alert,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "is_configured",
     "send_signal_alert",
     "send_telegram_message",
+    "should_send_telegram_alert",
 ]

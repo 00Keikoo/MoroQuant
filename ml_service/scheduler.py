@@ -197,7 +197,10 @@ def market_dominance_job():
 def signal_generation_job():
     """Generate signals for all production symbols - runs every hour."""
     from ml_service.models.predictor import generate_signal
-    from ml_service.notifications.telegram_notifier import send_signal_alert
+    from ml_service.notifications.telegram_notifier import (
+        send_signal_alert,
+        should_send_telegram_alert,
+    )
 
     logger.info("="*80)
     logger.info("Starting signal generation job")
@@ -220,12 +223,21 @@ def signal_generation_job():
                     generated_count += 1
 
                     # Signal has already been persisted to the DB inside
-                    # generate_signal() -> save_signal_to_db(). Fire the
-                    # Telegram alert. Notification failures MUST NOT affect
-                    # signal generation; send_signal_alert swallows them
-                    # and returns a bool, but we wrap defensively anyway.
+                    # generate_signal() -> save_signal_to_db(). Apply the
+                    # quality filter before notifying; low-quality signals
+                    # are logged and skipped. All notification/filter errors
+                    # are swallowed so they never affect signal generation.
                     try:
-                        send_signal_alert(signal)
+                        should_send, reason = should_send_telegram_alert(signal)
+
+                        if should_send:
+                            send_signal_alert(signal)
+                        else:
+                            logger.info(
+                                f"Telegram alert skipped: "
+                                f"{signal.get('symbol')} {signal.get('timeframe')} "
+                                f"(reason={reason})"
+                            )
                     except Exception as notify_err:
                         logger.error(
                             f"Telegram alert failed for {symbol} {timeframe}: {notify_err}"
