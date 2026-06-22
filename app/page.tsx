@@ -9,18 +9,15 @@ import MarketAnalysis from '@/components/trading/MarketAnalysis';
 import HyperliquidPanel from '@/components/trading/HyperliquidPanel';
 import { useMarketStore } from '@/lib/stores/marketStore';
 import { useNewsStore } from '@/lib/stores/newsStore';
-import { useAnalysisStore } from '@/lib/stores/analysisStore';
 import { useHyperliquidStore } from '@/lib/stores/hyperliquidStore';
 import { BinanceWebSocket, TOP_FUTURES_PAIRS, fetchCandlesticks, fetchFundingRate, fetchOpenInterest, fetchLongShortRatio } from '@/lib/api/binance';
 import { fetchNews } from '@/lib/api/news';
-import { generateNewsAnalysis, generateMarketAnalysis } from '@/lib/api/ai-analysis';
 import { fetchHyperliquidMarkets } from '@/lib/api/hyperliquid';
 import { calculateIndicators } from '@/lib/utils/indicators';
 
 export default function Home() {
-  const { updatePair, selectedPair, timeframe, updateCandlesticks, updateIndicators, pairs } = useMarketStore();
-  const { setNews, news, updateNewsAnalysis } = useNewsStore();
-  const { setAnalysis, setLoading: setAnalysisLoading } = useAnalysisStore();
+  const { updatePair, selectedPair, timeframe, updateCandlesticks, updateIndicators } = useMarketStore();
+  const { setNews } = useNewsStore();
   const { setMarkets, setLoading: setHyperliquidLoading } = useHyperliquidStore();
 
   useEffect(() => {
@@ -85,15 +82,6 @@ export default function Home() {
       try {
         const newsItems = await fetchNews();
         setNews(newsItems);
-
-        for (const item of newsItems.slice(0, 5)) {
-          try {
-            const analysis = await generateNewsAnalysis(item);
-            updateNewsAnalysis(item.id, analysis);
-          } catch (error) {
-            console.error('Error generating news analysis:', error);
-          }
-        }
       } catch (error) {
         console.error('Error loading news:', error);
       }
@@ -103,31 +91,7 @@ export default function Home() {
     const newsInterval = setInterval(loadNews, 60000);
 
     return () => clearInterval(newsInterval);
-  }, [setNews, updateNewsAnalysis]);
-
-  useEffect(() => {
-    const loadMarketAnalysis = async () => {
-      if (pairs.size === 0 || news.length === 0) return;
-
-      setAnalysisLoading(true);
-      try {
-        const analysis = await generateMarketAnalysis(pairs, news);
-        setAnalysis(analysis);
-      } catch (error) {
-        console.error('Error generating market analysis:', error);
-      } finally {
-        setAnalysisLoading(false);
-      }
-    };
-
-    const timer = setTimeout(loadMarketAnalysis, 2000);
-    const analysisInterval = setInterval(loadMarketAnalysis, 300000);
-
-    return () => {
-      clearTimeout(timer);
-      clearInterval(analysisInterval);
-    };
-  }, [pairs, news, setAnalysis, setAnalysisLoading]);
+  }, [setNews]);
 
   useEffect(() => {
     const loadHyperliquid = async () => {
