@@ -1,321 +1,507 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
+import PerformanceCard, { type CardStatus } from '@/components/performance/PerformanceCard';
+import EquityCurveChart from '@/components/performance/EquityCurveChart';
+import StatisticsGrid from '@/components/performance/StatisticsGrid';
+import PerformanceHeader from '@/components/performance/PerformanceHeader';
+import {
+  getLivePerformanceReport,
+  getOpenPositions,
+  getRegimePerformance,
+  getConfidenceBuckets,
+  type LiveMetrics,
+  type EquityPoint,
+  type Position,
+  type RegimeMetrics,
+  type ConfidenceBucket,
+} from '@/lib/services/performanceService';
 
-interface LiveMetrics {
-  total_trades: number;
-  win_rate: number;
-  profit_factor: number | string;
-  expectancy: number;
-  total_pnl: number;
-  sharpe_ratio: number | null;
-  max_drawdown: number;
-  avg_hold_time_hours: number | null;
-}
-
-interface EquityPoint {
-  timestamp: number;
-  cumulative_pnl: number;
-  trade_count: number;
-}
-
-interface Position {
-  symbol: string;
-  side: string;
-  entry_price: number;
-  mark_price: number;
-  unrealized_pnl: number;
-  signal?: {
-    direction: string;
-    confidence: number;
-  };
-  agreement: string;
-}
-
-interface RegimeMetrics {
-  regime_label: string;
-  total_trades: number;
-  win_rate: number;
-  profit_factor: number | string;
-  expectancy: number;
-}
-
-interface ConfidenceMetrics {
-  bucket: string;
-  total_trades: number;
-  win_rate: number;
-  expectancy: number;
-  total_pnl: number;
-}
+const AUTO_REFRESH_MS = 30_000;
 
 export default function PerformanceDashboard() {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [regimes, setRegimes] = useState<Record<string, RegimeMetrics>>({});
-  const [confidence, setConfidence] = useState<Record<string, ConfidenceMetrics>>({});
+  const [confidence, setConfidence] = useState<Record<string, ConfidenceBucket>>({});
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAllData();
-    const interval = setInterval(fetchAllData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const fetchAllData = useCallback(async (initial = false) => {
+    if (initial) {
+      setLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
 
-  const fetchAllData = async () => {
     try {
-      const API_BASE =
-  	process.env.NEXT_PUBLIC_API_URL ||
-  	`http://${window.location.hostname}:8000/api`;
-
-      const [metricsRes, positionsRes, regimesRes, confidenceRes] =
-  	await Promise.all([
-     	 fetch(`${API_BASE}/analytics/live-performance`),
-    	 fetch(`${API_BASE}/positions/open`),
-    	 fetch(`${API_BASE}/analytics/regimes`),
- 	 fetch(`${API_BASE}/analytics/confidence`)
+      const [report, positionsData, regimesData, confidenceData] = await Promise.all([
+        getLivePerformanceReport(),
+        getOpenPositions(),
+        getRegimePerformance(),
+        getConfidenceBuckets(),
       ]);
 
-      if (!metricsRes.ok) {
-        console.error('Live performance API failed:', metricsRes.status, metricsRes.statusText);
-        throw new Error(`API error: ${metricsRes.status} ${metricsRes.statusText}`);
-      }
-      if (!positionsRes.ok) {
-        console.error('Positions API failed:', positionsRes.status, positionsRes.statusText);
-        throw new Error(`API error: ${positionsRes.status} ${positionsRes.statusText}`);
-      }
-      if (!regimesRes.ok) {
-        console.error('Regimes API failed:', regimesRes.status, regimesRes.statusText);
-        throw new Error(`API error: ${regimesRes.status} ${regimesRes.statusText}`);
-      }
-      if (!confidenceRes.ok) {
-        console.error('Confidence API failed:', confidenceRes.status, confidenceRes.statusText);
-        throw new Error(`API error: ${confidenceRes.status} ${confidenceRes.statusText}`);
+      if (report.status === 'success') {
+        setMetrics(report.metrics);
+        setEquityCurve(report.equity_curve || []);
       }
 
-      const metricsData = await metricsRes.json();
-      const positionsData = await positionsRes.json();
-      const regimesData = await regimesRes.json();
-      const confidenceData = await confidenceRes.json();
-
-      if (metricsData.status === 'success') {
-        setMetrics(metricsData.metrics);
-        setEquityCurve(metricsData.equity_curve || []);
-      } else if (metricsData.status === 'no_data') {
-        console.warn('No trade data available yet');
-      }
-
-      if (positionsData.positions) {
-        setPositions(positionsData.positions);
-      }
-
-      if (regimesData.status === 'success') {
-        setRegimes(regimesData.regimes);
-      }
-
-      if (confidenceData.status === 'success') {
-        setConfidence(confidenceData.confidence_buckets);
-      }
-
-      setLoading(false);
+      setPositions(positionsData);
+      setRegimes(regimesData);
+      setConfidence(confidenceData);
       setError(null);
+      setLastUpdated(new Date().toISOString());
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch analytics data';
-      console.error('Analytics fetch error:', err);
-      setError(`Backend error: ${errorMessage}. Ensure ml_service is running on port 8000.`);
+      const message = err instanceof Error ? err.message : 'Failed to fetch analytics data';
+      setError(
+        `Backend error: ${message}. Ensure ml_service is running on port 8000.`,
+      );
+    } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  };
+  }, []);
 
+  useEffect(() => {
+    fetchAllData(true);
+    const interval = setInterval(() => fetchAllData(false), AUTO_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [fetchAllData]);
+
+  // ─── Loading state ────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex h-screen bg-black text-white">
+      <div className="flex h-screen bg-mq-bg text-white">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-gray-400">Loading analytics...</div>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="w-8 h-8 border-2 border-mq-accent/20 border-t-mq-accent rounded-full animate-spin mb-4" />
+          <div className="text-neutral-400 text-sm font-medium">Loading analytics...</div>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  // ─── Error state ──────────────────────────────────────────────
+  if (error && !metrics) {
     return (
-      <div className="flex h-screen bg-black text-white">
+      <div className="flex h-screen bg-mq-bg text-white">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-red-400">{error}</div>
+        <div className="flex-1 flex flex-col items-center justify-center p-8">
+          <svg
+            className="w-12 h-12 text-mq-short mb-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <div className="text-mq-short font-bold text-sm mb-1">Connection Error</div>
+          <div className="text-neutral-400 text-xs max-w-md text-center mb-6">{error}</div>
+          <button
+            onClick={() => fetchAllData(true)}
+            className="px-4 py-2 bg-mq-accent-dim/20 text-mq-accent border border-mq-accent/30 rounded-md text-sm font-semibold hover:bg-mq-accent-dim/40 transition-all"
+          >
+            Retry Connection
+          </button>
         </div>
       </div>
     );
   }
+
+  // ─── Helpers ──────────────────────────────────────────────────
+  const fmtUsd = (value: number | null | undefined): string => {
+    if (value === null || value === undefined) return 'N/A';
+    const sign = value >= 0 ? '+' : '-';
+    return `${sign}$${Math.abs(value).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const fmtNum = (value: number | null | undefined, digits = 2): string => {
+    if (value === null || value === undefined) return 'N/A';
+    return value.toLocaleString(undefined, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+  };
+
+  const pnlStatus = (value: number): CardStatus =>
+    value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
+
+  // ─── Recent trades from equity curve ──────────────────────────
+  const recentTrades = [...equityCurve]
+    .sort((a, b) => b.trade_count - a.trade_count)
+    .slice(0, 20);
 
   return (
-    <div className="flex h-screen bg-black text-white">
+    <div className="flex h-screen bg-mq-bg text-white">
       <Sidebar />
 
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Live Trading Performance</h1>
-            <button
-              onClick={fetchAllData}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm"
-            >
-              Refresh
-            </button>
-          </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <PerformanceHeader
+          lastUpdated={lastUpdated}
+          isRefreshing={isRefreshing}
+          onRefresh={() => fetchAllData(false)}
+          autoRefreshSeconds={AUTO_REFRESH_MS / 1000}
+        />
 
-          {metrics && (
-            <>
-              <div className="grid grid-cols-4 gap-4">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Win Rate</div>
-                  <div className="text-2xl font-bold mt-1">{metrics.win_rate}%</div>
-                </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Profit Factor</div>
-                  <div className="text-2xl font-bold mt-1">{metrics.profit_factor}</div>
-                </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Expectancy</div>
-                  <div className={`text-2xl font-bold mt-1 ${metrics.expectancy >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    ${metrics.expectancy}
-                  </div>
-                </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Sharpe Ratio</div>
-                  <div className="text-2xl font-bold mt-1">
-                    {metrics.sharpe_ratio !== null ? metrics.sharpe_ratio.toFixed(2) : 'N/A'}
-                  </div>
-                </div>
+        <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-black via-mq-bg to-black">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Inline error banner if data is stale */}
+            {error && metrics && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-mq-short-dim/10 border border-mq-short/30 text-mq-short text-xs font-medium">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Showing stale data — {error}
               </div>
+            )}
 
-              <div className="grid grid-cols-4 gap-4">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Total Trades</div>
-                  <div className="text-2xl font-bold mt-1">{metrics.total_trades}</div>
+            {/* ─── KPI Cards (4x2) ─────────────────────────────── */}
+            {metrics && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <PerformanceCard
+                  label="Win Rate"
+                  value={`${fmtNum(metrics.win_rate)}%`}
+                  sublabel={`${metrics.winning_trades}W / ${metrics.losing_trades}L`}
+                  status={metrics.win_rate >= 50 ? 'positive' : 'neutral'}
+                />
+                <PerformanceCard
+                  label="Total Trades"
+                  value={String(metrics.total_trades)}
+                  sublabel="Closed positions"
+                  status="neutral"
+                />
+                <PerformanceCard
+                  label="Net PnL"
+                  value={fmtUsd(metrics.total_pnl)}
+                  sublabel={`ROI ${fmtNum(metrics.roi)}%`}
+                  status={pnlStatus(metrics.total_pnl)}
+                />
+                <PerformanceCard
+                  label="Profit Factor"
+                  value={fmtNum(metrics.profit_factor)}
+                  sublabel={metrics.profit_factor >= 1 ? 'Profitable' : 'Unprofitable'}
+                  status={metrics.profit_factor >= 1 ? 'positive' : 'negative'}
+                />
+                <PerformanceCard
+                  label="Expectancy"
+                  value={fmtUsd(metrics.expectancy)}
+                  sublabel="Per trade"
+                  status={pnlStatus(metrics.expectancy)}
+                />
+                <PerformanceCard
+                  label="Sharpe Ratio"
+                  value={metrics.sharpe_ratio !== null ? fmtNum(metrics.sharpe_ratio) : 'N/A'}
+                  sublabel="Risk-adjusted return"
+                  status={metrics.sharpe_ratio !== null && metrics.sharpe_ratio >= 1 ? 'positive' : 'neutral'}
+                />
+                <PerformanceCard
+                  label="Max Drawdown"
+                  value={fmtUsd(metrics.max_drawdown)}
+                  sublabel={`${fmtNum(metrics.max_drawdown_pct)}% peak-to-trough`}
+                  status="negative"
+                />
+                <PerformanceCard
+                  label="Avg Hold Time"
+                  value={metrics.avg_hold_time_hours !== null ? `${fmtNum(metrics.avg_hold_time_hours)}h` : 'N/A'}
+                  sublabel="Per trade"
+                  status="neutral"
+                />
+              </div>
+            )}
+
+            {/* ─── Equity Curve ─────────────────────────────────── */}
+            <section className="glass-card p-5">
+              <div className="flex items-baseline justify-between mb-4">
+                <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                  Equity Curve
+                </h3>
+                <span className="text-[10px] text-neutral-500 font-mono">
+                  Cumulative PnL · {equityCurve.length} trades
+                </span>
+              </div>
+              <EquityCurveChart data={equityCurve} height={360} />
+            </section>
+
+            {/* ─── Trading Statistics ───────────────────────────── */}
+            {metrics && (
+              <section>
+                <div className="flex items-baseline gap-2 mb-3">
+                  <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                    Trading Statistics
+                  </h3>
+                  <span className="text-[10px] text-neutral-500 font-mono">
+                    Detailed breakdown
+                  </span>
                 </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Total PnL</div>
-                  <div className={`text-2xl font-bold mt-1 ${metrics.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    ${metrics.total_pnl}
+                <StatisticsGrid metrics={metrics} />
+              </section>
+            )}
+
+            {/* ─── Confidence Analysis ──────────────────────────── */}
+            {Object.keys(confidence).length > 0 && (
+              <section className="glass-card overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                      Confidence Analysis
+                    </h3>
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      Win rate by confidence bucket
+                    </span>
                   </div>
                 </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Max Drawdown</div>
-                  <div className="text-2xl font-bold mt-1 text-red-400">${metrics.max_drawdown}</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-mq-panel-border">
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Bucket</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trades</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Win Rate</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Expectancy</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">PnL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(confidence).map(([key, bucket]) => {
+                        const profitable = bucket.total_pnl >= 0;
+                        return (
+                          <tr
+                            key={key}
+                            className={`border-b border-mq-panel-border last:border-0 transition-colors ${
+                              profitable ? 'bg-mq-long/[0.03] hover:bg-mq-long/[0.06]' : 'bg-mq-short/[0.03] hover:bg-mq-short/[0.06]'
+                            }`}
+                          >
+                            <td className="px-4 py-3 font-semibold text-white">{bucket.bucket}</td>
+                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{bucket.total_trades}</td>
+                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{fmtNum(bucket.win_rate)}%</td>
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${bucket.expectancy >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
+                              {fmtUsd(bucket.expectancy)}
+                            </td>
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${profitable ? 'text-mq-long' : 'text-mq-short'}`}>
+                              {fmtUsd(bucket.total_pnl)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <div className="text-gray-400 text-sm">Avg Hold Time</div>
-                  <div className="text-2xl font-bold mt-1">
-                    {metrics.avg_hold_time_hours !== null ? `${metrics.avg_hold_time_hours}h` : 'N/A'}
+              </section>
+            )}
+
+            {/* ─── Regime Performance ───────────────────────────── */}
+            {Object.keys(regimes).length > 0 && (
+              <section className="glass-card overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                      Regime Performance
+                    </h3>
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      Performance by market regime
+                    </span>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-mq-panel-border">
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Regime</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trades</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Win Rate</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Profit Factor</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Expectancy</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(regimes).map(([key, regime]) => {
+                        const isUnknown = regime.regime_label === 'unknown' || regime.regime_label === 'Unknown';
+                        const label = isUnknown ? 'Unknown (historical data)' : regime.regime_label;
+                        return (
+                          <tr
+                            key={key}
+                            className="border-b border-mq-panel-border last:border-0 hover:bg-white/[0.02] transition-colors"
+                          >
+                            <td className="px-4 py-3 font-semibold text-white capitalize">{label}</td>
+                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{regime.total_trades}</td>
+                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{fmtNum(regime.win_rate)}%</td>
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${Number(regime.profit_factor) >= 1 ? 'text-mq-long' : 'text-mq-short'}`}>
+                              {regime.profit_factor}
+                            </td>
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${regime.expectancy >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
+                              {fmtUsd(regime.expectancy)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
 
-          {equityCurve.length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-              <h2 className="text-lg font-bold mb-4">Equity Curve</h2>
-              <div className="h-64 flex items-end space-x-1">
-                {equityCurve.map((point, idx) => {
-                  const maxPnl = Math.max(...equityCurve.map(p => p.cumulative_pnl));
-                  const minPnl = Math.min(...equityCurve.map(p => p.cumulative_pnl));
-                  const range = maxPnl - minPnl || 1;
-                  const height = ((point.cumulative_pnl - minPnl) / range) * 100;
-
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 bg-blue-600 hover:bg-blue-500 transition-colors"
-                      style={{ height: `${Math.max(height, 2)}%` }}
-                      title={`Trade ${point.trade_count}: $${point.cumulative_pnl}`}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {positions.length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-              <h2 className="text-lg font-bold mb-4">Open Positions ({positions.length})</h2>
-              <div className="space-y-2">
-                {positions.map((pos, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-zinc-800 rounded">
-                    <div className="flex items-center space-x-4">
-                      <div className="font-bold">{pos.symbol}</div>
-                      <div className={`px-2 py-1 rounded text-xs ${pos.side === 'long' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                        {pos.side.toUpperCase()}
-                      </div>
-                      <div className="text-sm text-gray-400">Entry: ${pos.entry_price}</div>
-                      <div className="text-sm text-gray-400">Mark: ${pos.mark_price}</div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className={`font-bold ${pos.unrealized_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        ${pos.unrealized_pnl.toFixed(2)}
-                      </div>
-                      {pos.signal && (
-                        <div className={`text-xs px-2 py-1 rounded ${
-                          pos.agreement === 'match' ? 'bg-green-900 text-green-300' :
-                          pos.agreement === 'conflict' ? 'bg-red-900 text-red-300' :
-                          'bg-gray-700 text-gray-300'
-                        }`}>
-                          Signal: {pos.signal.direction} ({pos.signal.confidence}%)
+            {/* ─── Open Positions ───────────────────────────────── */}
+            {positions.length > 0 && (
+              <section className="glass-card overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                      Open Positions
+                    </h3>
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      {positions.length} active
+                    </span>
+                  </div>
+                </div>
+                <div className="divide-y divide-mq-panel-border">
+                  {positions.map((pos, idx) => {
+                    const isLong = pos.side === 'long';
+                    const pnlPositive = pos.unrealized_pnl >= 0;
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex items-center justify-between p-4 transition-colors hover:bg-white/[0.02] ${
+                          isLong ? 'border-l-2 border-l-mq-long/40' : 'border-l-2 border-l-mq-short/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="font-bold text-white">{pos.symbol}</div>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase ${
+                              isLong
+                                ? 'bg-mq-long-dim/10 text-mq-long border border-mq-long/30'
+                                : 'bg-mq-short-dim/10 text-mq-short border border-mq-short/30'
+                            }`}
+                          >
+                            {pos.side}
+                          </span>
+                          <div className="text-xs text-neutral-400 font-mono">
+                            <span className="text-neutral-600">Entry:</span> ${pos.entry_price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                          </div>
+                          <div className="text-xs text-neutral-400 font-mono">
+                            <span className="text-neutral-600">Mark:</span> ${pos.mark_price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                        <div className="flex items-center gap-4">
+                          {pos.signal && (
+                            <div
+                              className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold ${
+                                pos.agreement === 'match'
+                                  ? 'bg-mq-long-dim/10 text-mq-long'
+                                  : pos.agreement === 'conflict'
+                                    ? 'bg-mq-short-dim/10 text-mq-short'
+                                    : 'bg-neutral-800 text-neutral-400'
+                              }`}
+                            >
+                              {pos.signal.direction} ({pos.signal.confidence}%)
+                            </div>
+                          )}
+                          <div
+                            className={`text-sm font-bold font-mono ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}
+                          >
+                            {pnlPositive ? '+' : ''}${pos.unrealized_pnl.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-          {Object.keys(confidence).length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-              <h2 className="text-lg font-bold mb-4">Confidence Analysis</h2>
-              <div className="space-y-2">
-                {Object.entries(confidence).map(([bucket, data]) => (
-                  <div key={bucket} className="flex items-center justify-between p-3 bg-zinc-800 rounded">
-                    <div className="flex items-center space-x-4">
-                      <div className="font-bold w-24">{data.bucket}</div>
-                      <div className="text-sm text-gray-400">Trades: {data.total_trades}</div>
-                    </div>
-                    <div className="flex items-center space-x-6">
-                      <div className="text-sm">Win Rate: <span className="font-bold">{data.win_rate}%</span></div>
-                      <div className="text-sm">Expectancy: <span className={`font-bold ${data.expectancy >= 0 ? 'text-green-400' : 'text-red-400'}`}>${data.expectancy}</span></div>
-                      <div className="text-sm">PnL: <span className={`font-bold ${data.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>${data.total_pnl}</span></div>
-                    </div>
+            {/* ─── Recent Trades ────────────────────────────────── */}
+            {recentTrades.length > 0 && (
+              <section className="glass-card overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                      Recent Trades
+                    </h3>
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      Last {recentTrades.length} closed positions
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-mq-panel-border">
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Time</th>
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">#</th>
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Side</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trade PnL</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Cumulative</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentTrades.map((trade) => {
+                        const pnlPositive = trade.trade_pnl >= 0;
+                        const date = new Date(trade.timestamp);
+                        return (
+                          <tr
+                            key={trade.trade_count}
+                            className="border-b border-mq-panel-border last:border-0 hover:bg-white/[0.02] transition-colors"
+                          >
+                            <td className="px-4 py-3 font-mono text-xs text-neutral-400">
+                              {date.toLocaleString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-neutral-500">#{trade.trade_count}</td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                  pnlPositive
+                                    ? 'bg-mq-long-dim/10 text-mq-long'
+                                    : 'bg-mq-short-dim/10 text-mq-short'
+                                }`}
+                              >
+                                {pnlPositive ? 'Win' : 'Loss'}
+                              </span>
+                            </td>
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}>
+                              {pnlPositive ? '+' : ''}${trade.trade_pnl.toFixed(2)}
+                            </td>
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${trade.cumulative_pnl >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
+                              ${trade.cumulative_pnl.toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
 
-          {Object.keys(regimes).length > 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-              <h2 className="text-lg font-bold mb-4">Regime Performance</h2>
-              <div className="space-y-2">
-                {Object.entries(regimes).map(([regime, data]) => (
-                  <div key={regime} className="flex items-center justify-between p-3 bg-zinc-800 rounded">
-                    <div className="flex items-center space-x-4">
-                      <div className="font-bold w-32">{data.regime_label}</div>
-                      <div className="text-sm text-gray-400">Trades: {data.total_trades}</div>
-                    </div>
-                    <div className="flex items-center space-x-6">
-                      <div className="text-sm">Win Rate: <span className="font-bold">{data.win_rate}%</span></div>
-                      <div className="text-sm">PF: <span className="font-bold">{data.profit_factor}</span></div>
-                      <div className="text-sm">Expectancy: <span className={`font-bold ${data.expectancy >= 0 ? 'text-green-400' : 'text-red-400'}`}>${data.expectancy}</span></div>
-                    </div>
-                  </div>
-                ))}
+            {/* No data state */}
+            {!metrics && !error && (
+              <div className="glass-card p-12 flex flex-col items-center justify-center text-center">
+                <svg className="w-10 h-10 text-neutral-600 mb-3" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <div className="text-neutral-400 text-sm font-semibold mb-1">No trade data yet</div>
+                <div className="text-neutral-500 text-xs">Performance metrics will appear once trades are recorded.</div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

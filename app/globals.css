@@ -56,6 +56,15 @@
   .animate-pulse-slow {
     animation: pulse-slow 3s ease-in-out infinite;
   }
+
+  /* Glassmorphism card — semi-transparent panel with blur and subtle border */
+  .glass-card {
+    background-color: rgba(9, 9, 11, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+  }
 }
 
 * {
