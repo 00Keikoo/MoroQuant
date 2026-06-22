@@ -27,7 +27,7 @@ _signal_cache = {}
 
 def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     """
-    Load the most recent trained model for a symbol/timeframe.
+    Load the current production model for a symbol/timeframe.
 
     Args:
         symbol: Trading symbol
@@ -36,57 +36,62 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     Returns:
         Model package dict or None if no model found
     """
+    from models.governance import get_production_model_path, validate_model_compatibility
+
     cache_key = f"{symbol}_{timeframe}"
     if cache_key in _model_cache:
         logger.info(f"Using cached model for {symbol} {timeframe}")
         return _model_cache[cache_key]
 
-    models_dir = Path(__file__).parent.parent / "storage" / "models"
-
-    if not models_dir.exists():
-        logger.warning(f"Models directory not found: {models_dir}")
+    model_path = get_production_model_path(symbol, timeframe)
+    if not model_path:
+        logger.warning(f"No production model found for {symbol} {timeframe}")
         return None
 
-    pattern = f"{symbol}_{timeframe}_*.pkl"
-    model_files = [
-        f for f in models_dir.glob(pattern)
-        if not f.name.endswith("_calibration.pkl")
-    ]
+    df_sample = pd.DataFrame({
+        'timestamp': range(500),
+        'open': [100.0] * 500,
+        'high': [101.0] * 500,
+        'low': [99.0] * 500,
+        'close': [100.0] * 500,
+        'volume': [1000.0] * 500,
+    })
+    df_sample = prepare_features(df_sample, symbol=symbol)
+    current_features = get_feature_columns(df_sample)
 
-    if not model_files:
-        logger.warning(f"No model found for {symbol} {timeframe}")
+    is_compatible, missing_features = validate_model_compatibility(model_path, current_features)
+
+    if not is_compatible:
+        logger.error(f"Model {Path(model_path).name} is incompatible with current features")
+        logger.error(f"Missing features: {', '.join(missing_features)}")
+        logger.error(f"Model cannot be loaded. Fix active_models.json to reference a compatible model.")
         return None
 
-    latest_model = max(model_files, key=lambda p: p.stat().st_mtime)
-
-    with open(latest_model, 'rb') as f:
+    with open(model_path, 'rb') as f:
         model_package = pickle.load(f)
 
-    model_package['model_path'] = str(latest_model)
+    model_package['model_path'] = model_path
 
-    # Load metadata
     metadata = model_package.get('metadata', {})
     labeling_method = get_metadata_value(metadata, 'labeling_method', 'UNKNOWN')
     trained_at = get_metadata_value(metadata, 'trained_at', 'UNKNOWN')
     tp_mult = get_metadata_value(metadata, 'tp_mult', 'N/A')
     sl_mult = get_metadata_value(metadata, 'sl_mult', 'N/A')
 
-    # Load calibration artifact (for diagnostics only, NOT applied to predictions)
-    cal_artifact = cal_mod.load_calibration_artifact(str(latest_model))
+    cal_artifact = cal_mod.load_calibration_artifact(model_path)
     if cal_artifact:
         model_package['calibration'] = cal_artifact
 
-    # Startup log showing model configuration
+    model_name = Path(model_path).name
     logger.info(f"{'='*60}")
-    logger.info(f"LOADED MODEL: {latest_model.name}")
-    logger.info(f"  Model path: {latest_model}")
+    logger.info(f"LOADED MODEL: {model_name}")
+    logger.info(f"  Model path: {model_path}")
     logger.info(f"  Trained at: {trained_at}")
     logger.info(f"  Labeling method: {labeling_method}")
     if labeling_method == 'triple_barrier':
         logger.info(f"  TP multiplier: {tp_mult}x ATR")
         logger.info(f"  SL multiplier: {sl_mult}x ATR")
     logger.info(f"  Calibration available: {cal_artifact is not None}")
-    logger.info(f"  Calibration applied: False (using raw probabilities)")
     logger.info(f"{'='*60}")
 
     _model_cache[cache_key] = model_package
@@ -201,17 +206,31 @@ def generate_signal(
         raw_proba = model.predict_proba(X_latest)[0]
         feature_importance = calculate_feature_importance(model, feature_cols, X_latest)
 
-    # Use raw probabilities (research validated approach)
-    # Calibration artifacts loaded for diagnostics but NOT applied
+    # --- Confidence pipeline: raw → calibrated → confidence ---
     cal_artifact = model_package.get('calibration')
     calibration_available = cal_artifact is not None
-    if calibration_available:
-        calibration_method = cal_artifact['chosen_method']
-    else:
-        calibration_method = 'none'
+    calibration_applied = False
+    calibration_method = cal_artifact['chosen_method'] if calibration_available else 'none'
 
-    # Always use raw probabilities (no calibration applied)
-    prediction_proba = raw_proba
+    raw_proba_max = float(np.max(raw_proba))
+
+    if calibration_available and cal_artifact.get('chosen_method') != 'raw':
+        chosen_cal = cal_artifact['calibrators'].get(cal_artifact['chosen_method'])
+        if chosen_cal is not None:
+            try:
+                prediction_proba = cal_mod.apply_calibrator(chosen_cal, raw_proba.reshape(1, -1)).flatten()
+                calibration_applied = True
+                logger.info(f"Calibration applied: {calibration_method} "
+                            f"(raw max={raw_proba_max:.3f} → calibrated max={float(np.max(prediction_proba)):.3f})")
+            except Exception as e:
+                logger.warning(f"Calibration failed ({calibration_method}): {e}, falling back to raw probabilities")
+                prediction_proba = raw_proba
+        else:
+            prediction_proba = raw_proba
+    else:
+        prediction_proba = raw_proba
+
+    calibrated_proba_max = float(np.max(prediction_proba))
     prediction = int(np.argmax(prediction_proba))
     confidence = float(prediction_proba[prediction])
     confidence_pct = int(confidence * 100)
@@ -221,8 +240,10 @@ def generate_signal(
 
     # Log prediction details
     logger.info(f"Raw probability distribution: {[round(float(p), 3) for p in raw_proba]}")
+    if calibration_applied:
+        logger.info(f"Calibrated probability distribution ({calibration_method}): {[round(float(p), 3) for p in prediction_proba]}")
     logger.info(f"Predicted class: {prediction} ({direction})")
-    logger.info(f"Confidence: {confidence_pct}%")
+    logger.info(f"Confidence: {confidence_pct}% (raw_max={raw_proba_max:.3f}, calibrated_max={calibrated_proba_max:.3f})")
 
     # Apply confidence threshold filter
     filtered_by_confidence = False
@@ -269,7 +290,11 @@ def generate_signal(
     # Get model trained timestamp
     trained_at = get_metadata_value(metadata, 'trained_at', 'unknown')
 
-    # Calculate prediction distribution for diagnostics
+    # Extract model version from model path (e.g., BTCUSDT_1h_20240101_120000.pkl -> 20240101_120000)
+    model_path = model_package.get('model_path', '')
+    model_version = Path(model_path).stem.split('_', 2)[-1] if model_path else 'unknown'
+
+    # Calculate prediction distribution for diagnostics (post-calibration)
     pred_distribution = {
         'class0_short': round(float(prediction_proba[0]), 3),
         'class1_neutral': round(float(prediction_proba[1]), 3),
@@ -281,12 +306,15 @@ def generate_signal(
         'timeframe': timeframe,
         'direction': direction,
         'confidence': confidence_pct,
+        'model_version': model_version,
         'confidence_raw': round(confidence, 3),
         'confidence_threshold': int(confidence_threshold * 100),
         'filtered_by_confidence': filtered_by_confidence,
-        'calibration_applied': False,
+        'calibration_applied': calibration_applied,
         'calibration_available': calibration_available,
         'calibration_method': calibration_method,
+        'raw_probability_max': round(raw_proba_max, 4),
+        'calibrated_probability_max': round(calibrated_proba_max, 4),
         'price': current_price,
         'stop_loss': round(stop_loss, decimal_places) if stop_loss else None,
         'take_profit': round(take_profit, decimal_places) if take_profit else None,
@@ -296,6 +324,9 @@ def generate_signal(
         'risk_reward': f'1:{round(tp_multiplier / sl_multiplier, 1)}' if direction != 'neutral' else None,
         'valid_until': valid_until,
         'max_hold_candles': max_hold_candles,
+        'prob_short': round(float(prediction_proba[0]), 3),
+        'prob_neutral': round(float(prediction_proba[1]), 3),
+        'prob_long': round(float(prediction_proba[2]), 3),
         'tp_sl_source': tp_sl_source,
         'top_features': {k: float(v) for k, v in top_features.items()},
         'regime': regime,
@@ -304,7 +335,7 @@ def generate_signal(
         'labeling_method': labeling_method,
         'trained_at': trained_at,
         'prediction_distribution': pred_distribution,
-        'mtf_conflict': False,
+        'mtf_alignment': 'NEUTRAL',
     }
 
     if timeframe == '1h' and not skip_mtf:
@@ -319,14 +350,14 @@ def generate_signal(
 
             if higher_tf_signal is not None:
                 if higher_tf_signal['direction'] == signal['direction']:
-                    signal['confidence'] = min(100, int(signal['confidence'] * 1.15))
-                    signal['confidence_raw'] = min(1.0, signal['confidence_raw'] * 1.15)
-                    logger.info(f"MTF confirmation: 1h and 4h agree, boosted confidence to {signal['confidence']}%")
+                    signal['mtf_alignment'] = 'AGREE'
+                    logger.info(f"MTF alignment: AGREE (1h={signal['direction']}, 4h={higher_tf_signal['direction']})")
+                elif signal['direction'] == 'neutral' or higher_tf_signal['direction'] == 'neutral':
+                    signal['mtf_alignment'] = 'NEUTRAL'
+                    logger.info(f"MTF alignment: NEUTRAL (1h={signal['direction']}, 4h={higher_tf_signal['direction']})")
                 else:
-                    signal['confidence'] = max(0, int(signal['confidence'] * 0.80))
-                    signal['confidence_raw'] = max(0.0, signal['confidence_raw'] * 0.80)
-                    signal['mtf_conflict'] = True
-                    logger.info(f"MTF conflict: 1h={signal['direction']}, 4h={higher_tf_signal['direction']}, reduced confidence to {signal['confidence']}%")
+                    signal['mtf_alignment'] = 'DISAGREE'
+                    logger.info(f"MTF alignment: DISAGREE (1h={signal['direction']}, 4h={higher_tf_signal['direction']})")
         except Exception as e:
             logger.warning(f"MTF check failed: {e}")
 
@@ -409,9 +440,12 @@ def save_signal_to_db(signal: Dict) -> None:
             """
             INSERT INTO signals (
                 symbol, timeframe, timestamp, direction, confidence, features_json,
-                tp_multiplier, sl_multiplier, labeling_method, atr, regime
+                tp_multiplier, sl_multiplier, labeling_method, atr, regime, model_version,
+                entry_price, take_profit, stop_loss,
+                prob_short, prob_neutral, prob_long,
+                mtf_alignment, raw_probability_max, calibrated_probability_max
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 signal['symbol'],
@@ -425,7 +459,89 @@ def save_signal_to_db(signal: Dict) -> None:
                 signal.get('labeling_method'),
                 signal.get('atr'),
                 signal.get('regime'),
+                signal.get('model_version'),
+                signal.get('price'),
+                signal.get('take_profit'),
+                signal.get('stop_loss'),
+                signal.get('prob_short'),
+                signal.get('prob_neutral'),
+                signal.get('prob_long'),
+                signal.get('mtf_alignment', 'NEUTRAL'),
+                signal.get('raw_probability_max'),
+                signal.get('calibrated_probability_max'),
             )
         )
 
     logger.info(f"Signal saved to database")
+
+
+def get_latest_signal_from_db(symbol: str, timeframe: str) -> Optional[Dict]:
+    """
+    Read most recent signal from database without running inference.
+
+    Args:
+        symbol: Trading symbol
+        timeframe: Timeframe
+
+    Returns:
+        Signal dictionary or None if no signal found
+    """
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT
+                id, symbol, timeframe, timestamp, direction, confidence,
+                features_json, tp_multiplier, sl_multiplier, labeling_method,
+                atr, regime, model_version, created_at,
+                entry_price, take_profit, stop_loss
+            FROM signals
+            WHERE symbol = ? AND timeframe = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (symbol, timeframe)
+        )
+
+        row = cursor.fetchone()
+
+        if not row:
+            logger.warning(f"No signal found in database for {symbol} {timeframe}")
+            return None
+
+        # Parse features_json
+        features_json = row[6]
+        top_features = json.loads(features_json) if features_json else {}
+
+        # Calculate signal age
+        created_at_str = row[13]
+        created_at = datetime.fromisoformat(created_at_str)
+        age_seconds = (datetime.now() - created_at).total_seconds()
+        age_minutes = int(age_seconds / 60)
+
+        signal = {
+            'signal_id': row[0],
+            'symbol': row[1],
+            'timeframe': row[2],
+            'timestamp': row[3],
+            'direction': row[4],
+            'confidence': row[5],
+            'top_features': top_features,
+            'tp_multiplier': row[7],
+            'sl_multiplier': row[8],
+            'labeling_method': row[9],
+            'atr': row[10],
+            'regime': row[11],
+            'model_version': row[12],
+            'generated_at': created_at.isoformat(),
+            'age_minutes': age_minutes,
+            'source': 'database',
+            'entry_price': row[14],
+            'take_profit': row[15],
+            'stop_loss': row[16],
+        }
+
+        logger.info(f"Retrieved signal from database: {symbol} {timeframe} (age: {age_minutes} min)")
+        return signal

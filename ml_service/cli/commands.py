@@ -769,6 +769,96 @@ def my_performance():
             click.echo(f"⚠ ML signal trades had {abs(wr_diff):.1f}% lower win rate")
 
 
+@cli.command("attribution-report")
+def attribution_report():
+    """Generate detailed signal attribution quality report."""
+    from data.exchange_sync import generate_attribution_report
+
+    report = generate_attribution_report()
+
+    if report['summary']['total_trades'] == 0:
+        click.echo("\n❌ No trade history found")
+        click.echo("Run: python cli.py sync-trades")
+        return
+
+    summary = report['summary']
+
+    click.echo("\n" + "=" * 80)
+    click.echo("SIGNAL ATTRIBUTION QUALITY REPORT")
+    click.echo("=" * 80)
+    click.echo(f"Total Trades:     {summary['total_trades']}")
+    click.echo(f"Matched Signals:  {summary['matched_trades']} ({summary['match_rate_pct']}%)")
+    click.echo(f"Unmatched:        {summary['unmatched_trades']}")
+    click.echo(f"Total PnL:        ${summary['total_pnl']}")
+
+    click.echo("\n" + "-" * 80)
+    click.echo("MATCH RATE BY SYMBOL")
+    click.echo("-" * 80)
+    click.echo(f"{'Symbol':<12} {'Total':<8} {'Matched':<10} {'Match %':<10} {'Avg Conf':<10}")
+    click.echo("-" * 80)
+
+    for sym in report['by_symbol']:
+        conf_str = f"{sym['avg_confidence']:.1f}" if sym['avg_confidence'] else "N/A"
+        click.echo(
+            f"{sym['symbol']:<12} {sym['total_trades']:<8} "
+            f"{sym['matched_trades']:<10} {sym['match_rate_pct']:<10.1f} {conf_str:<10}"
+        )
+
+    if report['by_confidence']:
+        click.echo("\n" + "-" * 80)
+        click.echo("PERFORMANCE BY CONFIDENCE")
+        click.echo("-" * 80)
+        click.echo(f"{'Confidence':<15} {'Trades':<8} {'Avg PnL':<12} {'Win Rate':<10}")
+        click.echo("-" * 80)
+
+        for bucket in report['by_confidence']:
+            click.echo(
+                f"{bucket['confidence_range']:<15} {bucket['trade_count']:<8} "
+                f"${bucket['avg_pnl']:<11.2f} {bucket['win_rate_pct']:<10.1f}%"
+            )
+
+    perf = report['performance']
+
+    click.echo("\n" + "-" * 80)
+    click.echo("PERFORMANCE COMPARISON")
+    click.echo("-" * 80)
+    click.echo(f"{'Category':<15} {'Count':<8} {'Total PnL':<12} {'Avg PnL':<12} {'Win Rate':<10}")
+    click.echo("-" * 80)
+    click.echo(
+        f"{'Matched':<15} {perf['matched']['count']:<8} "
+        f"${perf['matched']['total_pnl']:<11.2f} ${perf['matched']['avg_pnl']:<11.2f} "
+        f"{perf['matched']['win_rate_pct']:<10.2f}%"
+    )
+    click.echo(
+        f"{'Unmatched':<15} {perf['unmatched']['count']:<8} "
+        f"${perf['unmatched']['total_pnl']:<11.2f} ${perf['unmatched']['avg_pnl']:<11.2f} "
+        f"{perf['unmatched']['win_rate_pct']:<10.2f}%"
+    )
+
+    click.echo("=" * 80)
+
+    if perf['matched']['count'] > 0 and perf['unmatched']['count'] > 0:
+        pnl_diff = perf['matched']['avg_pnl'] - perf['unmatched']['avg_pnl']
+        wr_diff = perf['matched']['win_rate_pct'] - perf['unmatched']['win_rate_pct']
+
+        click.echo("\nKEY INSIGHTS:")
+        if pnl_diff > 0:
+            click.echo(f"  ✓ Signal-matched trades outperformed by ${pnl_diff:.2f} avg PnL")
+        else:
+            click.echo(f"  ⚠ Signal-matched trades underperformed by ${abs(pnl_diff):.2f} avg PnL")
+
+        if wr_diff > 0:
+            click.echo(f"  ✓ Signal-matched trades had {wr_diff:.1f}% higher win rate")
+        else:
+            click.echo(f"  ⚠ Signal-matched trades had {abs(wr_diff):.1f}% lower win rate")
+
+        if summary['match_rate_pct'] < 50:
+            click.echo(f"\n  💡 Low match rate ({summary['match_rate_pct']}%) suggests:")
+            click.echo("     - Manual trading not aligned with ML signals")
+            click.echo("     - Signal generation timing mismatch")
+            click.echo("     - Consider generating signals more frequently")
+
+
 @cli.command()
 @click.option("--start", "action", flag_value="start", help="Start the scheduler")
 @click.option("--status", "action", flag_value="status", help="Show scheduler status")

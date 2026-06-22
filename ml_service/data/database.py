@@ -164,6 +164,16 @@ class Database:
                 ON user_trade_history(symbol, trade_time DESC)
             """)
 
+            # signal_outcomes table is managed via migrations (004_replace_signal_outcomes_with_ohlcv_based.sql)
+            # Schema: OHLCV-based outcome tracking with entry_price, take_profit, stop_loss, MFE/MAE
+
+            # Add model_version column to signals table if it doesn't exist
+            try:
+                cursor.execute("ALTER TABLE signals ADD COLUMN model_version TEXT")
+                logger.info("Added model_version column to signals table")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+
             conn.commit()
             logger.info("Database schema initialized")
 

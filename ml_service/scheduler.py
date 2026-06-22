@@ -15,6 +15,7 @@ from ml_service.data.database import get_database
 from ml_service.data.ingestion import fetch_all
 from ml_service.data.coingecko import get_coingecko_fetcher
 from ml_service.models.trainer import train_model
+from ml_service.models.governance import compare_and_promote
 from ml_service.utils.logger import setup_logger, get_logger
 
 setup_logger()
@@ -22,7 +23,7 @@ logger = get_logger()
 
 SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
 TIMEFRAMES = ['1h', '4h']
-F1_THRESHOLD = 0.95
+F1_THRESHOLD = 1.03
 RETRAIN_LOG_PATH = Path(__file__).parent / 'storage' / 'logs' / 'retrain_log.csv'
 
 _scheduler = None
@@ -51,22 +52,19 @@ def load_data(symbol: str, timeframe: str, limit: int = 2000):
 
 
 def get_current_model_f1(symbol: str, timeframe: str) -> float:
-    """Get F1 score of current model from metadata file."""
-    model_dir = Path(__file__).parent / 'storage' / 'models'
-    metadata_file = model_dir / f"{symbol}_{timeframe}_metadata.txt"
+    """Get F1 score of current production model from pickle metadata."""
+    from ml_service.models.governance import get_production_model_path, load_model_metadata
 
-    if not metadata_file.exists():
+    production_path = get_production_model_path(symbol, timeframe)
+    if not production_path:
         return 0.0
 
-    try:
-        with open(metadata_file, 'r') as f:
-            for line in f:
-                if 'avg_f1_weighted' in line:
-                    return float(line.split(':')[1].strip())
-    except Exception as e:
-        logger.warning(f"Could not read F1 from metadata: {e}")
+    metadata = load_model_metadata(production_path)
+    if not metadata:
+        return 0.0
 
-    return 0.0
+    validation = metadata.get('validation', {})
+    return validation.get('avg_f1_weighted', 0.0)
 
 
 def retrain_job():
@@ -139,21 +137,26 @@ def retrain_job():
                 )
 
                 new_f1 = train_results['avg_f1_weighted']
+                candidate_path = train_results['model_path']
 
-                if new_f1 >= old_f1 * F1_THRESHOLD:
-                    logger.info(f"✓ Model accepted: old={old_f1:.4f}, new={new_f1:.4f}")
-                    status = 'replaced'
-                else:
-                    logger.warning(f"✗ Model rejected: old={old_f1:.4f}, new={new_f1:.4f} (below threshold)")
-                    status = 'rejected'
+                governance_result = compare_and_promote(
+                    candidate_path=candidate_path,
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    improvement_threshold=F1_THRESHOLD,
+                )
+
+                status = governance_result.get('status', 'unknown')
+                reason = governance_result.get('reason', '')
 
                 _last_retrain_results.append({
                     'symbol': symbol,
                     'timeframe': timeframe,
                     'status': status,
-                    'reason': '',
+                    'reason': reason,
                     'old_f1': old_f1,
                     'new_f1': new_f1,
+                    'governance': governance_result,
                 })
 
             except Exception as e:
@@ -189,6 +192,69 @@ def market_dominance_job():
             logger.warning("Failed to update market dominance data")
     except Exception as e:
         logger.error(f"Market dominance fetch failed: {e}")
+
+
+def signal_generation_job():
+    """Generate signals for all production symbols - runs every hour."""
+    from ml_service.models.predictor import generate_signal
+
+    logger.info("="*80)
+    logger.info("Starting signal generation job")
+    logger.info("="*80)
+
+    generated_count = 0
+    failed_count = 0
+
+    for symbol in SYMBOLS:
+        for timeframe in TIMEFRAMES:
+            try:
+                signal = generate_signal(symbol=symbol, timeframe=timeframe)
+
+                if signal:
+                    logger.info(
+                        f"Generated signal: {symbol} {timeframe} | "
+                        f"Direction: {signal['direction']} | "
+                        f"Confidence: {signal['confidence']}%"
+                    )
+                    generated_count += 1
+                else:
+                    logger.warning(f"Failed to generate signal for {symbol} {timeframe}")
+                    failed_count += 1
+
+            except Exception as e:
+                logger.error(f"Error generating signal for {symbol} {timeframe}: {e}")
+                failed_count += 1
+
+    logger.info(f"Signal generation complete: {generated_count} generated, {failed_count} failed")
+    logger.info("="*80)
+
+
+def outcome_evaluation_job():
+    """Evaluate pending signal outcomes - runs every hour.
+
+    Uses the new two-phase evaluation:
+    Phase 1: Checkpoint monitoring (1h, 4h, 12h, 24h, 48h) for early WIN/LOSS.
+             Checkpoint timeouts are NOT final -- signals stay pending.
+    Phase 2: Final evaluation at 7-day expiry. TIMEOUT is only assigned
+             after the full 7-day window is scanned.
+    """
+    from ml_service.analytics.outcome_engine import OutcomeEngine
+
+    logger.info("Starting outcome evaluation job")
+
+    try:
+        engine = OutcomeEngine()
+        stats = engine.evaluate_pending_outcomes(batch_size=100)
+
+        logger.info(
+            f"Outcome evaluation complete: {stats['evaluated']} finalized | "
+            f"Wins: {stats['wins']} | Losses: {stats['losses']} | "
+            f"Timeouts: {stats['timeouts']} | Still pending: {stats['still_pending']} | "
+            f"Checkpoints scanned: {stats['checkpoints_scanned']} | "
+            f"Failed: {stats['failed']}"
+        )
+    except Exception as e:
+        logger.error(f"Outcome evaluation job failed: {e}")
 
 
 def log_retrain_results(results):
@@ -244,8 +310,24 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    _scheduler.add_job(
+        signal_generation_job,
+        trigger=IntervalTrigger(hours=1),
+        id='signal_generation_job',
+        name='Generate signals for all symbols',
+        replace_existing=True,
+    )
+
+    _scheduler.add_job(
+        outcome_evaluation_job,
+        trigger=IntervalTrigger(hours=1),
+        id='outcome_evaluation_job',
+        name='Evaluate pending signal outcomes',
+        replace_existing=True,
+    )
+
     _scheduler.start()
-    logger.info("Scheduler started - retrain every 24h, market dominance every 1h")
+    logger.info("Scheduler started - retrain every 24h, dominance/signals/outcomes every 1h")
 
 
 def stop_scheduler():

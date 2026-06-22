@@ -151,16 +151,27 @@ def save_trades_to_db(trades: List[Dict]) -> int:
 def enrich_trades_with_signals():
     """
     Match user trades with ML signals from the signals table.
-    Links trades to signals within 1 hour window for analysis.
+
+    Matching criteria:
+    - Symbol must match
+    - Direction must match (BUY=long, SELL=short)
+    - Neutral signals are ignored
+    - Timeframe-aware windows: 1h = ±90min, 4h = ±4h
+    - Highest confidence signal selected when multiple candidates exist
     """
     db = get_database()
+
+    timeframe_windows = {
+        '1h': 90 * 60 * 1000,   # ±90 minutes in milliseconds
+        '4h': 4 * 60 * 60 * 1000,  # ±4 hours in milliseconds
+    }
 
     with db.get_connection() as conn:
         cursor = conn.cursor()
 
         cursor.execute(
             """
-            SELECT id, symbol, trade_time
+            SELECT id, symbol, side, trade_time
             FROM user_trade_history
             WHERE matched_signal_id IS NULL
             """
@@ -169,27 +180,46 @@ def enrich_trades_with_signals():
         unmatched_trades = cursor.fetchall()
         matched = 0
 
-        for trade_id, symbol, trade_time in unmatched_trades:
-            time_window_start = trade_time - (3600 * 1000)
-            time_window_end = trade_time + (3600 * 1000)
+        for trade_id, symbol, side, trade_time in unmatched_trades:
+            # Convert trade side to signal direction
+            trade_direction = 'long' if side == 'BUY' else 'short'
 
-            cursor.execute(
-                """
-                SELECT id, direction, confidence, features_json
-                FROM signals
-                WHERE symbol = ?
-                  AND timestamp >= ?
-                  AND timestamp <= ?
-                ORDER BY ABS(timestamp - ?) ASC
-                LIMIT 1
-                """,
-                (symbol, time_window_start, time_window_end, trade_time)
-            )
+            best_signal = None
+            best_confidence = -1
 
-            signal = cursor.fetchone()
+            # Check each timeframe with its specific window
+            for timeframe, window_ms in timeframe_windows.items():
+                time_window_start = trade_time - window_ms
+                time_window_end = trade_time + window_ms
 
-            if signal:
-                signal_id, direction, confidence, features_json = signal
+                cursor.execute(
+                    """
+                    SELECT id, direction, confidence, features_json, timeframe
+                    FROM signals
+                    WHERE symbol = ?
+                      AND timeframe = ?
+                      AND direction = ?
+                      AND direction != 'neutral'
+                      AND timestamp >= ?
+                      AND timestamp <= ?
+                    ORDER BY confidence DESC, ABS(timestamp - ?) ASC
+                    LIMIT 1
+                    """,
+                    (symbol, timeframe, trade_direction, time_window_start, time_window_end, trade_time)
+                )
+
+                signal = cursor.fetchone()
+
+                if signal:
+                    signal_id, direction, confidence, features_json, sig_timeframe = signal
+
+                    # Keep the highest confidence signal across all timeframes
+                    if confidence > best_confidence:
+                        best_confidence = confidence
+                        best_signal = signal
+
+            if best_signal:
+                signal_id, direction, confidence, features_json, sig_timeframe = best_signal
 
                 try:
                     features = json.loads(features_json)
@@ -213,6 +243,147 @@ def enrich_trades_with_signals():
 
     logger.info(f"Enriched {matched} trades with signal data")
     return matched
+
+
+def generate_attribution_report() -> Dict:
+    """
+    Generate comprehensive signal attribution quality report.
+
+    Returns:
+        Detailed attribution statistics including:
+        - Match rate by symbol
+        - Confidence distribution
+        - Timeframe breakdown
+        - Direction alignment
+        - Performance comparison
+    """
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+
+        # Overall statistics
+        cursor.execute("SELECT COUNT(*) FROM user_trade_history")
+        total_trades = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM user_trade_history WHERE matched_signal_id IS NOT NULL")
+        matched_count = cursor.fetchone()[0]
+
+        match_rate = (matched_count / total_trades * 100) if total_trades > 0 else 0
+
+        # Match rate by symbol
+        cursor.execute(
+            """
+            SELECT
+                symbol,
+                COUNT(*) as total,
+                SUM(CASE WHEN matched_signal_id IS NOT NULL THEN 1 ELSE 0 END) as matched,
+                AVG(CASE WHEN matched_signal_id IS NOT NULL THEN confidence_at_entry ELSE NULL END) as avg_confidence
+            FROM user_trade_history
+            GROUP BY symbol
+            ORDER BY total DESC
+            """
+        )
+        symbol_stats = []
+        for row in cursor.fetchall():
+            symbol, total, matched, avg_conf = row
+            symbol_stats.append({
+                'symbol': symbol,
+                'total_trades': total,
+                'matched_trades': matched,
+                'match_rate_pct': round((matched / total * 100) if total > 0 else 0, 1),
+                'avg_confidence': round(avg_conf, 1) if avg_conf else None
+            })
+
+        # Confidence distribution
+        cursor.execute(
+            """
+            SELECT
+                CASE
+                    WHEN confidence_at_entry >= 80 THEN '80-100'
+                    WHEN confidence_at_entry >= 60 THEN '60-79'
+                    WHEN confidence_at_entry >= 40 THEN '40-59'
+                    ELSE '0-39'
+                END as confidence_bucket,
+                COUNT(*) as count,
+                AVG(realized_pnl) as avg_pnl,
+                SUM(CASE WHEN realized_pnl > 0 THEN 1 ELSE 0 END) as wins
+            FROM user_trade_history
+            WHERE matched_signal_id IS NOT NULL
+            GROUP BY confidence_bucket
+            ORDER BY confidence_bucket DESC
+            """
+        )
+        confidence_dist = []
+        for row in cursor.fetchall():
+            bucket, count, avg_pnl, wins = row
+            win_rate = (wins / count * 100) if count > 0 else 0
+            confidence_dist.append({
+                'confidence_range': bucket,
+                'trade_count': count,
+                'avg_pnl': round(avg_pnl, 2),
+                'win_rate_pct': round(win_rate, 1)
+            })
+
+        # Performance comparison
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) as count,
+                AVG(realized_pnl) as avg_pnl,
+                SUM(CASE WHEN realized_pnl > 0 THEN 1 ELSE 0 END) as wins,
+                SUM(realized_pnl) as total_pnl
+            FROM user_trade_history
+            WHERE matched_signal_id IS NOT NULL
+            """
+        )
+        matched_result = cursor.fetchone()
+        matched_count, matched_avg_pnl, matched_wins, matched_total_pnl = matched_result
+        matched_win_rate = (matched_wins / matched_count * 100) if matched_count > 0 else 0
+
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) as count,
+                AVG(realized_pnl) as avg_pnl,
+                SUM(CASE WHEN realized_pnl > 0 THEN 1 ELSE 0 END) as wins,
+                SUM(realized_pnl) as total_pnl
+            FROM user_trade_history
+            WHERE matched_signal_id IS NULL
+            """
+        )
+        unmatched_result = cursor.fetchone()
+        unmatched_count, unmatched_avg_pnl, unmatched_wins, unmatched_total_pnl = unmatched_result
+        unmatched_win_rate = (unmatched_wins / unmatched_count * 100) if unmatched_count > 0 else 0
+
+        cursor.execute("SELECT SUM(realized_pnl) FROM user_trade_history")
+        total_pnl = cursor.fetchone()[0] or 0
+
+    return {
+        'summary': {
+            'total_trades': total_trades,
+            'matched_trades': matched_count,
+            'unmatched_trades': total_trades - matched_count,
+            'match_rate_pct': round(match_rate, 1),
+            'total_pnl': round(total_pnl, 2)
+        },
+        'by_symbol': symbol_stats,
+        'by_confidence': confidence_dist,
+        'performance': {
+            'matched': {
+                'count': matched_count,
+                'avg_pnl': round(matched_avg_pnl or 0, 2),
+                'total_pnl': round(matched_total_pnl or 0, 2),
+                'win_rate_pct': round(matched_win_rate, 2),
+            },
+            'unmatched': {
+                'count': unmatched_count,
+                'avg_pnl': round(unmatched_avg_pnl or 0, 2),
+                'total_pnl': round(unmatched_total_pnl or 0, 2),
+                'win_rate_pct': round(unmatched_win_rate, 2),
+            }
+        }
+    }
 
 
 def analyze_signal_performance() -> Dict:

@@ -1,0 +1,17 @@
+[Unit]
+Description=MoroQuant ML Trading Service
+After=network.target
+
+[Service]
+Type=simple
+User=zafka
+WorkingDirectory=/home/zafka/trade-dashboard/ml_service
+Environment="PATH=/home/zafka/trade-dashboard/ml_service/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/zafka/trade-dashboard/ml_service/venv/bin/uvicorn api.main:app --host 0.0.0.0 --port 8000 --limit-concurrency 20 --timeout-keep-alive 5
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/zafka/trade-dashboard/ml_service/storage/logs/ml_service.log
+StandardError=append:/home/zafka/trade-dashboard/ml_service/storage/logs/ml_service_error.log
+
+[Install]
+WantedBy=multi-user.target

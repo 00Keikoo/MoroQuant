@@ -337,29 +337,33 @@ def walk_forward_validation(
         xgb_model = xgb.XGBClassifier(**xgb_config)
         xgb_model.fit(X_train, y_train)
         xgb_pred = xgb_model.predict(X_test)
+        xgb_proba = xgb_model.predict_proba(X_test)
         xgb_f1 = f1_score(y_test, xgb_pred, average='weighted')
 
         lgb_model = lgb.LGBMClassifier(**lgb_config)
         lgb_model.fit(X_train, y_train)
         lgb_pred = lgb_model.predict(X_test)
+        lgb_proba = lgb_model.predict_proba(X_test)
         lgb_f1 = f1_score(y_test, lgb_pred, average='weighted')
 
         if xgb_f1 >= lgb_f1:
             best_model = xgb_model
             best_pred = xgb_pred
             best_f1 = xgb_f1
+            best_proba = xgb_proba
             model_type = 'xgboost'
         else:
             best_model = lgb_model
             best_pred = lgb_pred
             best_f1 = lgb_f1
+            best_proba = lgb_proba
             model_type = 'lightgbm'
 
         f1_per_class = f1_score(y_test, best_pred, average=None, labels=[0, 1, 2], zero_division=0)
 
         if collect_calibration_holdout:
             last_calibration_holdout = {
-                'probas': best_model.predict_proba(X_test),
+                'probas': best_proba,
                 'y': y_test.to_numpy(),
                 'model_type': model_type,
                 'fold': fold_num,
@@ -376,6 +380,7 @@ def walk_forward_validation(
             'test_size': len(X_test),
             'purge_size': purge_size,
             'embargo_size': embargo_size,
+            'test_confidences': [float(np.max(p) * 100) for p in best_proba],
         })
 
         if model_type == 'xgboost':
@@ -466,6 +471,32 @@ def train_final_model(
     sl_atr_mult = config.model.sl_atr_mult
     forward_periods = config.model.forward_periods
 
+    # Calculate training stats for feature drift
+    training_stats = {}
+    for feature in feature_cols:
+        vals = df_clean[feature].values
+        if len(vals) > 1000:
+            indices = np.linspace(0, len(vals) - 1, 1000, dtype=int)
+            vals_sampled = vals[indices]
+        else:
+            vals_sampled = vals
+        training_stats[feature] = {
+            'mean': float(np.mean(vals)),
+            'std': float(np.std(vals)),
+            'values': [float(x) for x in vals_sampled]
+        }
+
+    # Calculate regime distribution for regime drift
+    regime_dist = {}
+    if 'market_phase' in df.columns:
+        regime_counts = df['market_phase'].dropna().value_counts()
+        total_regime = len(df['market_phase'].dropna())
+        if total_regime > 0:
+            regime_dist = {
+                str(regime): float(count / total_regime * 100)
+                for regime, count in regime_counts.items()
+            }
+
     metadata = {
         'model_type': model_type,
         'feature_cols': feature_cols,
@@ -477,6 +508,8 @@ def train_final_model(
         'tp_mult': tp_atr_mult,
         'sl_mult': sl_atr_mult,
         'forward_periods': forward_periods,
+        'training_stats': training_stats,
+        'regime_distribution': regime_dist,
     }
 
     if validation_metrics:
@@ -490,20 +523,28 @@ def save_model(
     metadata: Dict,
     symbol: str,
     timeframe: str,
+    save_to_candidates: bool = True,
 ) -> str:
     """
-    Save trained model to storage/models/.
+    Save trained model to storage/models/candidates/ (or models/ for legacy).
 
     Args:
         model: Trained model object
         metadata: Model metadata
         symbol: Trading symbol
         timeframe: Timeframe
+        save_to_candidates: If True, save to candidates/ directory for governance review
 
     Returns:
         Path to saved model file
     """
-    models_dir = Path(__file__).parent.parent / "storage" / "models"
+    base_dir = Path(__file__).parent.parent / "storage" / "models"
+
+    if save_to_candidates:
+        models_dir = base_dir / "candidates"
+    else:
+        models_dir = base_dir
+
     models_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -664,6 +705,25 @@ def train_model(
             'test_size': r['test_size'],
         } for r in fold_results]
     }
+
+    # Aggregate validation confidences across all folds for drift detection expected distribution
+    all_val_confidences = []
+    for r in fold_results:
+        all_val_confidences.extend(r.get('test_confidences', []))
+
+    if all_val_confidences:
+        conf_arr = np.array(all_val_confidences)
+        if len(conf_arr) > 1000:
+            indices = np.linspace(0, len(conf_arr) - 1, 1000, dtype=int)
+            conf_sampled = conf_arr[indices]
+        else:
+            conf_sampled = conf_arr
+
+        validation_metrics['confidence_distribution'] = {
+            'mean': float(np.mean(conf_arr)),
+            'std': float(np.std(conf_arr)),
+            'values': [float(x) for x in conf_sampled]
+        }
 
     best_model_type = fold_results[-1]['model_type']
 
