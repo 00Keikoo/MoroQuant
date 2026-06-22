@@ -197,6 +197,7 @@ def market_dominance_job():
 def signal_generation_job():
     """Generate signals for all production symbols - runs every hour."""
     from ml_service.models.predictor import generate_signal
+    from ml_service.notifications.telegram_notifier import send_signal_alert
 
     logger.info("="*80)
     logger.info("Starting signal generation job")
@@ -217,6 +218,18 @@ def signal_generation_job():
                         f"Confidence: {signal['confidence']}%"
                     )
                     generated_count += 1
+
+                    # Signal has already been persisted to the DB inside
+                    # generate_signal() -> save_signal_to_db(). Fire the
+                    # Telegram alert. Notification failures MUST NOT affect
+                    # signal generation; send_signal_alert swallows them
+                    # and returns a bool, but we wrap defensively anyway.
+                    try:
+                        send_signal_alert(signal)
+                    except Exception as notify_err:
+                        logger.error(
+                            f"Telegram alert failed for {symbol} {timeframe}: {notify_err}"
+                        )
                 else:
                     logger.warning(f"Failed to generate signal for {symbol} {timeframe}")
                     failed_count += 1
