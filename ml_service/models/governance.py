@@ -211,6 +211,19 @@ def promote_model(
         production_cal_path = production_dir / candidate_calibration.name
         shutil.copy(str(candidate_calibration), str(production_cal_path))
 
+    # Update active model registry
+    registry = load_active_models_registry()
+
+    if symbol not in registry:
+    	registry[symbol] = {}
+
+    registry[symbol][timeframe] = candidate_file.name
+
+    save_active_models_registry(registry)
+
+    logger.info(
+    	f"Updated active registry: {symbol} {timeframe} -> {candidate_file.name}"
+    )
     logger.info(f"Promoted model to production: {production_path}")
 
     return {

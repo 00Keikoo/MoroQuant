@@ -130,9 +130,16 @@ def add_cross_pair_correlation(
                 rsuffix='_btc'
             )
 
-            df['btc_correlation'] = merged['returns'].rolling(window=window).corr(
-                merged['returns_btc']
-            ).values
+            if 'returns_btc' in merged.columns:
+                df['btc_correlation'] = (
+                    merged['returns']
+                    .rolling(window=window)
+                    .corr(merged['returns_btc'])
+                    .values
+                )
+            else:
+                # fallback when BTC alignment fails
+                df['btc_correlation'] = 0.0
         else:
             if len(df) == len(btc_df):
                 df['btc_correlation'] = df['returns'].rolling(window=window).corr(
@@ -229,12 +236,27 @@ def add_usdt_dominance_features(
             merged = df_aligned.join(btc_aligned[['returns']], how='left', rsuffix='_btc')
             merged = merged.join(eth_aligned[['returns']], how='left', rsuffix='_eth')
 
-            btc_roll_return = merged['returns_btc'].rolling(window=window).mean()
-            eth_roll_return = merged['returns_eth'].rolling(window=window).mean()
+            if (
+                'returns_btc' in merged.columns and
+                'returns_eth' in merged.columns
+            ):
+                btc_roll_return = (
+                    merged['returns_btc']
+                    .rolling(window=window)
+                    .mean()
+                )
 
-            df['btc_dominance_proxy'] = (btc_roll_return / (eth_roll_return + 1e-8)).values
-        else:
-            df['btc_dominance_proxy'] = 1.0
+                eth_roll_return = (
+                    merged['returns_eth']
+                    .rolling(window=window)
+                    .mean()
+                )
+
+                df['btc_dominance_proxy'] = (
+                    btc_roll_return / (eth_roll_return + 1e-8)
+                ).values
+            else:
+                df['btc_dominance_proxy'] = 1.0
     else:
         df['btc_dominance_proxy'] = 1.0
 

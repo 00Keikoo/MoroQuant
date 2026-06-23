@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pandas as pd
 import csv
+import traceback
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -21,7 +22,11 @@ from ml_service.utils.logger import setup_logger, get_logger
 setup_logger()
 logger = get_logger()
 
-SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
+TIER_1_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT']
+TIER_2_SYMBOLS = ['HYPEUSDT', 'LINKUSDT', 'LTCUSDT', 'SUIUSDT', 'ZECUSDT', 'ADAUSDT']
+
+SYMBOLS = TIER_1_SYMBOLS + TIER_2_SYMBOLS
+
 TIMEFRAMES = ['1h', '4h']
 F1_THRESHOLD = 1.03
 RETRAIN_LOG_PATH = Path(__file__).parent / 'storage' / 'logs' / 'retrain_log.csv'
@@ -101,7 +106,7 @@ def retrain_job():
 
     logger.info("Step 4: Retraining all models...")
 
-    for symbol in SYMBOLS:
+    for symbol in TIER_1_SYMBOLS:
         for timeframe in TIMEFRAMES:
             logger.info(f"\nTraining {symbol} {timeframe}")
 
@@ -160,7 +165,11 @@ def retrain_job():
                 })
 
             except Exception as e:
-                logger.error(f"Training failed for {symbol} {timeframe}: {e}")
+                logger.error(
+                    f"Training failed for {symbol} {timeframe}: {e}\n"
+                    f"{traceback.format_exc()}"
+                )
+
                 _last_retrain_results.append({
                     'symbol': symbol,
                     'timeframe': timeframe,
@@ -309,7 +318,6 @@ def log_retrain_results(results):
             })
 
 
-def start_scheduler():
     """Start the background scheduler."""
     global _scheduler
 
@@ -349,6 +357,17 @@ def start_scheduler():
         id='outcome_evaluation_job',
         name='Evaluate pending signal outcomes',
         replace_existing=True,
+    )
+
+    _scheduler.add_job(
+    	weekly_retrain_job,
+    	trigger='cron',
+    	day_of_week='sun',
+    	hour=3,
+    	minute=0,
+    	id='weekly_retrain_job',
+    	name='Weekly retrain tier 2 models',
+    	replace_existing=True,
     )
 
     _scheduler.start()
