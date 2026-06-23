@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { MLSignal } from '@/lib/types/ml';
 import { getSignal, getSymbols, getDisplayName } from '@/lib/api/ml-trading';
 import SignalCard from './SignalCard';
+import SignalFilterBar, {
+  DirectionFilter,
+  SortField,
+  SortOrder,
+} from './SignalFilterBar';
 
 interface SignalGridProps {
   timeframe: '1h' | '4h';
@@ -22,6 +27,13 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const isFirstLoad = useRef(true);
   const previousSignals = useRef<MLSignal[]>([]);
+
+  // Filter state
+  const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
+  const [minConfidence, setMinConfidence] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<SortField>('symbol');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   useEffect(() => {
     console.log('[SignalGrid] Component mounted');
@@ -125,13 +137,45 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
     }
   };
 
+  // Handle sort change — toggle direction if same field, otherwise default desc
+  const handleSortChange = (field: SortField) => {
+    if (field === sortField) {
+      setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  // Filtered + sorted signals
+  const filteredSignals = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    const filtered = signals.filter(s => {
+      if (s.error) return true; // show error cards regardless
+      if (directionFilter !== 'all' && s.direction !== directionFilter) return false;
+      if (s.confidence < minConfidence) return false;
+      if (query && !s.symbol.toLowerCase().includes(query)) return false;
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortField === 'confidence') {
+        return sortOrder === 'desc' ? b.confidence - a.confidence : a.confidence - b.confidence;
+      }
+      // symbol sort — always asc for symbol
+      return a.symbol.localeCompare(b.symbol);
+    });
+
+    return filtered;
+  }, [signals, directionFilter, minConfidence, searchQuery, sortField, sortOrder]);
+
   const cryptoSymbols = availableSymbols.filter(s => !s.endsWith('_proxy'));
   const proxySymbols = availableSymbols.filter(s => s.endsWith('_proxy'));
 
-  const cryptoSignals = signals.filter(s => !s.symbol.endsWith('_proxy'));
-  const proxySignals = signals.filter(s => s.symbol.endsWith('_proxy'));
+  const filteredCrypto = filteredSignals.filter(s => !s.symbol.endsWith('_proxy'));
+  const filteredProxy = filteredSignals.filter(s => s.symbol.endsWith('_proxy'));
 
-  const signalStats = cryptoSignals.reduce(
+  const signalStats = signals.reduce(
     (acc, signal) => {
       if (!signal.error) {
         acc.total++;
@@ -154,7 +198,7 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
           <div className="h-10 bg-gray-800 rounded w-full sm:w-48 animate-pulse"></div>
           <div className="h-10 bg-gray-800 rounded w-full sm:w-32 animate-pulse"></div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="bg-gray-900 rounded-lg p-4 border border-gray-800">
               <div className="animate-pulse space-y-3">
@@ -171,6 +215,7 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
 
   return (
     <div className="space-y-3 sm:space-y-4">
+      {/* Stats row */}
       {signalStats.total > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-gradient-to-br from-blue-900/40 to-blue-950/20 backdrop-blur border border-blue-700/30 rounded-xl p-4 sm:p-5 hover:scale-105 transition-transform duration-300">
@@ -211,6 +256,20 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
         </div>
       )}
 
+      {/* Filter bar */}
+      <SignalFilterBar
+        direction={directionFilter}
+        onDirectionChange={setDirectionFilter}
+        minConfidence={minConfidence}
+        onMinConfidenceChange={setMinConfidence}
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
+      />
+
+      {/* Symbol select + refresh */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <select
           value={selectedSymbol}
@@ -248,20 +307,38 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-        {cryptoSignals.map(signal => (
+      {/* Crypto signals grid — full width, 5 cols on 2xl */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+        {filteredCrypto.map(signal => (
           <SignalCard key={signal.symbol} signal={signal} />
         ))}
       </div>
 
-      {proxySignals.length > 0 && (
+      {filteredProxy.length > 0 && (
         <div className="space-y-3 mt-6">
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Macro Context</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {proxySignals.map(signal => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+            {filteredProxy.map(signal => (
               <SignalCard key={signal.symbol} signal={signal} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* No results */}
+      {filteredCrypto.length === 0 && filteredProxy.length === 0 && !loading && signals.length > 0 && (
+        <div className="text-center py-12 text-gray-500">
+          <p className="text-sm">No signals match the current filters.</p>
+          <button
+            onClick={() => {
+              setDirectionFilter('all');
+              setMinConfidence(0);
+              setSearchQuery('');
+            }}
+            className="mt-2 text-xs text-mq-accent hover:underline"
+          >
+            Clear all filters
+          </button>
         </div>
       )}
     </div>

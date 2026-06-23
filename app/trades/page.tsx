@@ -230,7 +230,7 @@ export default function TradesPage() {
       <Sidebar />
 
       <div className="flex-1 p-6 overflow-y-auto">
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="space-y-6">
           <div className="bg-gradient-to-r from-green-900/30 via-blue-900/20 to-green-900/30 rounded-2xl p-8 border border-green-800/30">
             <h1 className="text-4xl font-bold text-white mb-2">My Trades</h1>
             <p className="text-lg text-gray-300">Track and manage your live positions</p>

@@ -16,11 +16,16 @@ const impactColors = {
   'neutral': 'text-gray-400',
 };
 
-export default function NewsFeed() {
+export default function NewsFeed({ className }: { className?: string }) {
   const { news } = useNewsStore();
 
   return (
-    <div className="w-96 bg-gray-950 border-l border-gray-800 flex flex-col">
+    <div
+      className={
+        className ??
+        'w-96 bg-gray-950 border-l border-gray-800 flex flex-col shrink-0'
+      }
+    >
       <div className="p-4 border-b border-gray-800">
         <h2 className="text-lg font-semibold text-white">Market News</h2>
         <p className="text-xs text-gray-500 mt-1">Real-time geopolitical & macro updates</p>

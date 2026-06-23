@@ -316,7 +316,7 @@ export default function BacktestPage() {
 
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-7xl mx-auto space-y-6">
+              <div className="space-y-6">
             <div className="bg-gradient-to-r from-purple-900/30 via-blue-900/20 to-purple-900/30 rounded-2xl p-8 border border-purple-800/30">
               <h1 className="text-4xl font-bold text-white mb-2">Backtest Engine</h1>
               <p className="text-lg text-gray-300">Walk-forward backtesting with ML signals</p>
@@ -797,7 +797,7 @@ export default function BacktestPage() {
           </div>
         </div>
 
-        <div className="w-80 bg-gray-950 border-l border-gray-800 p-6 overflow-y-auto">
+        <div className="hidden lg:block w-80 bg-gray-950 border-l border-gray-800 p-6 overflow-y-auto shrink-0">
           <h2 className="text-lg font-bold text-white mb-4">Position Calculator</h2>
           <div className="space-y-4">
             <div>

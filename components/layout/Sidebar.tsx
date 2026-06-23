@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useMarketStore } from '@/lib/stores/marketStore';
 import { TOP_FUTURES_PAIRS } from '@/lib/api/binance';
 import Link from 'next/link';
@@ -59,14 +60,21 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export default function Sidebar() {
+/**
+ * Reusable sidebar body: branding, navigation, watchlist, footer.
+ * Shared by both the desktop bar and the mobile drawer so they never drift.
+ *
+ * `onNavigate` is invoked after a link/button is tapped, so the mobile
+ * drawer can close itself.
+ */
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { pairs, selectedPair, setSelectedPair } = useMarketStore();
   const pathname = usePathname();
 
   return (
-    <div className="w-[220px] bg-mq-panel border-r border-mq-panel-border flex flex-col shrink-0">
+    <div className="flex flex-col h-full">
       {/* Logo / branding header */}
-      <div className="px-5 py-4 border-b border-mq-panel-border">
+      <div className="px-5 py-4 border-b border-mq-panel-border shrink-0">
         <div className="flex items-center gap-3">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
             <path d="M16 4L4 10L16 16L28 10L16 4Z" fill="#00f0ff" opacity="0.8" />
@@ -98,6 +106,7 @@ export default function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={onNavigate}
                   className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-semibold ${
                     isActive
                       ? 'bg-mq-accent-dim/20 text-mq-accent border border-mq-accent/30'
@@ -127,7 +136,10 @@ export default function Sidebar() {
               return (
                 <button
                   key={symbol}
-                  onClick={() => setSelectedPair(symbol)}
+                  onClick={() => {
+                    setSelectedPair(symbol);
+                    onNavigate?.();
+                  }}
                   className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
                     isSelected
                       ? 'bg-mq-accent-dim/20 text-white border border-mq-accent/20'
@@ -162,7 +174,7 @@ export default function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-mq-panel-border">
+      <div className="px-5 py-3 border-t border-mq-panel-border shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-neutral-600 font-medium tracking-wider uppercase">
             MoroQuant
@@ -173,5 +185,55 @@ export default function Sidebar() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Sidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <>
+      {/* Desktop sidebar: fixed-width bar, always visible on md+ */}
+      <aside className="hidden md:flex w-[220px] bg-mq-panel border-r border-mq-panel-border shrink-0">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile hamburger trigger */}
+      <button
+        type="button"
+        aria-label="Open navigation menu"
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-md bg-mq-panel/80 backdrop-blur border border-mq-panel-border text-white hover:bg-mq-panel transition-colors"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Mobile drawer + backdrop */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <div className="absolute inset-y-0 left-0 w-64 max-w-[80vw] bg-mq-panel border-r border-mq-panel-border shadow-2xl animate-fade-in">
+            <button
+              type="button"
+              aria-label="Close navigation menu"
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <SidebarContent onNavigate={() => setMobileOpen(false)} />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

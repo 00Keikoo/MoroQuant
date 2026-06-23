@@ -47,7 +47,7 @@ export default function TradingPage() {
           }}
         />
         <div className="flex-1 p-4 sm:p-6 overflow-y-auto relative z-10">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-900/30 via-purple-900/20 to-blue-900/30 rounded-2xl p-6 sm:p-8 border border-blue-800/30 shadow-2xl">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex-1">

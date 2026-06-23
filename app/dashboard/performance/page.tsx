@@ -157,7 +157,7 @@ export default function PerformanceDashboard() {
         />
 
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-black via-mq-bg to-black">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="space-y-6">
             {/* Inline error banner if data is stale */}
             {error && metrics && (
               <div className="flex items-center gap-3 p-3 rounded-lg bg-mq-short-dim/10 border border-mq-short/30 text-mq-short text-xs font-medium">
@@ -222,136 +222,143 @@ export default function PerformanceDashboard() {
               </div>
             )}
 
-            {/* ─── Equity Curve ─────────────────────────────────── */}
-            <section className="glass-card p-5">
-              <div className="flex items-baseline justify-between mb-4">
-                <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                  Equity Curve
-                </h3>
-                <span className="text-[10px] text-neutral-500 font-mono">
-                  Cumulative PnL · {equityCurve.length} trades
-                </span>
-              </div>
-              <EquityCurveChart data={equityCurve} height={360} />
-            </section>
-
-            {/* ─── Trading Statistics ───────────────────────────── */}
-            {metrics && (
-              <section>
-                <div className="flex items-baseline gap-2 mb-3">
+            {/* ─── Equity Curve + Confidence (70/30) ──────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+              <section className="lg:col-span-7 glass-card p-5">
+                <div className="flex items-baseline justify-between mb-4">
                   <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                    Trading Statistics
+                    Equity Curve
                   </h3>
                   <span className="text-[10px] text-neutral-500 font-mono">
-                    Detailed breakdown
+                    Cumulative PnL · {equityCurve.length} trades
                   </span>
                 </div>
-                <StatisticsGrid metrics={metrics} />
+                <EquityCurveChart data={equityCurve} height={360} />
               </section>
-            )}
 
-            {/* ─── Confidence Analysis ──────────────────────────── */}
-            {Object.keys(confidence).length > 0 && (
-              <section className="glass-card overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
-                  <div className="flex items-baseline gap-2">
+              {/* ─── Confidence Analysis ──────────────────────────── */}
+              {Object.keys(confidence).length > 0 ? (
+                <section className="lg:col-span-3 glass-card overflow-hidden">
+                  <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
+                    <div className="flex items-baseline gap-2">
+                      <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                        Confidence
+                      </h3>
+                      <span className="text-[10px] text-neutral-500 font-mono">
+                        Win rate by bucket
+                      </span>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-mq-panel-border">
+                          <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Bucket</th>
+                          <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trades</th>
+                          <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Win%</th>
+                          <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">PnL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(confidence).map(([key, bucket]) => {
+                          const profitable = bucket.total_pnl >= 0;
+                          return (
+                            <tr
+                              key={key}
+                              className={`border-b border-mq-panel-border last:border-0 transition-colors ${
+                                profitable ? 'bg-mq-long/[0.03] hover:bg-mq-long/[0.06]' : 'bg-mq-short/[0.03] hover:bg-mq-short/[0.06]'
+                              }`}
+                            >
+                              <td className="px-4 py-3 font-semibold text-white text-xs">{bucket.bucket}</td>
+                              <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{bucket.total_trades}</td>
+                              <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{fmtNum(bucket.win_rate)}%</td>
+                              <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${profitable ? 'text-mq-long' : 'text-mq-short'}`}>
+                                {fmtUsd(bucket.total_pnl)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              ) : (
+                <section className="lg:col-span-3 glass-card p-8 flex items-center justify-center">
+                  <span className="text-neutral-500 text-xs">No confidence data</span>
+                </section>
+              )}
+            </div>
+
+            {/* ─── Statistics + Regime (50/50) ─────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {metrics && (
+                <section>
+                  <div className="flex items-baseline gap-2 mb-3">
                     <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                      Confidence Analysis
+                      Trading Statistics
                     </h3>
                     <span className="text-[10px] text-neutral-500 font-mono">
-                      Win rate by confidence bucket
+                      Detailed breakdown
                     </span>
                   </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-mq-panel-border">
-                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Bucket</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trades</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Win Rate</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Expectancy</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">PnL</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(confidence).map(([key, bucket]) => {
-                        const profitable = bucket.total_pnl >= 0;
-                        return (
-                          <tr
-                            key={key}
-                            className={`border-b border-mq-panel-border last:border-0 transition-colors ${
-                              profitable ? 'bg-mq-long/[0.03] hover:bg-mq-long/[0.06]' : 'bg-mq-short/[0.03] hover:bg-mq-short/[0.06]'
-                            }`}
-                          >
-                            <td className="px-4 py-3 font-semibold text-white">{bucket.bucket}</td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{bucket.total_trades}</td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{fmtNum(bucket.win_rate)}%</td>
-                            <td className={`px-4 py-3 text-right font-mono font-semibold ${bucket.expectancy >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
-                              {fmtUsd(bucket.expectancy)}
-                            </td>
-                            <td className={`px-4 py-3 text-right font-mono font-semibold ${profitable ? 'text-mq-long' : 'text-mq-short'}`}>
-                              {fmtUsd(bucket.total_pnl)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
+                  <StatisticsGrid metrics={metrics} />
+                </section>
+              )}
 
-            {/* ─── Regime Performance ───────────────────────────── */}
-            {Object.keys(regimes).length > 0 && (
-              <section className="glass-card overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                      Regime Performance
-                    </h3>
-                    <span className="text-[10px] text-neutral-500 font-mono">
-                      Performance by market regime
-                    </span>
+              {Object.keys(regimes).length > 0 ? (
+                <section className="glass-card overflow-hidden">
+                  <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
+                    <div className="flex items-baseline gap-2">
+                      <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                        Regime Performance
+                      </h3>
+                      <span className="text-[10px] text-neutral-500 font-mono">
+                        Performance by market regime
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-mq-panel-border">
-                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Regime</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trades</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Win Rate</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Profit Factor</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Expectancy</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(regimes).map(([key, regime]) => {
-                        const isUnknown = regime.regime_label === 'unknown' || regime.regime_label === 'Unknown';
-                        const label = isUnknown ? 'Unknown (historical data)' : regime.regime_label;
-                        return (
-                          <tr
-                            key={key}
-                            className="border-b border-mq-panel-border last:border-0 hover:bg-white/[0.02] transition-colors"
-                          >
-                            <td className="px-4 py-3 font-semibold text-white capitalize">{label}</td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{regime.total_trades}</td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-300">{fmtNum(regime.win_rate)}%</td>
-                            <td className={`px-4 py-3 text-right font-mono font-semibold ${Number(regime.profit_factor) >= 1 ? 'text-mq-long' : 'text-mq-short'}`}>
-                              {regime.profit_factor}
-                            </td>
-                            <td className={`px-4 py-3 text-right font-mono font-semibold ${regime.expectancy >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
-                              {fmtUsd(regime.expectancy)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-mq-panel-border">
+                          <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Regime</th>
+                          <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trades</th>
+                          <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Win Rate</th>
+                          <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">P.F.</th>
+                          <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Expect.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(regimes).map(([key, regime]) => {
+                          const isUnknown = regime.regime_label === 'unknown' || regime.regime_label === 'Unknown';
+                          const label = isUnknown ? 'Unknown (historical data)' : regime.regime_label;
+                          return (
+                            <tr
+                              key={key}
+                              className="border-b border-mq-panel-border last:border-0 hover:bg-white/[0.02] transition-colors"
+                            >
+                              <td className="px-4 py-3 font-semibold text-white capitalize text-xs">{label}</td>
+                              <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{regime.total_trades}</td>
+                              <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{fmtNum(regime.win_rate)}%</td>
+                              <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${Number(regime.profit_factor) >= 1 ? 'text-mq-long' : 'text-mq-short'}`}>
+                                {regime.profit_factor}
+                              </td>
+                              <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${regime.expectancy >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
+                                {fmtUsd(regime.expectancy)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              ) : (
+                <section className="glass-card p-8 flex items-center justify-center">
+                  <span className="text-neutral-500 text-xs">No regime data</span>
+                </section>
+              )}
+            </div>
 
             {/* ─── Open Positions ───────────────────────────────── */}
             {positions.length > 0 && (

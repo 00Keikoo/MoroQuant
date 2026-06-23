@@ -7,6 +7,9 @@ import NewsFeed from '@/components/news/NewsFeed';
 import MarketStats from '@/components/indicators/MarketStats';
 import MarketAnalysis from '@/components/trading/MarketAnalysis';
 import HyperliquidPanel from '@/components/trading/HyperliquidPanel';
+import OpenPositionsPanel from '@/components/dashboard/OpenPositionsPanel';
+import ModelHealthPanel from '@/components/dashboard/ModelHealthPanel';
+import MarketRegimesPanel from '@/components/dashboard/MarketRegimesPanel';
 import { useMarketStore } from '@/lib/stores/marketStore';
 import { useNewsStore } from '@/lib/stores/newsStore';
 import { useHyperliquidStore } from '@/lib/stores/hyperliquidStore';
@@ -116,21 +119,36 @@ export default function Home() {
     <div className="flex h-screen bg-black text-white">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 flex gap-4 p-4 overflow-hidden">
-          <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-            <TradingChart />
-            <MarketStats />
+      {/* Main scrollable content */}
+      <div className="flex-1 flex gap-4 overflow-hidden">
+        <main className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Top row: Chart + Analysis + Hyperliquid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <TradingChart />
+            </div>
+            <div className="flex flex-col gap-4">
+              <MarketAnalysis />
+              <HyperliquidPanel />
+            </div>
           </div>
 
-          <div className="w-96 flex flex-col gap-4 overflow-y-auto">
-            <MarketAnalysis />
-            <HyperliquidPanel />
+          {/* Market stats — full width */}
+          <MarketStats />
+
+          {/* Live open positions — full width */}
+          <OpenPositionsPanel />
+
+          {/* Model health + Market regimes — 50/50 split */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ModelHealthPanel />
+            <MarketRegimesPanel />
           </div>
-        </div>
+        </main>
+
+        {/* News feed — sidebar, hidden on mobile/tablet */}
+        <NewsFeed className="hidden lg:flex w-96 shrink-0 flex-col" />
       </div>
-
-      <NewsFeed />
     </div>
   );
 }
