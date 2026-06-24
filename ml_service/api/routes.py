@@ -392,6 +392,23 @@ async def get_open_positions() -> Dict:
     }
 
 
+@router.get("/account/equity")
+async def get_account_equity_endpoint() -> Dict:
+    """Fetch real account equity from Binance Futures.
+
+    Returns wallet_balance, unrealized_pnl, margin_balance, and
+    available_balance directly from Binance — no hardcoded starting
+    balance involved.
+
+    On any failure (missing credentials, network error, timeout)
+    returns HTTP 200 with ``source: "unavailable"`` and null balances.
+    Never crashes the API.
+    """
+    from data.exchange_sync import get_account_equity
+
+    return get_account_equity()
+
+
 @router.get("/analytics/live-performance")
 async def get_live_performance(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),

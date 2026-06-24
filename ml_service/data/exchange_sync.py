@@ -713,6 +713,125 @@ def analyze_signal_performance() -> Dict:
     }
 
 
+def get_account_equity() -> Dict:
+    """Fetch real account equity from Binance Futures.
+
+    Calls ``GET /fapi/v2/account`` and extracts wallet-level balances.
+    Returns a dict with ``source: 'binance'`` on success, or
+    ``source: 'unavailable'`` with null balances on any failure (never raises).
+
+    Field mapping (Binance → our schema):
+        totalWalletBalance  → wallet_balance
+        totalUnrealizedProfit → unrealized_pnl
+        totalMarginBalance  → margin_balance
+        availableBalance     → available_balance
+    """
+    api_key, api_secret = _load_exchange_credentials()
+    if not api_key or not api_secret:
+        logger.warning("get_account_equity: Binance credentials not configured")
+        return {
+            "wallet_balance": None,
+            "unrealized_pnl": None,
+            "margin_balance": None,
+            "available_balance": None,
+            "source": "unavailable",
+            "reason": "credentials_missing",
+        }
+
+    try:
+        account = _signed_request('/fapi/v2/account', {}, api_key, api_secret)
+    except Exception as e:
+        logger.error(f"get_account_equity: request failed: {e}")
+        return {
+            "wallet_balance": None,
+            "unrealized_pnl": None,
+            "margin_balance": None,
+            "available_balance": None,
+            "source": "unavailable",
+            "reason": "request_error",
+        }
+
+    if not account or not isinstance(account, dict):
+        logger.warning("get_account_equity: Binance returned empty or non-dict response")
+        return {
+            "wallet_balance": None,
+            "unrealized_pnl": None,
+            "margin_balance": None,
+            "available_balance": None,
+            "source": "unavailable",
+            "reason": "empty_response",
+        }
+
+    # Binance error responses contain a "code" field.
+    if 'code' in account:
+        logger.error(
+            f"get_account_equity: Binance API error: "
+            f"{account.get('code')} {account.get('msg')}"
+        )
+        return {
+            "wallet_balance": None,
+            "unrealized_pnl": None,
+            "margin_balance": None,
+            "available_balance": None,
+            "source": "unavailable",
+            "reason": "api_error",
+        }
+
+    try:
+        wallet_balance = float(account.get('totalWalletBalance', 0))
+        unrealized_pnl = float(account.get('totalUnrealizedProfit', 0))
+        margin_balance = float(account.get('totalMarginBalance', 0))
+        available_balance = float(account.get('availableBalance', 0))
+
+        logger.info(
+            f"get_account_equity: wallet={wallet_balance:.2f} "
+            f"unrealized={unrealized_pnl:.2f} margin={margin_balance:.2f} "
+            f"available={available_balance:.2f}"
+        )
+
+        return {
+            "wallet_balance": round(wallet_balance, 2),
+            "unrealized_pnl": round(unrealized_pnl, 2),
+            "margin_balance": round(margin_balance, 2),
+            "available_balance": round(available_balance, 2),
+            "source": "binance",
+        }
+    except (ValueError, TypeError) as e:
+        logger.error(f"get_account_equity: failed to parse balances: {e}")
+        return {
+            "wallet_balance": None,
+            "unrealized_pnl": None,
+            "margin_balance": None,
+            "available_balance": None,
+            "source": "unavailable",
+            "reason": "parse_error",
+        }
+
+
+def _load_exchange_credentials() -> tuple:
+    """Load Binance API credentials from config.
+
+    Returns (api_key, api_secret) tuple — either may be None.
+    """
+    try:
+        config = get_config()
+        # Try exchange_sync section first (preferred for signed endpoints).
+        if hasattr(config, 'exchange_sync'):
+            key = getattr(config.exchange_sync, 'binance_api_key', None)
+            secret = getattr(config.exchange_sync, 'binance_api_secret', None)
+            if key and secret:
+                return key, secret
+        # Fallback to data_sources.binance.
+        if hasattr(config, 'data_sources'):
+            key = getattr(config.data_sources.binance, 'api_key', None)
+            secret = getattr(config.data_sources.binance, 'api_secret', None)
+            if key and secret:
+                return key, secret
+    except Exception as e:
+        logger.debug(f"Could not load exchange credentials from config: {e}")
+    return None, None
+
+
 def get_position_signal_comparison(positions: List[Dict]) -> List[Dict]:
     """
     Compare open positions with current ML signals.

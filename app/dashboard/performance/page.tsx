@@ -12,12 +12,14 @@ import {
   getOpenPositions,
   getRegimePerformance,
   getConfidenceBuckets,
+  getAccountEquity,
   type LiveMetrics,
   type EquityPoint,
   type RecentTrade,
   type Position,
   type RegimeMetrics,
   type ConfidenceBucket,
+  type AccountEquity,
 } from '@/lib/services/performanceService';
 
 const AUTO_REFRESH_MS = 30_000;
@@ -25,6 +27,7 @@ const AUTO_REFRESH_MS = 30_000;
 export default function PerformanceDashboard() {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
+  const [accountEquity, setAccountEquity] = useState<AccountEquity | null>(null);
   const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [regimes, setRegimes] = useState<Record<string, RegimeMetrics>>({});
@@ -42,11 +45,12 @@ export default function PerformanceDashboard() {
     }
 
     try {
-      const [report, positionsData, regimesData, confidenceData] = await Promise.all([
+      const [report, positionsData, regimesData, confidenceData, equityData] = await Promise.all([
         getLivePerformanceReport(),
         getOpenPositions(),
         getRegimePerformance(),
         getConfidenceBuckets(),
+        getAccountEquity(),
       ]);
 
       if (report.status === 'success') {
@@ -66,6 +70,8 @@ export default function PerformanceDashboard() {
           }
         }
       }
+
+      setAccountEquity(equityData);
 
       setPositions(positionsData);
       setRegimes(regimesData);
@@ -208,58 +214,100 @@ export default function PerformanceDashboard() {
             )}
 
             {/* ─── KPI Cards (4x2) ─────────────────────────────── */}
-            {metrics && (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {/* ─── Account Equity (from Binance) ────────────── */}
+              {accountEquity && accountEquity.source === 'binance' && (
+                <>
+                  <PerformanceCard
+                    label="Account Equity"
+                    value={`$${fmtNum(accountEquity.margin_balance)}`}
+                    sublabel="Binance Futures margin"
+                    status="neutral"
+                  />
+                  <PerformanceCard
+                    label="Wallet Balance"
+                    value={`$${fmtNum(accountEquity.wallet_balance)}`}
+                    sublabel={`Unrealized ${fmtUsd(accountEquity.unrealized_pnl)}`}
+                    status={accountEquity.unrealized_pnl !== null ? pnlStatus(accountEquity.unrealized_pnl) : 'neutral'}
+                  />
+                  <PerformanceCard
+                    label="Available Balance"
+                    value={`$${fmtNum(accountEquity.available_balance)}`}
+                    sublabel="For new orders"
+                    status={accountEquity.available_balance !== null && accountEquity.available_balance > 0 ? 'positive' : 'negative'}
+                  />
+                </>
+              )}
+              {accountEquity && accountEquity.source === 'unavailable' && (
                 <PerformanceCard
-                  label="Win Rate"
-                  value={`${fmtNum(metrics.win_rate)}%`}
-                  sublabel={`${metrics.winning_trades}W / ${metrics.losing_trades}L`}
-                  status={metrics.win_rate >= 50 ? 'positive' : 'neutral'}
-                />
-                <PerformanceCard
-                  label="Total Trades"
-                  value={String(metrics.total_trades)}
-                  sublabel="Closed positions"
+                  label="Account Equity"
+                  value="Unavailable"
+                  sublabel="Binance API not reachable"
                   status="neutral"
                 />
+              )}
+              {!accountEquity && (
                 <PerformanceCard
-                  label="Net PnL"
-                  value={fmtUsd(metrics.total_pnl)}
-                  sublabel={`ROI ${fmtNum(metrics.roi)}%`}
-                  status={pnlStatus(metrics.total_pnl)}
-                />
-                <PerformanceCard
-                  label="Profit Factor"
-                  value={fmtNum(metrics.profit_factor)}
-                  sublabel={metrics.profit_factor >= 1 ? 'Profitable' : 'Unprofitable'}
-                  status={metrics.profit_factor >= 1 ? 'positive' : 'negative'}
-                />
-                <PerformanceCard
-                  label="Expectancy"
-                  value={fmtUsd(metrics.expectancy)}
-                  sublabel="Per trade"
-                  status={pnlStatus(metrics.expectancy)}
-                />
-                <PerformanceCard
-                  label="Sharpe Ratio"
-                  value={metrics.sharpe_ratio !== null ? fmtNum(metrics.sharpe_ratio) : 'N/A'}
-                  sublabel="Risk-adjusted return"
-                  status={metrics.sharpe_ratio !== null && metrics.sharpe_ratio >= 1 ? 'positive' : 'neutral'}
-                />
-                <PerformanceCard
-                  label="Max Drawdown"
-                  value={fmtUsd(metrics.max_drawdown)}
-                  sublabel={`${fmtNum(metrics.max_drawdown_pct)}% peak-to-trough`}
-                  status="negative"
-                />
-                <PerformanceCard
-                  label="Avg Hold Time"
-                  value={metrics.avg_hold_time_hours !== null ? `${fmtNum(metrics.avg_hold_time_hours)}h` : 'N/A'}
-                  sublabel="Per trade"
+                  label="Account Equity"
+                  value="—"
+                  sublabel="Loading..."
                   status="neutral"
                 />
-              </div>
-            )}
+              )}
+              {/* ─── Performance Metrics (rest of grid) ────── */}
+              {metrics && (
+                <>
+                  <PerformanceCard
+                    label="Win Rate"
+                    value={`${fmtNum(metrics.win_rate)}%`}
+                    sublabel={`${metrics.winning_trades}W / ${metrics.losing_trades}L`}
+                    status={metrics.win_rate >= 50 ? 'positive' : 'neutral'}
+                  />
+                  <PerformanceCard
+                    label="Total Trades"
+                    value={String(metrics.total_trades)}
+                    sublabel="Closed positions"
+                    status="neutral"
+                  />
+                  <PerformanceCard
+                    label="Net PnL"
+                    value={fmtUsd(metrics.total_pnl)}
+                    sublabel={`ROI ${fmtNum(metrics.roi)}%`}
+                    status={pnlStatus(metrics.total_pnl)}
+                  />
+                  <PerformanceCard
+                    label="Profit Factor"
+                    value={fmtNum(metrics.profit_factor)}
+                    sublabel={metrics.profit_factor >= 1 ? 'Profitable' : 'Unprofitable'}
+                    status={metrics.profit_factor >= 1 ? 'positive' : 'negative'}
+                  />
+                  <PerformanceCard
+                    label="Expectancy"
+                    value={fmtUsd(metrics.expectancy)}
+                    sublabel="Per trade"
+                    status={pnlStatus(metrics.expectancy)}
+                  />
+                  <PerformanceCard
+                    label="Sharpe Ratio"
+                    value={metrics.sharpe_ratio !== null ? fmtNum(metrics.sharpe_ratio) : 'N/A'}
+                    sublabel="Risk-adjusted return"
+                    status={metrics.sharpe_ratio !== null && metrics.sharpe_ratio >= 1 ? 'positive' : 'neutral'}
+                  />
+                  <PerformanceCard
+                    label="Max Drawdown"
+                    value={fmtUsd(metrics.max_drawdown)}
+                    sublabel={`${fmtNum(metrics.max_drawdown_pct)}% peak-to-trough`}
+                    status="negative"
+                  />
+                  <PerformanceCard
+                    label="Avg Hold Time"
+                    value={metrics.avg_hold_time_hours !== null ? `${fmtNum(metrics.avg_hold_time_hours)}h` : 'N/A'}
+                    sublabel="Per trade"
+                    status="neutral"
+                  />
+                </>
+              )}
+            </div>
 
             {/* ─── Equity Curve + Confidence (70/30) ──────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
@@ -269,7 +317,7 @@ export default function PerformanceDashboard() {
                     Equity Curve
                   </h3>
                   <span className="text-[10px] text-neutral-500 font-mono">
-                    Account Equity · {equityCurve.length} trades
+                    Historical (closed positions) · {equityCurve.length} trades
                   </span>
                 </div>
                 <EquityCurveChart data={equityCurve} height={360} />

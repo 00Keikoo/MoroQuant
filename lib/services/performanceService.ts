@@ -98,6 +98,16 @@ export interface LivePerformanceReport {
 
 // ─── Model drift / regime types ───────────────────────────────────
 
+/** Real Binance Futures account equity. */
+export interface AccountEquity {
+  wallet_balance: number | null;
+  unrealized_pnl: number | null;
+  margin_balance: number | null;
+  available_balance: number | null;
+  source: 'binance' | 'unavailable';
+  reason?: string;
+}
+
 /**
  * Drift report shape returned by GET /api/models/{symbol}/{timeframe}/drift.
  * Only the fields consumed by the UI are typed; the backend returns more
@@ -353,4 +363,28 @@ export async function getCurrentRegimes(
   });
 
   return Promise.all(tasks);
+}
+
+/**
+ * Fetch real account equity from Binance Futures.
+ * GET /api/account/equity
+ *
+ * Returns null balances with source='unavailable' if Binance is
+ * unreachable — never throws.
+ */
+export async function getAccountEquity(): Promise<AccountEquity> {
+  try {
+    const base = getApiBaseUrl();
+    const response = await fetchWithRetry(`${base}/account/equity`);
+    return (await response.json()) as AccountEquity;
+  } catch {
+    return {
+      wallet_balance: null,
+      unrealized_pnl: null,
+      margin_balance: null,
+      available_balance: null,
+      source: 'unavailable',
+      reason: 'fetch_error',
+    };
+  }
 }
