@@ -885,6 +885,93 @@ def attribution_report():
             click.echo("     - Consider generating signals more frequently")
 
 
+@cli.command("reconcile")
+@click.option("--no-live", is_flag=True, help="Skip live Binance fetch (synced DB only)")
+def reconcile(no_live: bool):
+    """Compare dashboard analytics vs Binance source data."""
+    from analytics.reconciliation import compare_dashboard_vs_binance
+
+    report = compare_dashboard_vs_binance(use_live=not no_live)
+
+    if report['binance_synced']['total_fills'] == 0:
+        click.echo("\n❌ No synced trade history found")
+        click.echo("Run: python cli.py sync-trades")
+        return
+
+    d = report['dashboard']
+    s = report['binance_synced']
+    diffs = report['differences']
+
+    click.echo("\n" + "=" * 80)
+    click.echo("RECONCILIATION REPORT")
+    click.echo("=" * 80)
+    click.echo(f"\n{report['summary']}\n")
+
+    click.echo("-" * 80)
+    click.echo("DASHBOARD (closed positions, FIFO)")
+    click.echo("-" * 80)
+    click.echo(f"  Closed positions: {d['total_closed_positions']}")
+    click.echo(f"  Realized PnL:     ${d['realized_pnl']:.4f}")
+    click.echo(f"  Commission:       ${d['commission']:.4f}")
+    click.echo(f"  Net PnL:          ${d['net_pnl']:.4f}")
+
+    click.echo("\n" + "-" * 80)
+    click.echo("BINANCE (synced raw fills — source of truth)")
+    click.echo("-" * 80)
+    click.echo(f"  Total fills:      {s['total_fills']}")
+    click.echo(f"  Symbols:          {s['symbols']}")
+    click.echo(f"  Realized PnL:     ${s['realized_pnl']:.4f}")
+    click.echo(f"  Commission:       ${s['commission']:.4f}")
+    click.echo(f"  Net PnL:          ${s['net_realized_pnl']:.4f}")
+
+    if report.get('binance_live') and 'error' not in (report['binance_live'] or {}):
+        bl = report['binance_live']
+        click.echo("\n" + "-" * 80)
+        click.echo(f"BINANCE LIVE (income endpoint, last {bl.get('window_days', 90)}d)")
+        click.echo("-" * 80)
+        click.echo(f"  Income records:   {bl.get('income_records', 'N/A')}")
+        click.echo(f"  Realized PnL:     ${bl['realized_pnl']:.4f}")
+        click.echo(f"  Commission:       ${bl['commission']:.4f}")
+        click.echo(f"  Net PnL:          ${bl['net_realized_pnl']:.4f}")
+        if diffs.get('dashboard_minus_live') is not None:
+            click.echo(f"  Diff (dash-live): ${diffs['dashboard_minus_live']:.4f}")
+
+    click.echo("\n" + "-" * 80)
+    click.echo("DIFFERENCES")
+    click.echo("-" * 80)
+    click.echo(f"  Dashboard - Synced: ${diffs['dashboard_minus_synced']:.4f}")
+    click.echo(f"  {diffs['explanation']}")
+
+    if report['open_positions_residual']:
+        click.echo("\n" + "-" * 80)
+        click.echo("OPEN POSITIONS (realized PnL on partials excluded)")
+        click.echo("-" * 80)
+        for r in report['open_positions_residual']:
+            click.echo(f"  {r['symbol']:<12} net={r['net_qty']:>12} {r['direction']}")
+
+    if report['duplicate_trades']:
+        click.echo("\n" + "-" * 80)
+        click.echo("DUPLICATE FILLS DETECTED")
+        click.echo("-" * 80)
+        for dup in report['duplicate_trades']:
+            click.echo(f"  {dup['order_id']}: {dup['count']}x")
+    else:
+        click.echo("\n  ✓ No duplicate fills detected")
+
+    click.echo("\n" + "-" * 80)
+    click.echo("PER-SYMBOL (synced)")
+    click.echo("-" * 80)
+    click.echo(f"  {'Symbol':<12} {'Fills':<8} {'Realized':<14} {'Commission':<14} {'Net':<12}")
+    for sym in report['per_symbol_synced']:
+        click.echo(
+            f"  {sym['symbol']:<12} {sym['fills']:<8} "
+            f"${sym['realized_pnl']:<13.4f} ${sym['commission']:<13.4f} "
+            f"${sym['net_pnl']:<11.4f}"
+        )
+
+    click.echo("=" * 80)
+
+
 @cli.command()
 @click.option("--start", "action", flag_value="start", help="Start the scheduler")
 @click.option("--status", "action", flag_value="status", help="Show scheduler status")

@@ -398,13 +398,20 @@ async def get_live_performance(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get live trading performance metrics from synced Binance trades."""
-    from analytics.live_metrics import compute_live_metrics, get_equity_curve
+    from analytics.live_metrics import (
+        compute_live_metrics, get_equity_curve, get_recent_trades
+    )
 
     metrics = compute_live_metrics(symbol=symbol, days_back=days_back)
 
     if metrics['status'] == 'success':
         equity_curve = get_equity_curve(symbol=symbol, days_back=days_back)
         metrics['equity_curve'] = equity_curve
+        # Embed recent closed positions (full schema) so the dashboard's
+        # Recent Trades table has symbol/side/regime/outcome per trade.
+        metrics['recent_trades'] = get_recent_trades(
+            symbol=symbol, days_back=days_back, limit=20
+        )
 
     return metrics
 
@@ -415,15 +422,45 @@ async def get_live_performance_report(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get comprehensive live trading performance report."""
-    from analytics.live_metrics import compute_live_metrics, get_equity_curve
+    from analytics.live_metrics import (
+        compute_live_metrics, get_equity_curve, get_recent_trades
+    )
 
     metrics = compute_live_metrics(symbol=symbol, days_back=days_back)
 
     if metrics['status'] == 'success':
         equity_curve = get_equity_curve(symbol=symbol, days_back=days_back)
         metrics['equity_curve'] = equity_curve
+        metrics['recent_trades'] = get_recent_trades(
+            symbol=symbol, days_back=days_back, limit=20
+        )
 
     return metrics
+
+
+@router.get("/analytics/recent-trades")
+async def get_recent_trades_endpoint(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    days_back: Optional[int] = Query(None, description="Days to look back"),
+    limit: int = Query(50, description="Number of recent closed positions")
+) -> Dict:
+    """Get recent CLOSED POSITIONS (completed round trips), newest first.
+
+    Each row contains the full trade schema: symbol, side, entry/exit
+    time & price, duration, quantity, gross/commission/net PnL, regime,
+    confidence, and outcome. Use this for the Recent Trades table instead
+    of deriving it from raw fills or the equity curve.
+    """
+    from analytics.live_metrics import get_recent_trades
+
+    trades = get_recent_trades(symbol=symbol, days_back=days_back, limit=limit)
+
+    return {
+        "status": "success",
+        "trades": trades,
+        "count": len(trades),
+        "timestamp": datetime.now().isoformat()
+    }
 
 
 @router.get("/analytics/regimes")
@@ -458,6 +495,22 @@ async def get_confidence_performance(
         metrics['correlation_analysis'] = correlation
 
     return metrics
+
+
+@router.get("/analytics/reconciliation")
+async def get_reconciliation(
+    use_live: bool = Query(True, description="Also pull live figures from Binance")
+) -> Dict:
+    """Reconciliation report: dashboard closed positions vs Binance source.
+
+    Compares the dashboard's realized PnL (closed positions, FIFO)
+    against the synced raw fills and, optionally, the live Binance income
+    endpoint. Surfaces differences, duplicate fills, and still-open
+    position residuals.
+    """
+    from analytics.reconciliation import compare_dashboard_vs_binance
+
+    return compare_dashboard_vs_binance(use_live=use_live)
 
 
 @router.get("/analytics/trade-history")

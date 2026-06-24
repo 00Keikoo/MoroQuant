@@ -32,6 +32,28 @@ export interface EquityPoint {
   cumulative_pnl: number;
   trade_count: number;
   trade_pnl: number;
+  /** Absolute account equity = starting_balance + cumulative_pnl. */
+  equity?: number;
+}
+
+export interface RecentTrade {
+  symbol: string;
+  side: string;
+  direction: string;
+  entry_time: number;
+  exit_time: number;
+  duration_minutes: number;
+  entry_price: number;
+  exit_price: number | null;
+  quantity: number;
+  gross_pnl: number;
+  commission: number;
+  net_pnl: number;
+  regime: string;
+  confidence: number | null;
+  outcome: 'win' | 'loss' | 'breakeven';
+  matched_signal_id: string | null;
+  fill_count: number;
 }
 
 export interface Position {
@@ -70,6 +92,8 @@ export interface LivePerformanceReport {
   metrics: LiveMetrics;
   timestamp: string;
   equity_curve: EquityPoint[];
+  /** Embedded recent closed positions (newest first). */
+  recent_trades?: RecentTrade[];
 }
 
 // ─── Model drift / regime types ───────────────────────────────────
@@ -184,6 +208,19 @@ export async function getLivePerformanceReport(): Promise<LivePerformanceReport>
   }
 
   return data;
+}
+
+/**
+ * Fetch recent CLOSED POSITIONS (completed round trips), newest first.
+ * GET /api/analytics/recent-trades
+ */
+export async function getRecentTrades(limit = 50): Promise<RecentTrade[]> {
+  const base = getApiBaseUrl();
+  const response = await fetchWithRetry(
+    `${base}/analytics/recent-trades?limit=${limit}`,
+  );
+  const data = await response.json();
+  return data.trades || [];
 }
 
 export async function getOpenPositions(): Promise<Position[]> {
