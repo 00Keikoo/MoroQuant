@@ -30,6 +30,9 @@ def compute_confidence_performance(
     """
     Compute performance metrics grouped by confidence buckets.
 
+    Operates on CLOSED POSITIONS (aggregated fills), not raw fills, so
+    that confidence buckets align with the equity curve granularity.
+
     Args:
         symbol: Filter by symbol (None = all symbols)
         days_back: Look back period in days (None = all time)
@@ -37,36 +40,19 @@ def compute_confidence_performance(
     Returns:
         Dictionary with confidence-based performance breakdown
     """
+    from ml_service.analytics.live_metrics import aggregate_closed_positions, _fetch_fills
     db = get_database()
 
     with db.get_connection() as conn:
-        cursor = conn.cursor()
+        fills = _fetch_fills(conn, symbol=symbol, days_back=days_back)
 
-        query = """
-            SELECT
-                confidence_at_entry,
-                realized_pnl,
-                commission,
-                matched_signal_id
-            FROM user_trade_history
-            WHERE matched_signal_id IS NOT NULL
-              AND confidence_at_entry IS NOT NULL
-        """
-        params = []
+    positions = aggregate_closed_positions(fills) if fills else []
+    matched_positions = [
+        p for p in positions
+        if p['matched_signal_id'] is not None and p['confidence_at_entry'] is not None
+    ]
 
-        if symbol:
-            query += " AND symbol = ?"
-            params.append(symbol)
-
-        if days_back:
-            cutoff_ts = int((datetime.now() - timedelta(days=days_back)).timestamp() * 1000)
-            query += " AND trade_time >= ?"
-            params.append(cutoff_ts)
-
-        cursor.execute(query, params)
-        trades = cursor.fetchall()
-
-    if not trades:
+    if not matched_positions:
         return {
             "status": "no_data",
             "message": "No trades with confidence data found",
@@ -75,13 +61,12 @@ def compute_confidence_performance(
 
     bucket_data = {bucket[2]: [] for bucket in CONFIDENCE_BUCKETS}
 
-    for trade in trades:
-        confidence, realized_pnl, commission, signal_id = trade
-        net_pnl = realized_pnl - commission
+    for pos in matched_positions:
+        confidence = pos['confidence_at_entry']
 
         for min_conf, max_conf, label in CONFIDENCE_BUCKETS:
             if min_conf <= confidence < max_conf:
-                bucket_data[label].append(net_pnl)
+                bucket_data[label].append(pos['net_pnl'])
                 break
 
     confidence_metrics = {}
@@ -146,6 +131,8 @@ def analyze_confidence_correlation(
     """
     Analyze correlation between signal confidence and trade outcomes.
 
+    Operates on CLOSED POSITIONS (aggregated fills).
+
     Args:
         symbol: Filter by symbol
         days_back: Look back period in days
@@ -153,43 +140,26 @@ def analyze_confidence_correlation(
     Returns:
         Dictionary with correlation analysis
     """
+    from ml_service.analytics.live_metrics import aggregate_closed_positions, _fetch_fills
     db = get_database()
 
     with db.get_connection() as conn:
-        cursor = conn.cursor()
+        fills = _fetch_fills(conn, symbol=symbol, days_back=days_back)
 
-        query = """
-            SELECT confidence_at_entry, realized_pnl, commission
-            FROM user_trade_history
-            WHERE matched_signal_id IS NOT NULL
-              AND confidence_at_entry IS NOT NULL
-        """
-        params = []
+    positions = aggregate_closed_positions(fills) if fills else []
+    matched_positions = [
+        p for p in positions
+        if p['matched_signal_id'] is not None and p['confidence_at_entry'] is not None
+    ]
 
-        if symbol:
-            query += " AND symbol = ?"
-            params.append(symbol)
-
-        if days_back:
-            cutoff_ts = int((datetime.now() - timedelta(days=days_back)).timestamp() * 1000)
-            query += " AND trade_time >= ?"
-            params.append(cutoff_ts)
-
-        cursor.execute(query, params)
-        trades = cursor.fetchall()
-
-    if len(trades) < 2:
+    if len(matched_positions) < 2:
         return {
             "status": "insufficient_data",
-            "message": "Need at least 2 trades for correlation analysis"
+            "message": "Need at least 2 closed positions for correlation analysis"
         }
 
-    confidences = []
-    pnls = []
-
-    for confidence, realized_pnl, commission in trades:
-        confidences.append(confidence)
-        pnls.append(realized_pnl - commission)
+    confidences = [p['confidence_at_entry'] for p in matched_positions]
+    pnls = [p['net_pnl'] for p in matched_positions]
 
     confidences_arr = np.array(confidences)
     pnls_arr = np.array(pnls)

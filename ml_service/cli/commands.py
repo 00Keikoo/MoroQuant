@@ -599,14 +599,17 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
 
 
 @cli.command("sync-trades")
-@click.option("--continuous", is_flag=True, help="Run continuously in background")
+@click.option("--continuous", is_flag=True, help="Run continuously, syncing every sync_interval_hours")
 @click.option("--symbol", help="Sync specific symbol only")
-def sync_trades(continuous: bool, symbol: Optional[str]):
+@click.option("--backfill-regimes", is_flag=True, help="Re-run regime enrichment for all matched trades")
+def sync_trades(continuous: bool, symbol: Optional[str], backfill_regimes: bool):
     """Sync trade history from Binance Futures exchange."""
     from data.exchange_sync import (
         fetch_user_trades,
+        sync_all_trades,
         save_trades_to_db,
         enrich_trades_with_signals,
+        backfill_regimes,
     )
     from utils.config import get_config
     import yaml
@@ -639,25 +642,48 @@ def sync_trades(continuous: bool, symbol: Optional[str]):
         click.echo("\n❌ Binance API credentials not configured")
         return
 
-    click.echo(f"\nSyncing trades from Binance Futures...")
+    def run_once():
+        click.echo(f"\nSyncing trades from Binance Futures...")
 
-    trades = fetch_user_trades(api_key, api_secret, symbol=symbol)
+        # Multi-symbol path (default) uses startTime watermark + pagination.
+        if symbol:
+            trades = fetch_user_trades(api_key, api_secret, symbol=symbol)
+        else:
+            trades = sync_all_trades(api_key, api_secret)
 
-    if not trades:
-        click.echo("❌ Failed to fetch trades (check API credentials)")
+        if trades is None:
+            click.echo("❌ Failed to fetch trades (check API credentials / network)")
+            return False
+
+        inserted = save_trades_to_db(trades)
+        click.echo(f"✓ Synced {len(trades)} fills ({inserted} new)")
+
+        click.echo("\nEnriching trades with signal data...")
+        matched = enrich_trades_with_signals()
+        click.echo(f"✓ Matched {matched} trades with ML signals")
+        return True
+
+    if backfill_regimes:
+        click.echo("\nBackfilling regime data for all matched trades...")
+        updated = backfill_regimes()
+        click.echo(f"✓ Backfilled {updated} trades")
         return
 
-    inserted = save_trades_to_db(trades)
-    click.echo(f"✓ Synced {len(trades)} trades ({inserted} new)")
+    success = run_once()
 
-    click.echo("\nEnriching trades with signal data...")
-    matched = enrich_trades_with_signals()
-    click.echo(f"✓ Matched {matched} trades with ML signals")
-
-    if continuous:
-        click.echo("\n⚠️  Continuous mode not yet implemented")
-        click.echo("Run as cron job instead:")
-        click.echo("  0 */6 * * * cd /path/to/project && python cli.py sync-trades")
+    if continuous and success:
+        interval_hours = exchange_config.get('sync_interval_hours', 1)
+        click.echo(
+            f"\n🔄 Continuous mode: syncing every {interval_hours}h. "
+            "Press Ctrl+C to stop."
+        )
+        import time
+        try:
+            while True:
+                time.sleep(interval_hours * 3600)
+                run_once()
+        except KeyboardInterrupt:
+            click.echo("\n\nStopping continuous sync...")
 
 
 @cli.command("open-positions")

@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import pandas as pd
 import csv
 import traceback
+import yaml
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -318,6 +319,123 @@ def log_retrain_results(results):
             })
 
 
+def weekly_retrain_job():
+    """Retrain tier-2 models — runs every Sunday at 03:00 UTC."""
+    global _last_retrain_time, _last_retrain_results
+
+    logger.info("Starting weekly tier-2 retrain...")
+    _last_retrain_time = datetime.now()
+    _last_retrain_results = []
+
+    for symbol in TIER_2_SYMBOLS:
+        for timeframe in TIMEFRAMES:
+            try:
+                df = load_data(symbol, timeframe)
+                if df is None or len(df) < 100:
+                    logger.warning(f"Insufficient data for {symbol} {timeframe}")
+                    continue
+
+                btc_1h = load_data('BTCUSDT', '1h')
+                btc_4h = load_data('BTCUSDT', '4h')
+
+                old_f1 = get_current_model_f1(symbol, timeframe)
+                train_results = train_model(
+                    df=df, symbol=symbol, timeframe=timeframe,
+                    btc_df=btc_1h if timeframe == '1h' else btc_4h,
+                    eth_df=None, spy_df=None, dominance_df=None,
+                )
+                new_f1 = train_results['avg_f1_weighted']
+                governance_result = compare_and_promote(
+                    candidate_path=train_results['model_path'],
+                    symbol=symbol, timeframe=timeframe,
+                    improvement_threshold=F1_THRESHOLD,
+                )
+                _last_retrain_results.append({
+                    'symbol': symbol, 'timeframe': timeframe,
+                    'status': governance_result.get('status', 'unknown'),
+                    'reason': governance_result.get('reason', ''),
+                    'old_f1': old_f1, 'new_f1': new_f1,
+                })
+            except Exception as e:
+                logger.error(f"Weekly retrain failed for {symbol} {timeframe}: {e}")
+                _last_retrain_results.append({
+                    'symbol': symbol, 'timeframe': timeframe,
+                    'status': 'failed', 'reason': str(e),
+                    'old_f1': 0, 'new_f1': 0,
+                })
+
+    log_retrain_results(_last_retrain_results)
+    logger.info("Weekly tier-2 retrain complete")
+
+
+def trade_sync_job():
+    """Sync trade history from Binance Futures + enrich with signals.
+
+    Runs automatically on schedule (default every hour) and once on
+    FastAPI startup so recently closed positions appear immediately.
+    """
+    from ml_service.data.exchange_sync import (
+        sync_all_trades,
+        save_trades_to_db,
+        enrich_trades_with_signals,
+        backfill_regimes,
+    )
+    from ml_service.utils.config import get_config
+    import yaml
+    from pathlib import Path
+
+    try:
+        config = get_config()
+    except Exception:
+        # Fallback: read config.yaml directly if dataclass parsing fails
+        config = None
+
+    # Resolve API credentials from exchange_sync config (or binance data_sources)
+    api_key = None
+    api_secret = None
+
+    config_path = Path(__file__).parent / "config.yaml"
+    if config_path.exists():
+        with open(config_path) as f:
+            raw = yaml.safe_load(f)
+
+        ec = raw.get('exchange_sync', {})
+        if ec.get('enabled'):
+            api_key = ec.get('binance_api_key')
+            api_secret = ec.get('binance_api_secret')
+
+    if not api_key or not api_secret:
+        logger.warning("Trade sync skipped: no Binance API credentials in exchange_sync config")
+        return
+
+    try:
+        logger.info("Starting scheduled trade sync...")
+        trades = sync_all_trades(api_key, api_secret)
+
+        if not trades:
+            logger.info("Trade sync complete: no new trades found")
+            return
+
+        inserted = save_trades_to_db(trades)
+        logger.info(f"Trade sync: {len(trades)} fetched, {inserted} new inserts")
+
+        # Re-enrich any newly inserted trades with signal data
+        matched = enrich_trades_with_signals()
+        logger.info(f"Trade sync enrichment: {matched} trades matched with signals")
+
+        # Backfill regime for any matched trades still missing it (idempotent)
+        backfilled = backfill_regimes()
+        if backfilled:
+            logger.info(f"Trade sync regime backfill: {backfilled} trades updated")
+
+    except Exception as e:
+        logger.error(f"Trade sync job failed: {e}")
+
+
+_last_sync_time = None
+
+
+def start_scheduler():
     """Start the background scheduler."""
     global _scheduler
 
@@ -326,6 +444,26 @@ def log_retrain_results(results):
         return
 
     _scheduler = BackgroundScheduler(daemon=True)
+
+    # ── Trade sync: runs every hour by default ──────────────────────
+    sync_interval_hours = 1
+    try:
+        config_path = Path(__file__).parent / "config.yaml"
+        with open(config_path) as f:
+            raw = yaml.safe_load(f)
+        sync_interval_hours = int(
+            raw.get('exchange_sync', {}).get('sync_interval_hours', 1)
+        )
+    except Exception:
+        pass
+
+    _scheduler.add_job(
+        trade_sync_job,
+        trigger=IntervalTrigger(hours=sync_interval_hours),
+        id='trade_sync_job',
+        name=f'Sync Binance trades every {sync_interval_hours}h',
+        replace_existing=True,
+    )
 
     _scheduler.add_job(
         retrain_job,
@@ -360,18 +498,21 @@ def log_retrain_results(results):
     )
 
     _scheduler.add_job(
-    	weekly_retrain_job,
-    	trigger='cron',
-    	day_of_week='sun',
-    	hour=3,
-    	minute=0,
-    	id='weekly_retrain_job',
-    	name='Weekly retrain tier 2 models',
-    	replace_existing=True,
+        weekly_retrain_job,
+        trigger='cron',
+        day_of_week='sun',
+        hour=3,
+        minute=0,
+        id='weekly_retrain_job',
+        name='Weekly retrain tier 2 models',
+        replace_existing=True,
     )
 
     _scheduler.start()
-    logger.info("Scheduler started - retrain every 24h, dominance/signals/outcomes every 1h")
+    logger.info(
+        f"Scheduler started - trade sync every {sync_interval_hours}h, "
+        "retrain every 24h, dominance/signals/outcomes every 1h"
+    )
 
 
 def stop_scheduler():

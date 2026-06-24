@@ -4,7 +4,7 @@ import hmac
 import hashlib
 import time
 import requests
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from datetime import datetime
 import json
 
@@ -15,6 +15,10 @@ from data.database import get_database
 logger = get_logger()
 
 BINANCE_FUTURES_BASE_URL = "https://fapi.binance.com"
+
+# Symbols known to have been traded — extended on every sync via
+# open positions and /fapi/v2/account endpoint.
+_KNOWN_SYMBOLS: Set[str] = set()
 
 
 def _create_signature(query_string: str, api_secret: str) -> str:
@@ -45,6 +49,105 @@ def _signed_request(endpoint: str, params: Dict, api_key: str, api_secret: str) 
         return None
 
 
+def _discover_traded_symbols(api_key: str, api_secret: str) -> List[str]:
+    """Return the list of symbols that have any trade history.
+
+    Pulls symbols from open positions AND from the account endpoint's
+    position list (which includes positions with non-zero accumulated qty
+    even if currently zero).
+    """
+    symbols: Set[str] = set()
+
+    # 1. Open positions
+    positions = fetch_open_positions(api_key, api_secret)
+    if positions:
+        for p in positions:
+            symbols.add(p['symbol'])
+
+    # 2. Account positions (includes recently closed)
+    acct = _signed_request('/fapi/v2/account', {}, api_key, api_secret)
+    if acct and isinstance(acct, dict) and 'positions' in acct:
+        for p in acct['positions']:
+            amt = abs(float(p.get('positionAmt', 0)))
+            entry = float(p.get('entryPrice', 0))
+            # Include any symbol that has ever held a position
+            if amt > 0 or entry > 0:
+                symbols.add(p['symbol'])
+
+    # 3. Merge with config symbols (covers symbols traded before account
+    #    positions were opened under this API key)
+    try:
+        config = get_config()
+        for sym in config.data_sources.binance.symbols:
+            symbols.add(sym)
+    except Exception:
+        pass
+
+    result = sorted(symbols)
+    logger.info(f"Trade-sync symbol list: {result}")
+    return result
+
+
+def _get_watermark(symbol: Optional[str] = None) -> int:
+    """Return max trade_time from DB as the startTime watermark.
+
+    If symbol is given, use only that symbol's max; otherwise use the
+    global max across all symbols.
+    """
+    db = get_database()
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        if symbol:
+            cursor.execute(
+                "SELECT MAX(trade_time) FROM user_trade_history WHERE symbol = ?",
+                (symbol,)
+            )
+        else:
+            cursor.execute("SELECT MAX(trade_time) FROM user_trade_history")
+        row = cursor.fetchone()
+        return int(row[0]) if row and row[0] else 0
+
+
+def fetch_user_trades_for_symbol(
+    api_key: str,
+    api_secret: str,
+    symbol: str,
+    start_time: Optional[int] = None,
+    limit: int = 1000
+) -> Optional[List[Dict]]:
+    """
+    Fetch user trade history from Binance Futures for a SINGLE symbol.
+
+    The /fapi/v1/userTrades endpoint requires `symbol` as a mandatory
+    parameter for USD-M Futures.  `limit` is per-symbol (max 1000).
+
+    Returns a list of raw Binance trade dicts, or None on error.
+    """
+    params = {'symbol': symbol, 'limit': limit}
+    if start_time:
+        params['startTime'] = start_time
+
+    trades = _signed_request('/fapi/v1/userTrades', params, api_key, api_secret)
+
+    if trades and isinstance(trades, list):
+        logger.info(
+            f"Fetched {len(trades)} trades for {symbol} "
+            f"(startTime={start_time})"
+        )
+        return trades
+
+    # Binance returns {"code": -1102, ...} on error
+    if trades and isinstance(trades, dict) and 'code' in trades:
+        logger.error(
+            f"Binance API error for {symbol}: "
+            f"{trades.get('code')} {trades.get('msg')}"
+        )
+
+    return None
+
+
+# Legacy name kept for backward compatibility with CLI / tests.
+# Now delegates to sync_all_trades.
 def fetch_user_trades(
     api_key: str,
     api_secret: str,
@@ -52,31 +155,73 @@ def fetch_user_trades(
     start_time: Optional[int] = None,
     limit: int = 1000
 ) -> Optional[List[Dict]]:
-    """
-    Fetch user trade history from Binance Futures.
+    """Fetch trades from Binance Futures.
 
-    Args:
-        api_key: Binance API key (read-only)
-        api_secret: Binance API secret
-        symbol: Trading symbol (optional, fetches all if None)
-        start_time: Start timestamp in milliseconds
-        limit: Number of trades to fetch (max 1000)
-
-    Returns:
-        List of trade dicts or None on error
+    If *symbol* is given, fetches that symbol only (for backward compat).
+    Otherwise, discovers all traded symbols and fetches each.
     """
-    params = {'limit': limit}
     if symbol:
-        params['symbol'] = symbol
-    if start_time:
-        params['startTime'] = start_time
+        result = fetch_user_trades_for_symbol(
+            api_key, api_secret, symbol, start_time, limit
+        )
+        return result
 
-    trades = _signed_request('/fapi/v1/userTrades', params, api_key, api_secret)
+    # No symbol provided — do a full multi-symbol sync.
+    all_trades = sync_all_trades(api_key, api_secret)
+    return all_trades
 
-    if trades:
-        logger.info(f"Fetched {len(trades)} trades from Binance Futures")
 
-    return trades
+def sync_all_trades(
+    api_key: str,
+    api_secret: str,
+) -> List[Dict]:
+    """Sync trades across all known symbols, paginating with startTime.
+
+    Returns the combined list of all fetched trade dicts.
+    """
+    global _KNOWN_SYMBOLS
+    if _KNOWN_SYMBOLS:
+        symbols = sorted(_KNOWN_SYMBOLS)
+    else:
+        symbols = _discover_traded_symbols(api_key, api_secret)
+        _KNOWN_SYMBOLS = set(symbols)
+
+    all_trades: List[Dict] = []
+
+    for symbol in symbols:
+        # Per-symbol watermark: fetch only fills newer than what we have.
+        watermark = _get_watermark(symbol)
+
+        # Safety: subtract a small overlap window (1 min) to catch fills
+        # that arrived in the same millisecond as the watermark.
+        effective_start = max(0, watermark - 60_000) if watermark else None
+
+        page = fetch_user_trades_for_symbol(
+            api_key, api_secret, symbol,
+            start_time=effective_start,
+            limit=1000,
+        )
+        if page:
+            all_trades.extend(page)
+
+            # Binance returns newest-first; if we got a full page (1000)
+            # we may need to paginate backwards.  Check the oldest fill.
+            if len(page) == 1000:
+                oldest_time = min(int(t['time']) for t in page)
+                if effective_start is None or oldest_time > effective_start:
+                    logger.info(
+                        f"  {symbol}: full page received, paginating further back"
+                    )
+                    earlier = fetch_user_trades_for_symbol(
+                        api_key, api_secret, symbol,
+                        start_time=max(0, oldest_time - 60_000),
+                        limit=1000,
+                    )
+                    if earlier:
+                        all_trades.extend(earlier)
+
+    logger.info(f"Total fetched across all symbols: {len(all_trades)} fills")
+    return all_trades
 
 
 def fetch_open_positions(api_key: str, api_secret: str) -> Optional[List[Dict]]:
@@ -104,8 +249,7 @@ def save_trades_to_db(trades: List[Dict]) -> int:
     """
     Save user trades to database.
 
-    Args:
-        trades: List of trade dicts from Binance API
+    Uses INSERT OR IGNORE on order_id for deduplication.
 
     Returns:
         Number of new trades inserted
@@ -222,7 +366,7 @@ def enrich_trades_with_signals():
 
                 cursor.execute(
                     """
-                    SELECT id, direction, confidence, features_json, timeframe
+                    SELECT id, direction, confidence, features_json, timeframe, regime
                     FROM signals
                     WHERE symbol = ?
                       AND timeframe = ?
@@ -237,7 +381,7 @@ def enrich_trades_with_signals():
                 )
                 signal = cursor.fetchone()
                 if signal:
-                    signal_id, direction, confidence, features_json, sig_timeframe = signal
+                    signal_id, direction, confidence, features_json, sig_timeframe, signal_regime = signal
                     if confidence > best_confidence:
                         best_confidence = confidence
                         best_signal = signal
@@ -250,7 +394,7 @@ def enrich_trades_with_signals():
 
                     cursor.execute(
                         """
-                        SELECT id, direction, confidence, features_json, timeframe
+                        SELECT id, direction, confidence, features_json, timeframe, regime
                         FROM signals
                         WHERE symbol = ?
                           AND timeframe = ?
@@ -264,19 +408,17 @@ def enrich_trades_with_signals():
                     )
                     signal = cursor.fetchone()
                     if signal:
-                        signal_id, direction, confidence, features_json, sig_timeframe = signal
+                        signal_id, direction, confidence, features_json, sig_timeframe, signal_regime = signal
                         if confidence > best_confidence:
                             best_confidence = confidence
                             best_signal = signal
 
             if best_signal:
-                signal_id, direction, confidence, features_json, sig_timeframe = best_signal
+                signal_id, direction, confidence, features_json, sig_timeframe, signal_regime = best_signal
 
-                try:
-                    features = json.loads(features_json)
-                    market_regime = features.get('market_phase', 'unknown')
-                except:
-                    market_regime = 'unknown'
+                # Use the signals.regime column (authoritative), falling back
+                # to features_json only if column is NULL.
+                market_regime = signal_regime if signal_regime else 'unknown'
 
                 cursor.execute(
                     """
@@ -294,6 +436,78 @@ def enrich_trades_with_signals():
 
     logger.info(f"Enriched {matched} trades with signal data")
     return matched
+
+
+def backfill_regimes():
+    """Backfill market_regime for all trades that already have a matched_signal_id.
+
+    Reads the authoritative regime from the ``signals.regime`` column and
+    writes it to ``user_trade_history.market_regime`` for every row where
+    ``matched_signal_id IS NOT NULL`` but ``market_regime`` is still NULL or
+    ``'unknown'``.  This is a one-shot repair — safe to re-run idempotently.
+    """
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+
+        # 1. Count how many rows need backfill.
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM user_trade_history
+            WHERE matched_signal_id IS NOT NULL
+              AND (market_regime IS NULL OR market_regime = 'unknown')
+            """
+        )
+        need_backfill = cursor.fetchone()[0]
+
+        if need_backfill == 0:
+            logger.info("Regime backfill: all matched trades already have regimes")
+            return 0
+
+        logger.info(f"Regime backfill: {need_backfill} trades need regime update")
+
+        # 2. Mass-update via a single UPDATE…FROM query (SQLite supported).
+        cursor.execute(
+            """
+            UPDATE user_trade_history
+            SET market_regime = (
+                SELECT COALESCE(s.regime, 'unknown')
+                FROM signals s
+                WHERE s.id = user_trade_history.matched_signal_id
+            )
+            WHERE matched_signal_id IS NOT NULL
+              AND (market_regime IS NULL OR market_regime = 'unknown')
+              AND EXISTS (
+                SELECT 1 FROM signals s
+                WHERE s.id = user_trade_history.matched_signal_id
+                  AND s.regime IS NOT NULL
+                  AND s.regime != ''
+              )
+            """
+        )
+        updated = cursor.rowcount
+
+        # 3. For trades whose signal has NO regime column value either,
+        #    explicitly set 'unknown' so they are not retried endlessly.
+        cursor.execute(
+            """
+            UPDATE user_trade_history
+            SET market_regime = 'unknown'
+            WHERE matched_signal_id IS NOT NULL
+              AND (market_regime IS NULL OR market_regime = 'unknown')
+            """
+        )
+        finalized = cursor.rowcount
+
+        conn.commit()
+
+    logger.info(
+        f"Regime backfill complete: {updated} updated from signals, "
+        f"{finalized} finalized as 'unknown'"
+    )
+    return updated + finalized
 
 
 def generate_attribution_report() -> Dict:

@@ -36,12 +36,28 @@ dashboard_path = Path(__file__).parent.parent / "dashboard.html"
 @app.on_event("startup")
 async def startup_event():
     """Initialize price services and auto-retrain scheduler."""
+    import threading
+    from scheduler import trade_sync_job
+
     get_crypto_service()
     get_proxy_service()
     print("✅ Price services ready (on-demand fetching)")
 
     start_scheduler()
     print("✅ Auto-retrain scheduler started (runs every 24h)")
+
+    # Fire one trade sync immediately so recently closed positions appear
+    # without waiting for the next scheduled run. Run in a daemon thread
+    # so it never blocks server startup.
+    def _initial_sync():
+        try:
+            print("🔄 Running initial trade sync on startup...")
+            trade_sync_job()
+            print("✅ Initial trade sync complete")
+        except Exception as e:
+            print(f"⚠️  Initial trade sync failed: {e}")
+
+    threading.Thread(target=_initial_sync, daemon=True).start()
 
 @app.get("/")
 async def serve_dashboard():

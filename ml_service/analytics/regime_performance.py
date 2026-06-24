@@ -15,11 +15,18 @@ logger = get_logger()
 
 
 REGIME_LABELS = {
-    'trending': 'Trending',
-    'ranging': 'Ranging',
+    'trending_normal_vol': 'Trending Normal Vol',
+    'trending_high_vol': 'Trending High Vol',
+    'transitioning_normal_vol': 'Transitioning',
+    'transitioning_high_vol': 'Transitioning High Vol',
+    'ranging_normal_vol': 'Ranging',
+    'ranging_low_vol': 'Ranging Low Vol',
+    'choppy_normal_vol': 'Choppy Normal Vol',
     'choppy_low_vol': 'Choppy Low Vol',
     'high_volatility': 'High Volatility',
-    'unknown': 'Unknown'
+    'trending': 'Trending',
+    'ranging': 'Ranging',
+    'unknown': 'Unknown',
 }
 
 
@@ -30,6 +37,9 @@ def compute_regime_performance(
     """
     Compute performance metrics grouped by market regime.
 
+    Operates on CLOSED POSITIONS (aggregated fills), not raw fills, so
+    that regime buckets align with the equity curve granularity.
+
     Args:
         symbol: Filter by symbol (None = all symbols)
         days_back: Look back period in days (None = all time)
@@ -37,53 +47,35 @@ def compute_regime_performance(
     Returns:
         Dictionary with regime-based performance breakdown
     """
+    from ml_service.analytics.live_metrics import aggregate_closed_positions, _fetch_fills
     db = get_database()
 
     with db.get_connection() as conn:
-        cursor = conn.cursor()
+        fills = _fetch_fills(conn, symbol=symbol, days_back=days_back)
 
-        query = """
-            SELECT
-                market_regime,
-                realized_pnl,
-                commission,
-                matched_signal_id,
-                confidence_at_entry
-            FROM user_trade_history
-            WHERE matched_signal_id IS NOT NULL
-        """
-        params = []
-
-        if symbol:
-            query += " AND symbol = ?"
-            params.append(symbol)
-
-        if days_back:
-            cutoff_ts = int((datetime.now() - timedelta(days=days_back)).timestamp() * 1000)
-            query += " AND trade_time >= ?"
-            params.append(cutoff_ts)
-
-        cursor.execute(query, params)
-        trades = cursor.fetchall()
-
-    if not trades:
+    if not fills:
         return {
             "status": "no_data",
             "message": "No trades with matched signals found",
             "regimes": {}
         }
 
+    positions = aggregate_closed_positions(fills)
+    # Only count positions with a matched signal for attribution accuracy.
+    matched_positions = [p for p in positions if p['matched_signal_id'] is not None]
+
+    if not matched_positions:
+        return {
+            "status": "no_data",
+            "message": "No closed positions with matched signals found",
+            "regimes": {}
+        }
+
     regime_data = {}
 
-    for trade in trades:
-        market_regime, realized_pnl, commission, signal_id, confidence = trade
-        regime = market_regime or 'unknown'
-
-        if regime not in regime_data:
-            regime_data[regime] = []
-
-        net_pnl = realized_pnl - commission
-        regime_data[regime].append(net_pnl)
+    for pos in matched_positions:
+        regime = pos['market_regime'] or 'unknown'
+        regime_data.setdefault(regime, []).append(pos['net_pnl'])
 
     regime_metrics = {}
 
@@ -140,7 +132,7 @@ def get_regime_distribution(
     days_back: Optional[int] = None
 ) -> Dict:
     """
-    Get distribution of trades across market regimes.
+    Get distribution of CLOSED POSITIONS across market regimes.
 
     Args:
         symbol: Filter by symbol
@@ -149,42 +141,27 @@ def get_regime_distribution(
     Returns:
         Dictionary with regime distribution
     """
+    from ml_service.analytics.live_metrics import aggregate_closed_positions, _fetch_fills
     db = get_database()
 
     with db.get_connection() as conn:
-        cursor = conn.cursor()
+        fills = _fetch_fills(conn, symbol=symbol, days_back=days_back)
 
-        query = """
-            SELECT market_regime, COUNT(*) as count
-            FROM user_trade_history
-            WHERE matched_signal_id IS NOT NULL
-        """
-        params = []
-
-        if symbol:
-            query += " AND symbol = ?"
-            params.append(symbol)
-
-        if days_back:
-            cutoff_ts = int((datetime.now() - timedelta(days=days_back)).timestamp() * 1000)
-            query += " AND trade_time >= ?"
-            params.append(cutoff_ts)
-
-        query += " GROUP BY market_regime"
-
-        cursor.execute(query, params)
-        results = cursor.fetchall()
+    positions = aggregate_closed_positions(fills) if fills else []
+    matched_positions = [p for p in positions if p['matched_signal_id'] is not None]
 
     distribution = {}
     total = 0
 
-    for regime, count in results:
-        regime_key = regime or 'unknown'
-        distribution[regime_key] = {
-            "regime_label": REGIME_LABELS.get(regime_key, regime_key),
-            "count": count
-        }
-        total += count
+    for pos in matched_positions:
+        regime_key = pos['market_regime'] or 'unknown'
+        if regime_key not in distribution:
+            distribution[regime_key] = {
+                "regime_label": REGIME_LABELS.get(regime_key, regime_key),
+                "count": 0
+            }
+        distribution[regime_key]["count"] += 1
+        total += 1
 
     for regime_key in distribution:
         distribution[regime_key]["percentage"] = round(
