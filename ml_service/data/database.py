@@ -167,6 +167,25 @@ class Database:
             # signal_outcomes table is managed via migrations (004_replace_signal_outcomes_with_ohlcv_based.sql)
             # Schema: OHLCV-based outcome tracking with entry_price, take_profit, stop_loss, MFE/MAE
 
+            # ── Account equity snapshots (Binance wallet snapshots) ──────
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS account_equity_snapshots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp DATETIME NOT NULL,
+                    wallet_balance REAL NOT NULL,
+                    margin_balance REAL NOT NULL,
+                    available_balance REAL NOT NULL,
+                    unrealized_pnl REAL NOT NULL,
+                    source TEXT DEFAULT 'binance',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_equity_timestamp
+                ON account_equity_snapshots(timestamp)
+            """)
+
             # Add model_version column to signals table if it doesn't exist
             try:
                 cursor.execute("ALTER TABLE signals ADD COLUMN model_version TEXT")
@@ -187,7 +206,7 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
-            tables = ["ohlcv", "macro_events", "signals", "user_trades", "market_dominance"]
+            tables = ["ohlcv", "macro_events", "signals", "user_trades", "market_dominance", "account_equity_snapshots"]
             info = {}
 
             for table in tables:

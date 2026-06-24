@@ -57,6 +57,16 @@ async def startup_event():
         except Exception as e:
             print(f"⚠️  Initial trade sync failed: {e}")
 
+        # Capture an initial Binance equity snapshot so the equity-history
+        # chart has at least one point without waiting for the 5-min job.
+        try:
+            from scheduler import account_equity_snapshot_job
+            print("📸 Capturing initial account equity snapshot...")
+            account_equity_snapshot_job()
+            print("✅ Initial account equity snapshot complete")
+        except Exception as e:
+            print(f"⚠️  Initial account equity snapshot failed: {e}")
+
     threading.Thread(target=_initial_sync, daemon=True).start()
 
 @app.get("/")

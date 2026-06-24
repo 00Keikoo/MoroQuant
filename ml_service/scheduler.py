@@ -435,6 +435,28 @@ def trade_sync_job():
 _last_sync_time = None
 
 
+def account_equity_snapshot_job():
+    """Capture a Binance Futures equity snapshot every 5 minutes.
+
+    Calls ``capture_account_equity_snapshot()`` which fetches from
+    Binance and persists the result. Failures are swallowed and
+    logged — never affects other scheduled jobs.
+    """
+    try:
+        from ml_service.data.exchange_sync import capture_account_equity_snapshot
+        result = capture_account_equity_snapshot()
+        if result:
+            logger.info(
+                f"Account equity snapshot saved: "
+                f"margin=${result['margin_balance']:.2f} "
+                f"wallet=${result['wallet_balance']:.2f}"
+            )
+        else:
+            logger.debug("Account equity snapshot skipped (Binance unavailable)")
+    except Exception as e:
+        logger.error(f"Account equity snapshot job failed: {e}")
+
+
 def start_scheduler():
     """Start the background scheduler."""
     global _scheduler
@@ -508,10 +530,19 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    _scheduler.add_job(
+        account_equity_snapshot_job,
+        trigger=IntervalTrigger(minutes=5),
+        id='account_equity_snapshot_job',
+        name='Capture Binance equity snapshot every 5 min',
+        replace_existing=True,
+    )
+
     _scheduler.start()
     logger.info(
         f"Scheduler started - trade sync every {sync_interval_hours}h, "
-        "retrain every 24h, dominance/signals/outcomes every 1h"
+        "retrain every 24h, dominance/signals/outcomes every 1h, "
+        "account equity snapshot every 5m"
     )
 
 

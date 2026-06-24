@@ -409,6 +409,63 @@ async def get_account_equity_endpoint() -> Dict:
     return get_account_equity()
 
 
+@router.get("/account/equity-history")
+async def get_account_equity_history(
+    range: Optional[str] = Query(
+        None,
+        description="Time range: '1d', '7d', '30d', or 'all' (default)"
+    )
+) -> List[Dict]:
+    """Return persisted Binance equity snapshots (true account equity).
+
+    Each point is a snapshot captured by the 5-minute scheduler job.
+    The ``equity`` field equals ``margin_balance`` (wallet + unrealized
+    PnL), which best reflects live account value.
+
+    Query params:
+        range: '1d' | '7d' | '30d' | 'all' (default: 'all')
+
+    Returns an empty list if no snapshots exist yet.
+    """
+    from data.exchange_sync import get_equity_history
+
+    # Validate range param — fall back to 'all' on anything unknown.
+    valid_ranges = {'1d', '7d', '30d', 'all', None}
+    if range not in valid_ranges:
+        range = None
+
+    return get_equity_history(range=range)
+
+
+@router.get("/analytics/closed-trade-equity")
+async def get_closed_trade_equity(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    days_back: Optional[int] = Query(None, description="Days to look back")
+) -> Dict:
+    """Return the synthetic closed-trade equity curve (legacy view).
+
+    This is the historical equity computed from CLOSED POSITIONS only:
+
+        equity[n] = starting_balance + Σ(net_realized_pnl[0:n])
+
+    Kept for backward compatibility — useful for strategy analysis,
+    expectancy, and realized drawdown. The dashboard's main equity
+    chart now uses ``/api/account/equity-history`` (true Binance wallet
+    snapshots); this endpoint powers the secondary "Closed Trade Curve".
+    """
+    from analytics.live_metrics import get_equity_curve
+
+    curve = get_equity_curve(symbol=symbol, days_back=days_back)
+
+    return {
+        "status": "success",
+        "equity_curve": curve,
+        "count": len(curve),
+        "definition": "equity[n] = starting_balance + cumulative_net_realized_pnl[n]",
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
 @router.get("/analytics/live-performance")
 async def get_live_performance(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),

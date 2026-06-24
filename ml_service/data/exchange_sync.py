@@ -832,6 +832,133 @@ def _load_exchange_credentials() -> tuple:
     return None, None
 
 
+def capture_account_equity_snapshot() -> Optional[Dict]:
+    """Capture a Binance Futures equity snapshot and persist it to the DB.
+
+    Flow: Binance API → extract balances → persist to
+    ``account_equity_snapshots`` table.
+
+    Never raises — failures are logged and swallowed so the scheduler
+    is never interrupted.
+
+    Returns the inserted row as a dict, or None on failure.
+    """
+    try:
+        equity = get_account_equity()
+    except Exception as e:
+        logger.error(f"capture_account_equity_snapshot: get_account_equity failed: {e}")
+        return None
+
+    if equity.get('source') != 'binance':
+        logger.debug("capture_account_equity_snapshot: Binance unavailable, skipping snapshot")
+        return None
+
+    try:
+        db = get_database()
+        from datetime import datetime as dt
+        now = dt.utcnow().isoformat()
+
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO account_equity_snapshots
+                    (timestamp, wallet_balance, margin_balance, available_balance, unrealized_pnl, source)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    now,
+                    equity['wallet_balance'],
+                    equity['margin_balance'],
+                    equity['available_balance'],
+                    equity['unrealized_pnl'],
+                    'binance',
+                ),
+            )
+
+            row_id = cursor.lastrowid
+
+        logger.info(
+            f"capture_account_equity_snapshot: saved snapshot #{row_id} "
+            f"margin={equity['margin_balance']:.2f} wallet={equity['wallet_balance']:.2f}"
+        )
+
+        return {
+            "id": row_id,
+            "timestamp": now,
+            "wallet_balance": equity['wallet_balance'],
+            "margin_balance": equity['margin_balance'],
+            "available_balance": equity['available_balance'],
+            "unrealized_pnl": equity['unrealized_pnl'],
+            "source": "binance",
+        }
+    except Exception as e:
+        logger.error(f"capture_account_equity_snapshot: persistence failed: {e}")
+        return None
+
+
+def get_equity_history(range: Optional[str] = None) -> List[Dict]:
+    """Query stored equity snapshots from the DB.
+
+    Args:
+        range: Time range filter — one of '1d', '7d', '30d', 'all'.
+               Default is 'all'.
+
+    Returns:
+        List of snapshot dicts ordered by timestamp ascending.
+        Each dict has: timestamp, equity (= margin_balance),
+        wallet_balance, unrealized_pnl.
+    """
+    db = get_database()
+
+    # Map range to a datetime cutoff (SQLite will compare as ISO strings).
+    from datetime import datetime as dt, timedelta
+    cutoff = None
+    if range == '1d':
+        cutoff = (dt.utcnow() - timedelta(days=1)).isoformat()
+    elif range == '7d':
+        cutoff = (dt.utcnow() - timedelta(days=7)).isoformat()
+    elif range == '30d':
+        cutoff = (dt.utcnow() - timedelta(days=30)).isoformat()
+    # 'all' → no cutoff
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+
+        if cutoff:
+            cursor.execute(
+                """
+                SELECT timestamp, wallet_balance, margin_balance,
+                       available_balance, unrealized_pnl
+                FROM account_equity_snapshots
+                WHERE timestamp >= ?
+                ORDER BY timestamp ASC
+                """,
+                (cutoff,),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT timestamp, wallet_balance, margin_balance,
+                       available_balance, unrealized_pnl
+                FROM account_equity_snapshots
+                ORDER BY timestamp ASC
+                """
+            )
+
+        rows = cursor.fetchall()
+
+    return [
+        {
+            "timestamp": row[0],
+            "equity": round(row[2], 2),         # margin_balance = true equity
+            "wallet_balance": round(row[1], 2),
+            "unrealized_pnl": round(row[4], 2),
+        }
+        for row in rows
+    ]
+
+
 def get_position_signal_comparison(positions: List[Dict]) -> List[Dict]:
     """
     Compare open positions with current ML signals.

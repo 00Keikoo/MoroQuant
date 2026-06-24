@@ -108,6 +108,28 @@ export interface AccountEquity {
   reason?: string;
 }
 
+/** A single persisted Binance equity snapshot. */
+export interface EquitySnapshot {
+  /** ISO timestamp string. */
+  timestamp: string;
+  /** True account equity = margin_balance (wallet + unrealized PnL). */
+  equity: number;
+  wallet_balance: number;
+  unrealized_pnl: number;
+}
+
+/** Time range for equity history queries. */
+export type EquityRange = '1d' | '7d' | '30d' | 'all';
+
+/** Legacy closed-trade equity curve response shape. */
+export interface ClosedTradeEquityResponse {
+  status: string;
+  equity_curve: EquityPoint[];
+  count: number;
+  definition: string;
+  timestamp: string;
+}
+
 /**
  * Drift report shape returned by GET /api/models/{symbol}/{timeframe}/drift.
  * Only the fields consumed by the UI are typed; the backend returns more
@@ -386,5 +408,44 @@ export async function getAccountEquity(): Promise<AccountEquity> {
       source: 'unavailable',
       reason: 'fetch_error',
     };
+  }
+}
+
+/**
+ * Fetch persisted Binance equity snapshots (true account equity over time).
+ * GET /api/account/equity-history?range=7d
+ *
+ * Returns an empty list if no snapshots exist. Never throws.
+ */
+export async function getAccountEquityHistory(
+  range: EquityRange = '7d',
+): Promise<EquitySnapshot[]> {
+  try {
+    const base = getApiBaseUrl();
+    const response = await fetchWithRetry(
+      `${base}/account/equity-history?range=${range}`,
+    );
+    const data = await response.json();
+    return Array.isArray(data) ? (data as EquitySnapshot[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch the legacy synthetic closed-trade equity curve.
+ * GET /api/analytics/closed-trade-equity
+ *
+ * equity[n] = starting_balance + cumulative_net_realized_pnl[n].
+ * Never throws — returns empty list on failure.
+ */
+export async function getClosedTradeEquity(): Promise<EquityPoint[]> {
+  try {
+    const base = getApiBaseUrl();
+    const response = await fetchWithRetry(`${base}/analytics/closed-trade-equity`);
+    const data: ClosedTradeEquityResponse = await response.json();
+    return data.equity_curve || [];
+  } catch {
+    return [];
   }
 }

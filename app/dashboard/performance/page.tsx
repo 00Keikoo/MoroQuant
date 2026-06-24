@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import PerformanceCard, { type CardStatus } from '@/components/performance/PerformanceCard';
-import EquityCurveChart from '@/components/performance/EquityCurveChart';
+import {
+  TrueEquityCurve,
+  ClosedTradeEquityCurve,
+  RangeSelector,
+} from '@/components/performance/EquityCurveChart';
 import StatisticsGrid from '@/components/performance/StatisticsGrid';
 import PerformanceHeader from '@/components/performance/PerformanceHeader';
 import {
@@ -13,8 +17,12 @@ import {
   getRegimePerformance,
   getConfidenceBuckets,
   getAccountEquity,
+  getAccountEquityHistory,
+  getClosedTradeEquity,
   type LiveMetrics,
   type EquityPoint,
+  type EquitySnapshot,
+  type EquityRange,
   type RecentTrade,
   type Position,
   type RegimeMetrics,
@@ -28,6 +36,9 @@ export default function PerformanceDashboard() {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
   const [accountEquity, setAccountEquity] = useState<AccountEquity | null>(null);
+  const [equityHistory, setEquityHistory] = useState<EquitySnapshot[]>([]);
+  const [equityRange, setEquityRange] = useState<EquityRange>('7d');
+  const [closedTradeEquity, setClosedTradeEquity] = useState<EquityPoint[]>([]);
   const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [regimes, setRegimes] = useState<Record<string, RegimeMetrics>>({});
@@ -45,12 +56,24 @@ export default function PerformanceDashboard() {
     }
 
     try {
-      const [report, positionsData, regimesData, confidenceData, equityData] = await Promise.all([
+      const [
+        report,
+        positionsData,
+        regimesData,
+        confidenceData,
+        equityData,
+        historyData,
+        closedTradeData,
+      ] = await Promise.all([
         getLivePerformanceReport(),
         getOpenPositions(),
         getRegimePerformance(),
         getConfidenceBuckets(),
         getAccountEquity(),
+        // True Binance equity history respects the active range selector.
+        getAccountEquityHistory(equityRange),
+        // Legacy synthetic closed-trade equity curve.
+        getClosedTradeEquity(),
       ]);
 
       if (report.status === 'success') {
@@ -72,6 +95,8 @@ export default function PerformanceDashboard() {
       }
 
       setAccountEquity(equityData);
+      setEquityHistory(historyData);
+      setClosedTradeEquity(closedTradeData);
 
       setPositions(positionsData);
       setRegimes(regimesData);
@@ -87,7 +112,24 @@ export default function PerformanceDashboard() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [equityRange]);
+
+  // Refetch equity history whenever the range selector changes, without
+  // forcing the full loading spinner (only the chart refreshes).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const historyData = await getAccountEquityHistory(equityRange);
+        if (!cancelled) setEquityHistory(historyData);
+      } catch {
+        // Swallow — keep the previous data.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [equityRange]);
 
   useEffect(() => {
     fetchAllData(true);
@@ -309,18 +351,21 @@ export default function PerformanceDashboard() {
               )}
             </div>
 
-            {/* ─── Equity Curve + Confidence (70/30) ──────────── */}
+            {/* ─── True Account Equity Curve (Binance) ─────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
               <section className="lg:col-span-7 glass-card p-5">
-                <div className="flex items-baseline justify-between mb-4">
-                  <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                    Equity Curve
-                  </h3>
-                  <span className="text-[10px] text-neutral-500 font-mono">
-                    Historical (closed positions) · {equityCurve.length} trades
-                  </span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                      True Account Equity Curve
+                    </h3>
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      Binance · {equityHistory.length} snapshots
+                    </span>
+                  </div>
+                  <RangeSelector selected={equityRange} onSelect={setEquityRange} />
                 </div>
-                <EquityCurveChart data={equityCurve} height={360} />
+                <TrueEquityCurve data={equityHistory} height={360} />
               </section>
 
               {/* ─── Confidence Analysis ──────────────────────────── */}
@@ -446,6 +491,26 @@ export default function PerformanceDashboard() {
                 </section>
               )}
             </div>
+
+            {/* ─── Closed Trade Equity Curve (legacy/strategy) ──── */}
+            {closedTradeEquity.length > 0 && (
+              <section className="glass-card p-5">
+                <div className="flex items-baseline justify-between mb-4">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                      Closed Trade Curve
+                    </h3>
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      Realized PnL only · {closedTradeEquity.length} trades
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-neutral-600 font-mono">
+                    starting_balance + Σ net realized PnL
+                  </span>
+                </div>
+                <ClosedTradeEquityCurve data={closedTradeEquity} height={260} />
+              </section>
+            )}
 
             {/* ─── Open Positions ───────────────────────────────── */}
             {positions.length > 0 && (
