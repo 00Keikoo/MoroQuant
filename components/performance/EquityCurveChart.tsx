@@ -38,7 +38,9 @@ function ChartTooltip({ active, payload }: ChartTooltipProps) {
     hour: '2-digit',
     minute: '2-digit',
   });
-  const pnlColor = point.cumulative_pnl >= 0 ? '#00ff87' : '#ff0055';
+  // Equity is the absolute account balance (starting_balance + cumulative
+  // realized PnL). Fall back to cumulative_pnl only for legacy payloads.
+  const equity = typeof point.equity === 'number' ? point.equity : point.cumulative_pnl;
   const tradeColor = point.trade_pnl >= 0 ? '#00ff87' : '#ff0055';
 
   return (
@@ -55,9 +57,9 @@ function ChartTooltip({ active, payload }: ChartTooltipProps) {
         Trade #{point.trade_count} · {date}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '2px' }}>
-        <span style={{ fontSize: '10px', color: '#8e8e93' }}>Cumulative:</span>
-        <span style={{ fontSize: '13px', fontWeight: 700, color: pnlColor }}>
-          ${point.cumulative_pnl.toFixed(2)}
+        <span style={{ fontSize: '10px', color: '#8e8e93' }}>Equity:</span>
+        <span style={{ fontSize: '13px', fontWeight: 700, color: '#00f0ff' }}>
+          ${equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
@@ -73,13 +75,20 @@ function ChartTooltip({ active, payload }: ChartTooltipProps) {
 /**
  * Equity curve rendered as a smooth line chart with gradient fill below the line.
  * Uses ComposedChart to overlay an Area (fill) under the Line (stroke).
+ *
+ * Semantics: the Y-axis is ABSOLUTE ACCOUNT EQUITY
+ *   equity[n] = starting_balance + Σ net_realized_pnl[0:n]
+ * NOT cumulative PnL (which would start at 0). Falls back to cumulative_pnl
+ * only for legacy payloads that lack the `equity` field.
  */
 export default function EquityCurveChart({ data, height = 360 }: EquityCurveChartProps) {
-  // Sort by trade_count ascending so the line progresses chronologically
+  // Sort by trade_count ascending so the line progresses chronologically.
+  // Derive `equityValue` = absolute account equity per point.
   const chartData = [...data]
     .sort((a, b) => a.trade_count - b.trade_count)
     .map((point) => ({
       ...point,
+      equityValue: typeof point.equity === 'number' ? point.equity : point.cumulative_pnl,
       label: `#${point.trade_count}`,
     }));
 
@@ -133,7 +142,7 @@ export default function EquityCurveChart({ data, height = 360 }: EquityCurveChar
 
         <Area
           type="monotone"
-          dataKey="cumulative_pnl"
+          dataKey="equityValue"
           stroke="none"
           fill="url(#equityFillPositive)"
           isAnimationActive={true}
@@ -142,7 +151,7 @@ export default function EquityCurveChart({ data, height = 360 }: EquityCurveChar
 
         <Line
           type="monotone"
-          dataKey="cumulative_pnl"
+          dataKey="equityValue"
           stroke="#00f0ff"
           strokeWidth={2}
           dot={false}

@@ -33,9 +33,9 @@ def get_starting_balance() -> float:
 
     Resolution order:
       1. ``ML_STARTING_BALANCE`` env var (easiest to override per-deploy)
-      2. ``exchange_sync.starting_balance`` in config.yaml
-      3. ``backtest.initial_capital`` in config.yaml (existing setting)
-      4. The first recorded wallet balance (if available)
+      2. ``live_analytics.starting_balance`` in config.yaml (explicit key)
+      3. ``exchange_sync.starting_balance`` in config.yaml
+      4. ``backtest.initial_capital`` in config.yaml (existing setting)
       5. 10000.0 sane default
 
     Returns the resolved float balance.
@@ -49,20 +49,29 @@ def get_starting_balance() -> float:
         except ValueError:
             logger.warning(f"ML_STARTING_BALANCE='{env_val}' is not numeric, ignoring")
 
-    # 2/3. config.yaml keys.
+    # 2/3/4. config.yaml keys.
     try:
         from ml_service.utils.config import get_config
         config = get_config()
-        es = config.data_sources.get('binance', {}).get('starting_balance') if hasattr(config, 'data_sources') else None
+        es = None
+        # 2. Explicit live_analytics section (preferred).
+        if hasattr(config, 'live_analytics'):
+            es = config.live_analytics.get('starting_balance')
+        # 3. exchange_sync section.
         if es is None and hasattr(config, 'exchange_sync'):
             es = config.exchange_sync.get('starting_balance')
-        if es is None:
+        # 3b. data_sources.binance section.
+        if es is None and hasattr(config, 'data_sources'):
+            es = config.data_sources.get('binance', {}).get('starting_balance')
+        # 4. backtest fallback.
+        if es is None and hasattr(config, 'backtest'):
             es = config.backtest.get('initial_capital', 10000.0)
-        return float(es)
+        if es is not None:
+            return float(es)
     except Exception as e:
         logger.debug(f"Could not load starting balance from config: {e}")
 
-    # 4/5. Fallbacks.
+    # 5. Fallback.
     return 10000.0
 
 

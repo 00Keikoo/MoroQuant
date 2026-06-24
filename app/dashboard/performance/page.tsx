@@ -8,11 +8,13 @@ import StatisticsGrid from '@/components/performance/StatisticsGrid';
 import PerformanceHeader from '@/components/performance/PerformanceHeader';
 import {
   getLivePerformanceReport,
+  getRecentTrades,
   getOpenPositions,
   getRegimePerformance,
   getConfidenceBuckets,
   type LiveMetrics,
   type EquityPoint,
+  type RecentTrade,
   type Position,
   type RegimeMetrics,
   type ConfidenceBucket,
@@ -23,6 +25,7 @@ const AUTO_REFRESH_MS = 30_000;
 export default function PerformanceDashboard() {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
+  const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [regimes, setRegimes] = useState<Record<string, RegimeMetrics>>({});
   const [confidence, setConfidence] = useState<Record<string, ConfidenceBucket>>({});
@@ -49,6 +52,19 @@ export default function PerformanceDashboard() {
       if (report.status === 'success') {
         setMetrics(report.metrics);
         setEquityCurve(report.equity_curve || []);
+        // Recent closed positions come pre-built from the backend with the
+        // full schema (symbol/side/entry/exit/fees/regime). Prefer the
+        // embedded array; fall back to the dedicated endpoint if absent.
+        if (report.recent_trades && report.recent_trades.length > 0) {
+          setRecentTrades(report.recent_trades);
+        } else {
+          try {
+            const trades = await getRecentTrades(20);
+            setRecentTrades(trades);
+          } catch {
+            setRecentTrades([]);
+          }
+        }
       }
 
       setPositions(positionsData);
@@ -136,13 +152,36 @@ export default function PerformanceDashboard() {
     });
   };
 
+  // Price formatter: adapts decimals to magnitude (crypto-friendly).
+  const fmtPrice = (value: number | null | undefined): string => {
+    if (value === null || value === undefined) return '—';
+    const abs = Math.abs(value);
+    const digits = abs >= 1000 ? 2 : abs >= 1 ? 4 : 6;
+    return value.toLocaleString(undefined, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+  };
+
+  // Duration formatter: minutes → "Xh Ym" / "Xd Yh" / "Ym".
+  const fmtDuration = (minutes: number | null | undefined): string => {
+    if (minutes === null || minutes === undefined) return '—';
+    if (minutes < 1) return '<1m';
+    const totalMin = Math.round(minutes);
+    const days = Math.floor(totalMin / 1440);
+    const hours = Math.floor((totalMin % 1440) / 60);
+    const mins = totalMin % 60;
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
+
   const pnlStatus = (value: number): CardStatus =>
     value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
 
-  // ─── Recent trades from equity curve ──────────────────────────
-  const recentTrades = [...equityCurve]
-    .sort((a, b) => b.trade_count - a.trade_count)
-    .slice(0, 20);
+  // ─── Recent trades (from backend closed-position schema) ─────
+  // The list is already newest-first from the backend; no re-sort needed.
+  const visibleTrades = recentTrades.slice(0, 20);
 
   return (
     <div className="flex h-screen bg-mq-bg text-white">
@@ -230,7 +269,7 @@ export default function PerformanceDashboard() {
                     Equity Curve
                   </h3>
                   <span className="text-[10px] text-neutral-500 font-mono">
-                    Cumulative PnL · {equityCurve.length} trades
+                    Account Equity · {equityCurve.length} trades
                   </span>
                 </div>
                 <EquityCurveChart data={equityCurve} height={360} />
@@ -430,7 +469,7 @@ export default function PerformanceDashboard() {
             )}
 
             {/* ─── Recent Trades ────────────────────────────────── */}
-            {recentTrades.length > 0 && (
+            {visibleTrades.length > 0 && (
               <section className="glass-card overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
                   <div className="flex items-baseline gap-2">
@@ -438,7 +477,7 @@ export default function PerformanceDashboard() {
                       Recent Trades
                     </h3>
                     <span className="text-[10px] text-neutral-500 font-mono">
-                      Last {recentTrades.length} closed positions
+                      Last {visibleTrades.length} closed positions
                     </span>
                   </div>
                 </div>
@@ -446,47 +485,55 @@ export default function PerformanceDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-mq-panel-border">
-                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Time</th>
-                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">#</th>
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Symbol</th>
                         <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Side</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trade PnL</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Cumulative</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Entry</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Exit</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Duration</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Net PnL</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fees</th>
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Regime</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {recentTrades.map((trade) => {
-                        const pnlPositive = trade.trade_pnl >= 0;
-                        const date = new Date(trade.timestamp);
+                      {visibleTrades.map((trade, idx) => {
+                        const isLong = trade.direction === 'long';
+                        const pnlPositive = trade.net_pnl >= 0;
+                        const exitTime = new Date(trade.exit_time);
                         return (
                           <tr
-                            key={trade.trade_count}
+                            key={`${trade.symbol}-${trade.exit_time}-${idx}`}
                             className="border-b border-mq-panel-border last:border-0 hover:bg-white/[0.02] transition-colors"
                           >
-                            <td className="px-4 py-3 font-mono text-xs text-neutral-400">
-                              {date.toLocaleString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </td>
-                            <td className="px-4 py-3 font-mono text-neutral-500">#{trade.trade_count}</td>
+                            <td className="px-4 py-3 font-bold text-white text-xs">{trade.symbol}</td>
                             <td className="px-4 py-3">
                               <span
                                 className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                  pnlPositive
+                                  isLong
                                     ? 'bg-mq-long-dim/10 text-mq-long'
                                     : 'bg-mq-short-dim/10 text-mq-short'
                                 }`}
                               >
-                                {pnlPositive ? 'Win' : 'Loss'}
+                                {isLong ? 'Long' : 'Short'}
                               </span>
                             </td>
-                            <td className={`px-4 py-3 text-right font-mono font-semibold ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}>
-                              {pnlPositive ? '+' : ''}${trade.trade_pnl.toFixed(2)}
+                            <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">
+                              {fmtPrice(trade.entry_price)}
                             </td>
-                            <td className={`px-4 py-3 text-right font-mono font-semibold ${trade.cumulative_pnl >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
-                              ${trade.cumulative_pnl.toFixed(2)}
+                            <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">
+                              {trade.exit_price !== null ? fmtPrice(trade.exit_price) : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-neutral-400 text-xs">
+                              {fmtDuration(trade.duration_minutes)}
+                            </td>
+                            <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}>
+                              {pnlPositive ? '+' : ''}{trade.net_pnl.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-neutral-500 text-xs">
+                              {trade.commission.toFixed(4)}
+                            </td>
+                            <td className="px-4 py-3 text-neutral-400 text-xs capitalize">
+                              {trade.regime || '—'}
                             </td>
                           </tr>
                         );
