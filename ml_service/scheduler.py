@@ -457,6 +457,48 @@ def account_equity_snapshot_job():
         logger.error(f"Account equity snapshot job failed: {e}")
 
 
+def drift_snapshot_job():
+    """Compute drift for all production models and persist snapshots.
+
+    Runs every 60 minutes. For each symbol x timeframe pair, calls
+    ``get_drift_report()`` and persists the result. Individual model
+    failures are logged but never interrupt the remaining models.
+    """
+    from ml_service.analytics.drift_monitor import (
+        get_drift_report,
+        persist_drift_snapshot,
+    )
+
+    logger.info("Drift snapshot started")
+    processed = 0
+    failed = 0
+
+    for symbol in TIER_1_SYMBOLS:
+        for timeframe in TIMEFRAMES:
+            try:
+                report = get_drift_report(symbol, timeframe)
+                if report:
+                    ok = persist_drift_snapshot(symbol, timeframe, report)
+                    if ok:
+                        processed += 1
+                    else:
+                        failed += 1
+                else:
+                    failed += 1
+                    logger.warning(
+                        f"Drift snapshot: no report for {symbol} {timeframe}"
+                    )
+            except Exception as e:
+                failed += 1
+                logger.error(
+                    f"Drift snapshot failed for {symbol} {timeframe}: {e}"
+                )
+
+    logger.info(
+        f"Drift snapshot complete: {processed} saved, {failed} failed"
+    )
+
+
 def start_scheduler():
     """Start the background scheduler."""
     global _scheduler
@@ -538,11 +580,19 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    _scheduler.add_job(
+        drift_snapshot_job,
+        trigger=IntervalTrigger(hours=1),
+        id='drift_snapshot_job',
+        name='Compute and persist drift snapshots every 1h',
+        replace_existing=True,
+    )
+
     _scheduler.start()
     logger.info(
         f"Scheduler started - trade sync every {sync_interval_hours}h, "
         "retrain every 24h, dominance/signals/outcomes every 1h, "
-        "account equity snapshot every 5m"
+        "account equity snapshot every 5m, drift snapshot every 1h"
     )
 
 

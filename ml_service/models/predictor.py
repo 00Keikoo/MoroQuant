@@ -25,6 +25,54 @@ _model_cache = {}
 _signal_cache = {}
 
 
+def validate_model_features(
+    model_package: Dict,
+    generated_features: List[str],
+    context: str = "",
+) -> Tuple[bool, List[str]]:
+    """Validate a model's required features against what we can generate.
+
+    Compares ``metadata['feature_cols']`` (the features the model was
+    trained on) against the currently-generated feature columns. If any
+    required feature is missing, the model is rejected with a detailed
+    log so production inference never crashes on a feature mismatch.
+
+    Args:
+        model_package: The loaded model package dict (or any dict with a
+            ``metadata`` sub-dict containing ``feature_cols``).
+        generated_features: Feature column names currently producible.
+        context: Optional label (e.g. symbol/timeframe) for log clarity.
+
+    Returns:
+        (is_compatible, missing_features)
+    """
+    if not model_package:
+        return False, []
+
+    metadata = model_package.get('metadata', {})
+    required = metadata.get('feature_cols', [])
+
+    if not required:
+        logger.error(
+            f"Model rejected: no feature_cols in metadata"
+            f"{f' [{context}]' if context else ''}"
+        )
+        return False, []
+
+    required_set = set(required)
+    generated_set = set(generated_features)
+    missing = sorted(required_set - generated_set)
+
+    if missing:
+        logger.error(
+            f"Model rejected:{f' [{context}]' if context else ''}"
+        )
+        logger.error(f"missing features: {missing}")
+        return False, missing
+
+    return True, []
+
+
 def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     """
     Load the current production model for a symbol/timeframe.
@@ -62,9 +110,14 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     is_compatible, missing_features = validate_model_compatibility(model_path, current_features)
 
     if not is_compatible:
-        logger.error(f"Model {Path(model_path).name} is incompatible with current features")
-        logger.error(f"Missing features: {', '.join(missing_features)}")
-        logger.error(f"Model cannot be loaded. Fix active_models.json to reference a compatible model.")
+        # Detailed rejection log — never crash on feature mismatch.
+        context = f"{symbol} {timeframe}"
+        logger.error(
+            f"Model rejected: {Path(model_path).name} [{context}] "
+            f"is incompatible with current features"
+        )
+        logger.error(f"missing features: {missing_features}")
+        logger.error("Model cannot be loaded. Fix active_models.json to reference a compatible model.")
         return None
 
     with open(model_path, 'rb') as f:

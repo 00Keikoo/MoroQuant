@@ -186,6 +186,29 @@ class Database:
                 ON account_equity_snapshots(timestamp)
             """)
 
+            # ── Model drift snapshots (pre-computed drift cache) ────────
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS model_drift_snapshots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    timeframe TEXT NOT NULL,
+                    drift_score REAL,
+                    drift_status TEXT,
+                    feature_drift REAL,
+                    prediction_drift REAL,
+                    training_samples INTEGER,
+                    live_samples INTEGER,
+                    metadata_json TEXT,
+                    snapshot_timestamp DATETIME NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_drift_snapshot
+                ON model_drift_snapshots(symbol, timeframe, snapshot_timestamp)
+            """)
+
             # Add model_version column to signals table if it doesn't exist
             try:
                 cursor.execute("ALTER TABLE signals ADD COLUMN model_version TEXT")
@@ -206,7 +229,7 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
-            tables = ["ohlcv", "macro_events", "signals", "user_trades", "market_dominance", "account_equity_snapshots"]
+            tables = ["ohlcv", "macro_events", "signals", "user_trades", "market_dominance", "account_equity_snapshots", "model_drift_snapshots"]
             info = {}
 
             for table in tables:

@@ -784,9 +784,26 @@ async def aggregate_outcomes() -> Dict:
 
 @router.get("/models/{symbol}/{timeframe}/drift")
 async def get_model_drift(symbol: str, timeframe: str) -> Dict:
-    """Get drift analysis for a model to detect training/live divergence."""
-    from analytics.drift_monitor import get_drift_report
+    """Get drift analysis for a model — served from the pre-computed cache.
 
+    The expensive drift computation (model loading, feature engineering,
+    PSI/regime analysis) now runs in the hourly ``drift_snapshot_job``
+    and is persisted to ``model_drift_snapshots``. This endpoint does a
+    single indexed SELECT — target latency < 50 ms — so concurrent
+    frontend requests never overload the VPS.
+
+    Falls back to a live computation only if no snapshot exists yet
+    (cold start), keeping backward compatibility.
+    """
+    from analytics.drift_monitor import get_latest_drift_snapshot, get_drift_report
+
+    # Fast path: read from cache.
+    snapshot = get_latest_drift_snapshot(symbol, timeframe)
+    if snapshot is not None:
+        return snapshot
+
+    # Cold start fallback: compute live once so the cache can be
+    # populated by the next scheduler run. This keeps the endpoint
+    # functional before the first snapshot job has executed.
     report = get_drift_report(symbol, timeframe)
-
     return report

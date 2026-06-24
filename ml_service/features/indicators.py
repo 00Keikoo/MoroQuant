@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 import pandas_ta as ta
 
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 def add_ema_indicators(df: pd.DataFrame, periods: list = [9, 21, 50, 200]) -> pd.DataFrame:
     """
@@ -118,24 +122,65 @@ def add_bollinger_bands(df: pd.DataFrame, period: int = 20, std: float = 2.0) ->
 
 
 def add_vwap(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add VWAP (Volume Weighted Average Price).
+    """Add VWAP (Volume Weighted Average Price).
 
-    Note: For intraday data, VWAP should reset daily. For daily data, it's cumulative.
+    Ensures the DataFrame has an ordered DatetimeIndex before computing
+    VWAP — ``pandas_ta.vwap`` warns and produces incorrect results on a
+    non-DatetimeIndex / unsorted index. If a convertible time column
+    (``timestamp``, ``open_time``, or ``datetime``) is present it is
+    promoted to the index and sorted. If conversion is impossible VWAP
+    is skipped gracefully (never raises).
 
     Args:
-        df: DataFrame with OHLCV data and timestamp
+        df: DataFrame with OHLCV data (and ideally a time column).
 
     Returns:
-        DataFrame with VWAP column
+        DataFrame with ``vwap`` and ``price_to_vwap`` columns (when
+        computable); otherwise the input unchanged.
     """
     df = df.copy()
 
-    # Calculate VWAP using pandas-ta
-    df['vwap'] = ta.vwap(df['high'], df['low'], df['close'], df['volume'])
+    # ── Ensure an ordered DatetimeIndex ──────────────────────────
+    ready = False
+    if isinstance(df.index, pd.DatetimeIndex):
+        if not df.index.is_monotonic_increasing:
+            df = df.sort_index()
+        ready = True
+    else:
+        # Look for a convertible time column.
+        for col in ('timestamp', 'open_time', 'datetime'):
+            if col in df.columns:
+                try:
+                    dt = pd.to_datetime(df[col], errors='coerce')
+                    if dt.notna().any():
+                        df = df.set_index(dt)
+                        if df.index.duplicated().any():
+                            df = df[~df.index.duplicated(keep='last')]
+                        df = df.sort_index()
+                        ready = True
+                        break
+                except Exception as e:
+                    logger.warning(
+                        f"add_vwap: could not convert column '{col}' to "
+                        f"DatetimeIndex: {e}"
+                    )
 
-    # Calculate price position relative to VWAP (percentage)
-    df['price_to_vwap'] = ((df['close'] - df['vwap']) / df['vwap']) * 100
+    if not ready:
+        logger.warning(
+            "add_vwap: no DatetimeIndex and no convertible time column "
+            "(timestamp/open_time/datetime) found — skipping VWAP"
+        )
+        return df
+
+    # Guarantee the invariant pandas_ta requires.
+    if not df.index.is_monotonic_increasing:
+        df = df.sort_index()
+
+    try:
+        df['vwap'] = ta.vwap(df['high'], df['low'], df['close'], df['volume'])
+        df['price_to_vwap'] = ((df['close'] - df['vwap']) / df['vwap']) * 100
+    except Exception as e:
+        logger.warning(f"add_vwap: pandas_ta.vwap failed: {e} — skipping VWAP")
 
     return df
 

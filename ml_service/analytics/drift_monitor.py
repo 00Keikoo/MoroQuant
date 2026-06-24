@@ -12,6 +12,114 @@ from models.predictor import load_latest_model
 
 logger = get_logger(__name__)
 
+# ─── Drift snapshot persistence (cache layer) ─────────────────────
+
+def persist_drift_snapshot(symbol: str, timeframe: str, report: Dict) -> bool:
+    """Persist a drift report as a cached snapshot in the DB.
+
+    Extracts the key fields from the full report and stores them for
+    fast retrieval by the API endpoint.
+
+    Returns True on success, False on failure (never raises).
+    """
+    try:
+        db = get_database()
+        import json
+
+        # Extract sub-scores for the narrow columns.
+        feature_drift_val = report.get('feature_drift', {}).get('max_psi', 0)
+        confidence_drift_val = report.get('confidence_drift', {}).get('drift_score', 0)
+        metadata = {
+            'feature_drift': report.get('feature_drift'),
+            'confidence_drift': report.get('confidence_drift'),
+            'regime_drift': report.get('regime_drift'),
+            'retrain_reasons': report.get('retrain_reasons', []),
+        }
+
+        training_samples = (
+            report.get('feature_drift', {}).get('live_sample_size', 0)
+        )
+
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO model_drift_snapshots
+                    (symbol, timeframe, drift_score, drift_status,
+                     feature_drift, prediction_drift,
+                     training_samples, live_samples,
+                     metadata_json, snapshot_timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    symbol,
+                    timeframe,
+                    report.get('overall_score', 0),
+                    report.get('health_status', 'unknown'),
+                    feature_drift_val,
+                    confidence_drift_val,
+                    0,  # training_samples — not available directly
+                    training_samples,
+                    json.dumps(metadata),
+                    datetime.now().isoformat(),
+                ),
+            )
+        return True
+    except Exception as e:
+        logger.error(f"persist_drift_snapshot failed for {symbol} {timeframe}: {e}")
+        return False
+
+
+def get_latest_drift_snapshot(symbol: str, timeframe: str) -> Optional[Dict]:
+    """Retrieve the most recent drift snapshot from the DB cache.
+
+    Returns the full drift report dict (reconstructed from the cached
+    snapshot + stored metadata), or None if no snapshot exists.
+
+    Target latency: < 50 ms (single indexed SELECT).
+    """
+    try:
+        import json
+
+        db = get_database()
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT drift_score, drift_status, feature_drift,
+                       prediction_drift, metadata_json, snapshot_timestamp
+                FROM model_drift_snapshots
+                WHERE symbol = ? AND timeframe = ?
+                ORDER BY snapshot_timestamp DESC
+                LIMIT 1
+                """,
+                (symbol, timeframe),
+            )
+            row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        metadata = json.loads(row[4]) if row[4] else {}
+
+        return {
+            'symbol': symbol,
+            'timeframe': timeframe,
+            'health_status': row[1],
+            'overall_score': round(row[0], 3),
+            'retrain_required': row[1] == 'red' or (
+                row[2] is not None and row[2] > 0.25
+            ),
+            'retrain_reasons': metadata.get('retrain_reasons', []),
+            'feature_drift': metadata.get('feature_drift', {}),
+            'confidence_drift': metadata.get('confidence_drift', {}),
+            'regime_drift': metadata.get('regime_drift', {}),
+            'timestamp': row[5],
+        }
+    except Exception as e:
+        logger.error(f"get_latest_drift_snapshot failed for {symbol} {timeframe}: {e}")
+        return None
+
 
 def calculate_psi(expected: np.ndarray, actual: np.ndarray, bins: int = 10) -> float:
     """
