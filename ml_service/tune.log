@@ -1,0 +1,181 @@
+nohup: ignoring input
+=================================================
+TUNING BTCUSDT 1h
+=================================================
+
+Tuning hyperparameters for BTCUSDT 1h...
+Trials: 100
+2026-06-22 21:34:17 | ml_trading | INFO | Database schema initialized
+2026-06-22 21:34:17 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+Loaded 17710 candles
+[!] VWAP requires an ordered DatetimeIndex.
+2026-06-22 21:36:47 | ml_trading | INFO | Fetched 200 funding rate records for BTCUSDT
+
+Tuning XGBoost...
+2026-06-22 21:46:23 | ml_trading | INFO | Starting hyperparameter tuning for xgboost
+2026-06-22 21:46:23 | ml_trading | INFO | Trials: 100, Clean dataset: 17494 rows
+  0%|          | 0/100 [00:00<?, ?it/s]Best trial: 0. Best value: 0.422688:   0%|          | 0/100 [08:12<?, ?it/s]Best trial: 0. Best value: 0.422688:   1%|          | 1/100 [08:12<13:32:29, 492.42s/it]Best trial: 1. Best value: 0.428176:   1%|          | 1/100 [32:34<13:32:29, 492.42s/it]Best trial: 1. Best value: 0.428176:   2%|▏         | 2/100 [32:34<28:55:58, 1062.85s/it]Best trial: 1. Best value: 0.428176:   2%|▏         | 2/100 [45:27<28:55:58, 1062.85s/it]Best trial: 1. Best value: 0.428176:   3%|▎         | 3/100 [45:27<25:04:06, 930.37s/it] Best trial: 3. Best value: 0.432951:   3%|▎         | 3/100 [1:00:26<25:04:06, 930.37s/it]Best trial: 3. Best value: 0.432951:   4%|▍         | 4/100 [1:00:26<24:28:49, 918.02s/it]Best trial: 3. Best value: 0.432951:   4%|▍         | 4/100 [1:18:31<24:28:49, 918.02s/it]Best trial: 3. Best value: 0.432951:   5%|▌         | 5/100 [1:18:31<25:48:49, 978.21s/it]Best trial: 3. Best value: 0.432951:   5%|▌         | 5/100 [1:54:35<25:48:49, 978.21s/it]Best trial: 3. Best value: 0.432951:   6%|▌         | 6/100 [1:54:35<36:04:29, 1381.59s/it]Best trial: 6. Best value: 0.433279:   6%|▌         | 6/100 [2:23:40<36:04:29, 1381.59s/it]Best trial: 6. Best value: 0.433279:   7%|▋         | 7/100 [2:23:40<38:45:37, 1500.40s/it]Best trial: 6. Best value: 0.433279:   7%|▋         | 7/100 [2:27:38<38:45:37, 1500.40s/it]Best trial: 6. Best value: 0.433279:   8%|▊         | 8/100 [2:27:38<28:04:17, 1098.45s/it]Best trial: 6. Best value: 0.433279:   8%|▊         | 8/100 [2:49:11<28:04:17, 1098.45s/it]Best trial: 6. Best value: 0.433279:   9%|▉         | 9/100 [2:49:11<29:17:54, 1159.07s/it]Best trial: 6. Best value: 0.433279:   9%|▉         | 9/100 [3:10:14<29:17:54, 1159.07s/it]Best trial: 6. Best value: 0.433279:  10%|█         | 10/100 [3:10:14<29:46:52, 1191.25s/it]Best trial: 6. Best value: 0.433279:  10%|█         | 10/100 [3:22:29<29:46:52, 1191.25s/it]Best trial: 6. Best value: 0.433279:  11%|█         | 11/100 [3:22:29<25:59:49, 1051.57s/it]Best trial: 11. Best value: 0.436362:  11%|█         | 11/100 [3:38:20<25:59:49, 1051.57s/it]Best trial: 11. Best value: 0.436362:  12%|█▏        | 12/100 [3:38:20<24:57:31, 1021.04s/it]Best trial: 12. Best value: 0.437026:  12%|█▏        | 12/100 [3:54:53<24:57:31, 1021.04s/it]Best trial: 12. Best value: 0.437026:  13%|█▎        | 13/100 [3:54:53<24:28:14, 1012.58s/it]Best trial: 12. Best value: 0.437026:  13%|█▎        | 13/100 [4:11:36<24:28:14, 1012.58s/it]Best trial: 12. Best value: 0.437026:  14%|█▍        | 14/100 [4:11:36<24:07:13, 1009.69s/it]Best trial: 12. Best value: 0.437026:  14%|█▍        | 14/100 [4:22:06<24:07:13, 1009.69s/it]Best trial: 12. Best value: 0.437026:  15%|█▌        | 15/100 [4:22:06<21:08:21, 895.31s/it] Best trial: 12. Best value: 0.437026:  15%|█▌        | 15/100 [4:36:00<21:08:21, 895.31s/it]Best trial: 12. Best value: 0.437026:  16%|█▌        | 16/100 [4:36:00<20:27:27, 876.76s/it]Best trial: 12. Best value: 0.437026:  16%|█▌        | 16/100 [4:51:18<20:27:27, 876.76s/it]Best trial: 12. Best value: 0.437026:  17%|█▋        | 17/100 [4:51:18<20:30:00, 889.16s/it]Best trial: 12. Best value: 0.437026:  17%|█▋        | 17/100 [5:16:17<20:30:00, 889.16s/it]Best trial: 12. Best value: 0.437026:  18%|█▊        | 18/100 [5:16:17<24:25:37, 1072.40s/it]Best trial: 12. Best value: 0.437026:  18%|█▊        | 18/100 [5:30:20<24:25:37, 1072.40s/it]Best trial: 12. Best value: 0.437026:  19%|█▉        | 19/100 [5:30:20<22:34:54, 1003.63s/it]Best trial: 12. Best value: 0.437026:  19%|█▉        | 19/100 [5:51:21<22:34:54, 1003.63s/it]Best trial: 12. Best value: 0.437026:  20%|██        | 20/100 [5:51:21<24:01:10, 1080.88s/it]Best trial: 12. Best value: 0.437026:  20%|██        | 20/100 [6:11:12<24:01:10, 1080.88s/it]Best trial: 12. Best value: 0.437026:  21%|██        | 21/100 [6:11:12<24:26:38, 1113.90s/it]Best trial: 21. Best value: 0.437481:  21%|██        | 21/100 [6:34:53<24:26:38, 1113.90s/it]Best trial: 21. Best value: 0.437481:  22%|██▏       | 22/100 [6:34:53<26:07:45, 1205.97s/it]Best trial: 22. Best value: 0.43787:  22%|██▏       | 22/100 [6:54:04<26:07:45, 1205.97s/it] Best trial: 22. Best value: 0.43787:  23%|██▎       | 23/100 [6:54:04<25:26:22, 1189.38s/it]Best trial: 22. Best value: 0.43787:  23%|██▎       | 23/100 [7:13:30<25:26:22, 1189.38s/it]Best trial: 22. Best value: 0.43787:  24%|██▍       | 24/100 [7:13:30<24:57:45, 1182.44s/it]Best trial: 22. Best value: 0.43787:  24%|██▍       | 24/100 [7:25:35<24:57:45, 1182.44s/it]Best trial: 22. Best value: 0.43787:  25%|██▌       | 25/100 [7:25:35<21:46:42, 1045.37s/it]Best trial: 22. Best value: 0.43787:  25%|██▌       | 25/100 [7:39:25<21:46:42, 1045.37s/it]Best trial: 22. Best value: 0.43787:  26%|██▌       | 26/100 [7:39:25<20:09:31, 980.70s/it] Best trial: 26. Best value: 0.438306:  26%|██▌       | 26/100 [7:55:38<20:09:31, 980.70s/it]Best trial: 26. Best value: 0.438306:  27%|██▋       | 27/100 [7:55:38<19:50:27, 978.46s/it]Best trial: 26. Best value: 0.438306:  27%|██▋       | 27/100 [8:10:08<19:50:27, 978.46s/it]Best trial: 26. Best value: 0.438306:  28%|██▊       | 28/100 [8:10:08<18:54:47, 945.66s/it]Best trial: 26. Best value: 0.438306:  28%|██▊       | 28/100 [8:28:52<18:54:47, 945.66s/it]Best trial: 26. Best value: 0.438306:  29%|██▉       | 29/100 [8:28:52<19:42:20, 999.16s/it]./tune_active_models.sh: line 10: 3287506 Killed                  $PYTHON -m cli.commands tune --symbol $symbol --timeframe $tf --trials 100
+Finished BTCUSDT 1h
+
+=================================================
+TUNING BTCUSDT 4h
+=================================================
+
+Tuning hyperparameters for BTCUSDT 4h...
+Trials: 100
+2026-06-23 06:36:31 | ml_trading | INFO | Database schema initialized
+2026-06-23 06:36:31 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+Loaded 4428 candles
+Terminated
+Finished BTCUSDT 4h
+
+=================================================
+TUNING ETHUSDT 1h
+=================================================
+
+Tuning hyperparameters for ETHUSDT 1h...
+Trials: 100
+2026-06-23 06:36:45 | ml_trading | INFO | Database schema initialized
+2026-06-23 06:36:45 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+Loaded 17710 candles
+Terminated
+Finished ETHUSDT 1h
+
+=================================================
+TUNING ETHUSDT 4h
+=================================================
+
+Tuning hyperparameters for ETHUSDT 4h...
+Trials: 100
+2026-06-23 06:36:57 | ml_trading | INFO | Database schema initialized
+2026-06-23 06:36:57 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+Loaded 4428 candles
+Terminated
+Finished ETHUSDT 4h
+
+=================================================
+TUNING BNBUSDT 1h
+=================================================
+Terminated
+Finished BNBUSDT 1h
+
+=================================================
+TUNING BNBUSDT 4h
+=================================================
+Terminated
+Finished BNBUSDT 4h
+
+=================================================
+TUNING SOLUSDT 1h
+=================================================
+Terminated
+Finished SOLUSDT 1h
+
+=================================================
+TUNING SOLUSDT 4h
+=================================================
+Terminated
+Finished SOLUSDT 4h
+
+=================================================
+TUNING HYPEUSDT 1h
+=================================================
+Terminated
+Finished HYPEUSDT 1h
+
+=================================================
+TUNING HYPEUSDT 4h
+=================================================
+Terminated
+Finished HYPEUSDT 4h
+
+=================================================
+TUNING LINKUSDT 1h
+=================================================
+Terminated
+Finished LINKUSDT 1h
+
+=================================================
+TUNING LINKUSDT 4h
+=================================================
+Terminated
+Finished LINKUSDT 4h
+
+=================================================
+TUNING SUIUSDT 1h
+=================================================
+Terminated
+Finished SUIUSDT 1h
+
+=================================================
+TUNING SUIUSDT 4h
+=================================================
+Terminated
+Finished SUIUSDT 4h
+
+=================================================
+TUNING XRPUSDT 1h
+=================================================
+Terminated
+Finished XRPUSDT 1h
+
+=================================================
+TUNING XRPUSDT 4h
+=================================================
+Terminated
+Finished XRPUSDT 4h
+
+=================================================
+TUNING ZECUSDT 1h
+=================================================
+
+Tuning hyperparameters for ZECUSDT 1h...
+Trials: 100
+2026-06-23 06:37:11 | ml_trading | INFO | Database schema initialized
+2026-06-23 06:37:11 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+Loaded 17710 candles
+Terminated
+Finished ZECUSDT 1h
+
+=================================================
+TUNING ZECUSDT 4h
+=================================================
+Terminated
+Finished ZECUSDT 4h
+
+=================================================
+TUNING LTCUSDT 1h
+=================================================
+Terminated
+Finished LTCUSDT 1h
+
+=================================================
+TUNING LTCUSDT 4h
+=================================================
+
+Tuning hyperparameters for LTCUSDT 4h...
+Trials: 100
+2026-06-23 06:37:19 | ml_trading | INFO | Database schema initialized
+2026-06-23 06:37:19 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+Loaded 4428 candles
+Terminated
+Finished LTCUSDT 4h
+
+=================================================
+TUNING ADAUSDT 1h
+=================================================
+Terminated
+Finished ADAUSDT 1h
+
+=================================================
+TUNING ADAUSDT 4h
+=================================================
+
+Tuning hyperparameters for ADAUSDT 4h...
+Trials: 100
+2026-06-23 06:37:26 | ml_trading | INFO | Database schema initialized
+2026-06-23 06:37:26 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
+Loaded 4428 candles
+Terminated
+Finished ADAUSDT 4h
+

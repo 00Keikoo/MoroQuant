@@ -23,8 +23,8 @@ from ml_service.utils.logger import setup_logger, get_logger
 setup_logger()
 logger = get_logger()
 
-TIER_1_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT']
-TIER_2_SYMBOLS = ['HYPEUSDT', 'LINKUSDT', 'LTCUSDT', 'SUIUSDT', 'ZECUSDT', 'ADAUSDT']
+TIER_1_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT']
+TIER_2_SYMBOLS = ['XRPUSDT', 'LINKUSDT', 'LTCUSDT', 'SUIUSDT', 'ZECUSDT', 'ADAUSDT']
 
 SYMBOLS = TIER_1_SYMBOLS + TIER_2_SYMBOLS
 
