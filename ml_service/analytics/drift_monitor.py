@@ -40,6 +40,8 @@ def persist_drift_snapshot(symbol: str, timeframe: str, report: Dict) -> bool:
             report.get('feature_drift', {}).get('live_sample_size', 0)
         )
 
+        overall_score = report.get('overall_score')
+
         with db.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -54,7 +56,7 @@ def persist_drift_snapshot(symbol: str, timeframe: str, report: Dict) -> bool:
                 (
                     symbol,
                     timeframe,
-                    report.get('overall_score', 0),
+                    overall_score,  # may be None for 'unknown' status
                     report.get('health_status', 'unknown'),
                     feature_drift_val,
                     confidence_drift_val,
@@ -102,11 +104,13 @@ def get_latest_drift_snapshot(symbol: str, timeframe: str) -> Optional[Dict]:
 
         metadata = json.loads(row[4]) if row[4] else {}
 
+        raw_score = row[0]
+
         return {
             'symbol': symbol,
             'timeframe': timeframe,
             'health_status': row[1],
-            'overall_score': round(row[0], 3),
+            'overall_score': round(raw_score, 3) if raw_score is not None else None,
             'retrain_required': row[1] == 'red' or (
                 row[2] is not None and row[2] > 0.25
             ),
@@ -199,8 +203,12 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
     training_stats = metadata.get('training_stats', {})
 
     if not training_stats:
+        logger.warning(
+            f"Missing feature drift baseline for {symbol} {timeframe}. "
+            f"Falling back to UNKNOWN status."
+        )
         return {
-            'status': 'warning',
+            'status': 'unknown',
             'message': 'No training statistics available in model metadata',
             'feature_count': len(feature_cols)
         }
@@ -328,8 +336,12 @@ def compute_confidence_drift(symbol: str, timeframe: str, n_signals: int = 1000)
     val_confidence = validation.get('confidence_distribution')
 
     if not val_confidence:
+        logger.warning(
+            f"Missing confidence drift baseline for {symbol} {timeframe}. "
+            f"Falling back to UNKNOWN status."
+        )
         return {
-            'status': 'warning',
+            'status': 'unknown',
             'message': 'No validation confidence distribution available'
         }
 
@@ -436,8 +448,12 @@ def compute_regime_drift(symbol: str, timeframe: str, days_back: int = 30) -> Di
     training_regime_dist = metadata.get('regime_distribution', {})
 
     if not training_regime_dist:
+        logger.warning(
+            f"Missing regime drift baseline for {symbol} {timeframe}. "
+            f"Falling back to UNKNOWN status."
+        )
         return {
-            'status': 'warning',
+            'status': 'unknown',
             'message': 'No training regime distribution available'
         }
 
@@ -538,23 +554,67 @@ def get_drift_report(symbol: str, timeframe: str) -> Dict:
     regime_drift = compute_regime_drift(symbol, timeframe)
 
     # Calculate overall drift score (0-1 scale)
+    # Skip sub-drifts with 'error' or 'unknown' status — we can't score them
     scores = []
+    has_unknown = False
 
-    if feature_drift.get('status') != 'error':
+    if feature_drift.get('status') in ('error', 'unknown'):
+        if feature_drift.get('status') == 'unknown':
+            has_unknown = True
+    else:
         # Map PSI to 0-1 scale (0.25+ = 1.0)
         feature_score = min(feature_drift.get('max_psi', 0) / 0.25, 1.0)
         scores.append(feature_score)
 
-    if confidence_drift.get('status') != 'error':
+    if confidence_drift.get('status') in ('error', 'unknown'):
+        if confidence_drift.get('status') == 'unknown':
+            has_unknown = True
+    else:
         confidence_score = min(confidence_drift.get('drift_score', 0) / 0.3, 1.0)
         scores.append(confidence_score)
 
-    if regime_drift.get('status') != 'error':
+    if regime_drift.get('status') in ('error', 'unknown'):
+        if regime_drift.get('status') == 'unknown':
+            has_unknown = True
+    else:
         # Map max drift percentage to 0-1 scale (30%+ = 1.0)
         regime_score = min(regime_drift.get('max_drift_pct', 0) / 30, 1.0)
         scores.append(regime_score)
 
-    overall_score = np.mean(scores) if scores else 0.0
+    # If ALL sub-drifts are unknown/error, we have no baseline at all.
+    # Return UNKNOWN — never classify as warning/critical.
+    if not scores:
+        if has_unknown:
+            logger.warning(
+                f"Missing drift baseline for {symbol} {timeframe}. "
+                f"Falling back to UNKNOWN status."
+            )
+            return {
+                'symbol': symbol,
+                'timeframe': timeframe,
+                'health_status': 'unknown',
+                'overall_score': None,
+                'retrain_required': False,
+                'retrain_reasons': [],
+                'feature_drift': feature_drift,
+                'confidence_drift': confidence_drift,
+                'regime_drift': regime_drift,
+                'timestamp': datetime.now().isoformat(),
+            }
+        return {
+            'symbol': symbol,
+            'timeframe': timeframe,
+            'health_status': 'unknown',
+            'overall_score': None,
+            'retrain_required': False,
+            'retrain_reasons': [],
+            'feature_drift': feature_drift,
+            'confidence_drift': confidence_drift,
+            'regime_drift': regime_drift,
+            'timestamp': datetime.now().isoformat(),
+        }
+
+    overall_score = float(np.mean(scores))
 
     # Determine retrain requirement
     retrain_required = False

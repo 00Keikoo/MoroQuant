@@ -471,8 +471,9 @@ def train_final_model(
     sl_atr_mult = config.model.sl_atr_mult
     forward_periods = config.model.forward_periods
 
-    # Calculate training stats for feature drift
+    # ─── Drift baseline metadata (used by drift_monitor.py) ──────────
     training_stats = {}
+    feature_statistics = {}
     for feature in feature_cols:
         vals = df_clean[feature].values
         if len(vals) > 1000:
@@ -480,10 +481,18 @@ def train_final_model(
             vals_sampled = vals[indices]
         else:
             vals_sampled = vals
+        feat_mean = float(np.mean(vals))
+        feat_std = float(np.std(vals))
         training_stats[feature] = {
-            'mean': float(np.mean(vals)),
-            'std': float(np.std(vals)),
+            'mean': feat_mean,
+            'std': feat_std,
             'values': [float(x) for x in vals_sampled]
+        }
+        feature_statistics[feature] = {
+            'mean': feat_mean,
+            'std': feat_std,
+            'min': float(np.min(vals)),
+            'max': float(np.max(vals)),
         }
 
     # Calculate regime distribution for regime drift
@@ -501,6 +510,7 @@ def train_final_model(
         'model_type': model_type,
         'feature_cols': feature_cols,
         'n_samples': len(X),
+        'training_samples': len(X),  # explicit alias for drift_monitor
         'class_distribution': y.value_counts().to_dict(),
         'trained_at': datetime.now().isoformat(),
         'hyperparameters': params if custom_params else 'default',
@@ -509,8 +519,14 @@ def train_final_model(
         'sl_mult': sl_atr_mult,
         'forward_periods': forward_periods,
         'training_stats': training_stats,
+        'feature_statistics': feature_statistics,
         'regime_distribution': regime_dist,
     }
+
+    logger.info(
+        f"Drift baseline persisted: {len(feature_cols)} features, "
+        f"training_samples={len(X)}, regime_classes={len(regime_dist)}"
+    )
 
     if validation_metrics:
         metadata['validation'] = validation_metrics

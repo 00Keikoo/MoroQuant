@@ -152,8 +152,8 @@ export interface ModelDriftReport {
 export interface ModelDriftSummary {
   symbol: string;
   timeframe: string;
-  overall_score: number;
-  health_status: 'green' | 'yellow' | 'red';
+  overall_score: number | null;
+  health_status: 'green' | 'yellow' | 'red' | 'unknown';
   timestamp?: string;
 }
 
@@ -298,9 +298,13 @@ export async function getModelDrift(
 }
 
 function normalizeHealthStatus(
-  score: number | undefined,
+  score: number | null | undefined,
   fallback: string,
-): 'green' | 'yellow' | 'red' {
+): 'green' | 'yellow' | 'red' | 'unknown' {
+  // If the backend explicitly sent 'unknown' (no drift baseline), preserve it.
+  if (fallback === 'unknown') {
+    return 'unknown';
+  }
   // Explicit score wins (task spec thresholds).
   if (typeof score === 'number' && !Number.isNaN(score)) {
     if (score < 0.2) return 'green';
@@ -311,7 +315,7 @@ function normalizeHealthStatus(
   if (fallback === 'green' || fallback === 'yellow' || fallback === 'red') {
     return fallback;
   }
-  return 'red';
+  return 'unknown';
 }
 
 /**
@@ -330,15 +334,14 @@ export async function getModelDriftForActiveModels(): Promise<ModelDriftSummary[
         (async () => {
           try {
             const report = await getModelDrift(symbol, timeframe);
-            // Skip models that simply have no data (error/no_model responses).
-            if (typeof report.overall_score !== 'number' && !report.health_status) {
+            // Skip models that have no data at all (no score, no status).
+            if (report.overall_score == null && !report.health_status) {
               return null;
             }
             return {
               symbol,
               timeframe,
-              overall_score:
-                typeof report.overall_score === 'number' ? report.overall_score : 0,
+              overall_score: report.overall_score ?? null,
               health_status: normalizeHealthStatus(
                 report.overall_score,
                 report.health_status,
