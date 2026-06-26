@@ -2,7 +2,9 @@
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple
+import re
+import yaml
+from typing import Dict, List, Optional, Set, Tuple
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -11,6 +13,97 @@ from data.database import get_database
 from models.predictor import load_latest_model
 
 logger = get_logger(__name__)
+
+# ─── Feature-drift exclusion ────────────────────────────────────────
+# Features in this set are excluded from continuous PSI calculation in
+# compute_feature_drift().  They are still present in the returned
+# all_features list (with psi=None) so callers can audit them, but they
+# do NOT contribute to max_psi, status, or the overall drift score.
+#
+# Two categories:
+#   1. Categorical / binary features — PSI assumes a continuous
+#      distribution; applying it to {0,1} or {−1,0,1} produces
+#      meaningless scores that spike whenever the class balance shifts.
+#   2. Absolute price-level features — EMA values, BB bands, swing
+#      high/low are anchored to the BTC price level at training time.
+#      A 2x price move produces PSI >> 10 even when the model's
+#      *relative* feature relationships are perfectly intact.
+#
+# The list can be overridden via the ``feature_drift_exclude`` section
+# in config.yaml; entries are glob patterns matched against feature names.
+
+_CONFIG_PATH = Path(__file__).parent.parent / 'config.yaml'
+
+# Hard-coded safe defaults — applied when config is absent or unreadable.
+_DEFAULT_EXCLUDE_PATTERNS: List[str] = [
+    # Categorical / binary
+    'trend',
+    '*_direction',
+    'bullish_engulfing', 'bearish_engulfing',
+    'doji', 'hammer', 'shooting_star',
+    'funding_extreme', 'risk_off_regime',
+    'price_in_value_area',
+    # Absolute price-level (anchored to spot price)
+    'ema_9', 'ema_21', 'ema_50', 'ema_200',
+    'bb_upper', 'bb_middle', 'bb_lower',
+    'swing_high', 'swing_low',
+]
+
+# Cache the compiled set after first load.
+_exclude_cache: Optional[Set[str]] = None
+
+
+def _load_feature_drift_excludes() -> Set[str]:
+    """Build the exclusion set from config or fall back to defaults.
+
+    Config keys (under ``feature_drift_exclude``):
+      - ``patterns``: list of glob strings (e.g. ``ema_*``, ``*_direction``)
+
+    Never raises — missing config → defaults.
+    """
+    global _exclude_cache
+    if _exclude_cache is not None:
+        return _exclude_cache
+
+    patterns = list(_DEFAULT_EXCLUDE_PATTERNS)
+
+    try:
+        if _CONFIG_PATH.exists():
+            with open(_CONFIG_PATH) as f:
+                raw = yaml.safe_load(f) or {}
+            section = raw.get('feature_drift_exclude') or {}
+            cfg_patterns = section.get('patterns')
+            if isinstance(cfg_patterns, list):
+                patterns = cfg_patterns
+    except Exception as e:
+        logger.warning(
+            f"Failed to load feature_drift_exclude config, "
+            f"using defaults: {e}"
+        )
+
+    # Build set by expanding globs against a master feature name list.
+    all_features = set()
+    try:
+        # Import lazily to avoid circular imports at module level.
+        from models.trainer import get_feature_columns
+        all_features = set(get_feature_columns())
+    except Exception:
+        pass
+
+    excluded: Set[str] = set()
+    for pattern in patterns:
+        if '*' in pattern or '?' in pattern:
+            regex = re.compile(pattern.replace('*', '.*').replace('?', '.'))
+            excluded.update(f for f in all_features if regex.match(f))
+        elif pattern in all_features:
+            excluded.add(pattern)
+
+    _exclude_cache = excluded
+    logger.info(
+        f"Feature drift PSI exclusion set: {len(excluded)} features excluded"
+    )
+    return _exclude_cache
+
 
 # ─── Drift snapshot persistence (cache layer) ─────────────────────
 
@@ -248,12 +341,14 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
     # Calculate drift metrics for each feature
     feature_drifts = []
     max_psi = 0.0
+    psi_excluded = _load_feature_drift_excludes()
 
     for feature in feature_cols:
         if feature not in df_clean.columns:
             continue
 
         live_values = df_clean[feature].values
+        is_excluded = feature in psi_excluded
 
         if feature in training_stats:
             train_mean = training_stats[feature].get('mean', np.nan)
@@ -266,28 +361,35 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
             mean_shift = abs((live_mean - train_mean) / train_mean) if train_mean != 0 else 0
             std_shift = abs((live_std - train_std) / train_std) if train_std != 0 else 0
 
-            # Calculate PSI using real training distribution if available
-            train_values = training_stats[feature].get('values', [])
-            if len(train_values) > 0:
-                train_samples = np.array(train_values)
-                psi = calculate_psi(train_samples, live_values)
+            # PSI — only for non-excluded (continuous, normalized) features
+            psi = None
+            if is_excluded:
+                psi = None
             else:
-                psi = 0.0
+                train_values = training_stats[feature].get('values', [])
+                if len(train_values) > 0:
+                    train_samples = np.array(train_values)
+                    psi = calculate_psi(train_samples, live_values)
+                else:
+                    psi = 0.0
 
-            max_psi = max(max_psi, psi)
+            # Only non-excluded PSI contributes to max_psi / status
+            if psi is not None:
+                max_psi = max(max_psi, psi)
 
             feature_drifts.append({
                 'feature': feature,
                 'mean_shift': round(mean_shift, 4),
                 'std_shift': round(std_shift, 4),
-                'psi': round(psi, 4),
+                'psi': round(psi, 4) if psi is not None else None,
+                'excluded': is_excluded,
                 'train_mean': round(train_mean, 4),
                 'live_mean': round(live_mean, 4),
                 'train_std': round(train_std, 4),
                 'live_std': round(live_std, 4),
             })
 
-    # Determine status based on max PSI
+    # Determine status based on max PSI (from non-excluded features only)
     if max_psi > 0.25:
         status = 'critical'
     elif max_psi > 0.1:
@@ -301,6 +403,8 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
     return {
         'status': status,
         'max_psi': round(max_psi, 4),
+        'max_psi_features_only': True,  # flag: excludes price-level/categorical
+        'excluded_count': len([f for f in feature_drifts if f.get('excluded')]),
         'feature_count': len(feature_drifts),
         'top_drifting_features': feature_drifts[:10],
         'all_features': feature_drifts,
