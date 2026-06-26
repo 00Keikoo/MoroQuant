@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Dict, Optional, List, Tuple
 import pickle
 import json
+import yaml
 
 from utils.logger import get_logger
 from utils.config import get_forward_periods, get_config
@@ -15,6 +16,54 @@ from models.trainer import prepare_features, get_feature_columns
 from models import calibration as cal_mod
 
 logger = get_logger(__name__)
+
+# ─── Calibration config (safe defaults, never crashes) ─────────────
+_CAL_CONFIG_PATH = Path(__file__).parent.parent / 'config.yaml'
+_CAL_CONFIG_CACHE: Optional[Dict] = None
+
+_CALIBRATION_DEFAULTS = {
+    'production_default_method': 'platt',
+    'isotonic_override_enabled': True,
+    'sanity_check_threshold': 0.98,
+    'sanity_check_consecutive_limit': 5,
+}
+
+
+def _get_calibration_config() -> Dict:
+    """Load the ``calibration`` config section merged over safe defaults.
+
+    Never raises — a missing/malformed config returns defaults.
+    """
+    global _CAL_CONFIG_CACHE
+    if _CAL_CONFIG_CACHE is not None:
+        return _CAL_CONFIG_CACHE
+
+    config = dict(_CALIBRATION_DEFAULTS)
+
+    try:
+        if _CAL_CONFIG_PATH.exists():
+            with open(_CAL_CONFIG_PATH) as f:
+                raw = yaml.safe_load(f) or {}
+            section = raw.get('calibration') or {}
+            if isinstance(section.get('production_default_method'), str):
+                config['production_default_method'] = section['production_default_method']
+            if isinstance(section.get('isotonic_override_enabled'), bool):
+                config['isotonic_override_enabled'] = section['isotonic_override_enabled']
+            if section.get('sanity_check_threshold') is not None:
+                config['sanity_check_threshold'] = float(section['sanity_check_threshold'])
+            if section.get('sanity_check_consecutive_limit') is not None:
+                config['sanity_check_consecutive_limit'] = int(
+                    section['sanity_check_consecutive_limit']
+                )
+    except Exception as e:
+        logger.warning(f"Failed to load calibration config, using defaults: {e}")
+
+    _CAL_CONFIG_CACHE = config
+    return _CAL_CONFIG_CACHE
+
+
+# ─── Calibration sanity-check state ─────────────────────────────────
+_consecutive_extreme_count = 0
 
 def get_metadata_value(metadata, key, default=None):
 	if isinstance(metadata, dict):
@@ -269,6 +318,7 @@ def generate_signal(
         feature_importance = calculate_feature_importance(model, feature_cols, X_latest)
 
     # --- Confidence pipeline: raw → calibrated → confidence ---
+    cal_config = _get_calibration_config()
     cal_artifact = model_package.get('calibration')
     calibration_available = cal_artifact is not None
     calibration_applied = False
@@ -276,16 +326,32 @@ def generate_signal(
 
     raw_proba_max = float(np.max(raw_proba))
 
-    if calibration_available and cal_artifact.get('chosen_method') != 'raw':
-        chosen_cal = cal_artifact['calibrators'].get(cal_artifact['chosen_method'])
+    # ── Isotonic override: force platt when feature flag is enabled ───
+    # Isotonic regression overfits on small hold-out sets and collapses
+    # probabilities to extreme values in production (confidence=100%).
+    # When isotonic_override_enabled=true, silently use platt instead.
+    effective_method = calibration_method
+    if (
+        calibration_available
+        and calibration_method == 'isotonic'
+        and cal_config.get('isotonic_override_enabled', True)
+    ):
+        effective_method = 'platt'
+        logger.info(
+            f"Calibration override: isotonic → platt "
+            f"(feature flag: isotonic_override_enabled)"
+        )
+
+    if calibration_available and effective_method != 'raw':
+        chosen_cal = cal_artifact['calibrators'].get(effective_method)
         if chosen_cal is not None:
             try:
                 prediction_proba = cal_mod.apply_calibrator(chosen_cal, raw_proba.reshape(1, -1)).flatten()
                 calibration_applied = True
-                logger.info(f"Calibration applied: {calibration_method} "
+                logger.info(f"Calibration applied: {effective_method} "
                             f"(raw max={raw_proba_max:.3f} → calibrated max={float(np.max(prediction_proba)):.3f})")
             except Exception as e:
-                logger.warning(f"Calibration failed ({calibration_method}): {e}, falling back to raw probabilities")
+                logger.warning(f"Calibration failed ({effective_method}): {e}, falling back to raw probabilities")
                 prediction_proba = raw_proba
         else:
             prediction_proba = raw_proba
@@ -293,6 +359,28 @@ def generate_signal(
         prediction_proba = raw_proba
 
     calibrated_proba_max = float(np.max(prediction_proba))
+
+    # ── Calibration sanity check: detect collapsed probabilities ──────
+    sanity_threshold = float(cal_config.get('sanity_check_threshold', 0.98))
+    consecutive_limit = int(cal_config.get('sanity_check_consecutive_limit', 5))
+    global _consecutive_extreme_count
+
+    if calibrated_proba_max >= sanity_threshold:
+        _consecutive_extreme_count += 1
+        if _consecutive_extreme_count >= consecutive_limit:
+            logger.warning(
+                f"Calibration sanity check: calibrated_max >= {sanity_threshold} "
+                f"for {_consecutive_extreme_count} consecutive predictions "
+                f"(method={effective_method}, raw_max={raw_proba_max:.3f}, "
+                f"calibrated_max={calibrated_proba_max:.4f}, "
+                f"symbol={symbol}, timeframe={timeframe}). "
+                f"Probable calibration collapse — consider retraining."
+            )
+    else:
+        _consecutive_extreme_count = 0
+
+    # Update calibration_method in signal to reflect the effective method
+    calibration_method = effective_method if calibration_applied else calibration_method
     prediction = int(np.argmax(prediction_proba))
     confidence = float(prediction_proba[prediction])
     confidence_pct = int(confidence * 100)
@@ -510,9 +598,10 @@ def save_signal_to_db(signal: Dict) -> None:
                 tp_multiplier, sl_multiplier, labeling_method, atr, regime, model_version,
                 entry_price, take_profit, stop_loss,
                 prob_short, prob_neutral, prob_long,
-                mtf_alignment, raw_probability_max, calibrated_probability_max
+                mtf_alignment, raw_probability_max, calibrated_probability_max,
+                calibration_method
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 signal['symbol'],
@@ -536,6 +625,7 @@ def save_signal_to_db(signal: Dict) -> None:
                 signal.get('mtf_alignment', 'NEUTRAL'),
                 signal.get('raw_probability_max'),
                 signal.get('calibrated_probability_max'),
+                signal.get('calibration_method'),
             )
         )
 
