@@ -1125,5 +1125,147 @@ def backtest(symbol: Optional[str], timeframe: Optional[str], backtest_all: bool
         traceback.print_exc()
 
 
+@cli.command("retrain-full-universe")
+def retrain_full_universe():
+    """One-off full rebuild of all models (11 symbols × 2 timeframes).
+
+    Iterates over every configured symbol and both training timeframes,
+    trains a fresh model and runs compare_and_promote(). No adaptive
+    policy, no scheduler, no cooldown — unconditional rebuild.
+
+    Ideal after a feature-engineering change, a labeling-method switch,
+    or initial onboarding.
+    """
+    import traceback
+    from models.trainer import train_model as train_ml_model
+    from models.governance import compare_and_promote
+    from data.database import get_database
+    from data.ingestion import fetch_all
+    from data.coingecko import get_coingecko_fetcher
+
+    click.echo("\n" + "=" * 80)
+    click.echo("FULL UNIVERSE RETRAIN")
+    click.echo("=" * 80)
+
+    symbols = [
+        'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'HYPEUSDT',
+        'XRPUSDT', 'LINKUSDT', 'LTCUSDT', 'SUIUSDT', 'ZECUSDT', 'ADAUSDT',
+    ]
+    timeframes = ['1h', '4h']
+    f1_threshold = 1.03
+
+    total = len(symbols) * len(timeframes)
+    retrained = 0
+    failed = 0
+    skipped = 0
+
+    # ── Pre-flight: fetch latest data ──────────────────────────────────
+    click.echo("\nFetching latest data (last 7 days)...")
+    try:
+        fetch_all(days_back=7)
+        click.echo("Data fetch complete.")
+    except Exception as e:
+        click.echo(f"Data fetch failed: {e}")
+        return
+
+    # ── Load reference data ────────────────────────────────────────────
+    def load_ref(symbol, timeframe, limit=2000):
+        db = get_database()
+        import pandas as pd
+        with db.get_connection() as conn:
+            query = """
+                SELECT timestamp, open, high, low, close, volume
+                FROM ohlcv WHERE symbol = ? AND timeframe = ?
+                ORDER BY timestamp DESC LIMIT ?
+            """
+            df = pd.read_sql_query(query, conn, params=(symbol, timeframe, limit))
+        if df.empty:
+            return None
+        return df.sort_values('timestamp').reset_index(drop=True)
+
+    btc_1h = load_ref('BTCUSDT', '1h')
+    btc_4h = load_ref('BTCUSDT', '4h')
+    eth_1h = load_ref('ETHUSDT', '1h')
+    eth_4h = load_ref('ETHUSDT', '4h')
+    spy_1h = load_ref('ES_proxy', '1h')
+    spy_4h = load_ref('ES_proxy', '4h')
+
+    try:
+        fetcher = get_coingecko_fetcher()
+        dominance_df = fetcher.get_dominance_dataframe()
+    except Exception:
+        dominance_df = None
+
+    # ── Training loop ──────────────────────────────────────────────────
+    results_summary = []
+
+    for symbol in symbols:
+        for timeframe in timeframes:
+            tag = f"{symbol} {timeframe}"
+            click.echo(f"\n[{tag}] Training...")
+
+            df = load_ref(symbol, timeframe)
+            if df is None or len(df) < 100:
+                click.echo(f"  SKIP: insufficient data")
+                skipped += 1
+                results_summary.append({'tag': tag, 'status': 'skipped'})
+                continue
+
+            btc_df = None if symbol == 'BTCUSDT' else (
+                btc_1h if timeframe == '1h' else btc_4h
+            )
+            eth_df = eth_1h if timeframe == '1h' else eth_4h
+            spy_df = spy_1h if timeframe == '1h' else spy_4h
+
+            try:
+                train_results = train_ml_model(
+                    df=df,
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    btc_df=btc_df,
+                    eth_df=eth_df,
+                    spy_df=spy_df,
+                    dominance_df=dominance_df,
+                )
+
+                new_f1 = train_results['avg_f1_weighted']
+                candidate_path = train_results['model_path']
+
+                gov = compare_and_promote(
+                    candidate_path=candidate_path,
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    improvement_threshold=f1_threshold,
+                )
+
+                status = gov.get('status', 'unknown')
+                gov_reason = gov.get('reason', '')
+
+                retrained += 1
+                click.echo(
+                    f"  DONE: F1={new_f1:.4f} | "
+                    f"governance={status} ({gov_reason})"
+                )
+                results_summary.append({
+                    'tag': tag, 'status': status,
+                    'f1': new_f1, 'reason': gov_reason,
+                })
+
+            except Exception as e:
+                failed += 1
+                click.echo(f"  FAIL: {e}")
+                results_summary.append({'tag': tag, 'status': 'failed', 'reason': str(e)})
+
+    # ── Summary ────────────────────────────────────────────────────────
+    click.echo("\n" + "=" * 80)
+    click.echo("FULL UNIVERSE RETRAIN SUMMARY")
+    click.echo("=" * 80)
+    click.echo(f"Total:    {total} models")
+    click.echo(f"Retrained: {retrained}")
+    click.echo(f"Skipped:   {skipped}")
+    click.echo(f"Failed:    {failed}")
+    click.echo("=" * 80 + "\n")
+
+
 if __name__ == "__main__":
     cli()

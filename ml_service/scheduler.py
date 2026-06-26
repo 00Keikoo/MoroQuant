@@ -18,6 +18,7 @@ from ml_service.data.ingestion import fetch_all
 from ml_service.data.coingecko import get_coingecko_fetcher
 from ml_service.models.trainer import train_model
 from ml_service.models.governance import compare_and_promote
+from ml_service.retraining_policy import should_retrain_model
 from ml_service.utils.logger import setup_logger, get_logger
 
 setup_logger()
@@ -186,6 +187,187 @@ def retrain_job():
     logger.info("="*80)
     logger.info("Scheduled retrain job complete")
     logger.info("="*80)
+
+
+def adaptive_retrain_job():
+    """Condition-based retraining driven by drift scores and model age.
+
+    Replaces the static daily retrain + weekly tier-2 cadence with a single
+    per-model decision loop.  For each symbol × timeframe the policy checks
+    cooldown, drift threshold, and max age before deciding to retrain.
+
+    Per-model failures never stop the loop — every model gets a chance.
+    """
+    global _last_retrain_time, _last_retrain_results
+
+    logger.info("=" * 80)
+    logger.info("Adaptive retraining decision cycle started")
+    logger.info("=" * 80)
+
+    _last_retrain_time = datetime.now()
+    _last_retrain_results = []
+
+    # ── Step 1: Fetch latest data (same as legacy retrain_job) ─────────
+    logger.info("Step 1: Fetching latest data (last 7 days)...")
+    try:
+        fetch_all(days_back=7)
+        logger.info("Data fetch complete")
+    except Exception as e:
+        logger.error(f"Data fetch failed: {e}")
+        return
+
+    # ── Step 2: Load reference data for cross-pair features ─────────────
+    logger.info("Step 2: Loading reference data...")
+    btc_1h = load_data('BTCUSDT', '1h')
+    btc_4h = load_data('BTCUSDT', '4h')
+    eth_1h = load_data('ETHUSDT', '1h')
+    eth_4h = load_data('ETHUSDT', '4h')
+    spy_1h = load_data('ES_proxy', '1h')
+    spy_4h = load_data('ES_proxy', '4h')
+
+    logger.info("Step 3: Loading market dominance data...")
+    try:
+        fetcher = get_coingecko_fetcher()
+        dominance_df = fetcher.get_dominance_dataframe()
+        logger.info(f"Loaded {len(dominance_df)} market dominance records")
+    except Exception as e:
+        logger.warning(f"Market dominance fetch failed, proceeding without: {e}")
+        dominance_df = None
+
+    # ── Step 4: Per-model adaptive decision loop ────────────────────────
+    logger.info("Step 4: Evaluating adaptive retrain decisions...")
+
+    retrained = 0
+    skipped = 0
+    failed = 0
+
+    for symbol in SYMBOLS:
+        for timeframe in TIMEFRAMES:
+            should_retrain, reason, diagnostics = \
+                should_retrain_model(symbol, timeframe)
+
+            drift_val = diagnostics.get('drift_score')
+            health_val = diagnostics.get('health_status')
+            age_days_val = diagnostics.get('age_days')
+            cooldown_hours = diagnostics.get('age_hours')
+
+            # ── Structured decision log ─────────────────────────────────
+            logger.info(
+                f"Adaptive retraining decision: "
+                f"{symbol} {timeframe}  "
+                f"drift={drift_val}  "
+                f"health={health_val}  "
+                f"age={age_days_val}d  "
+                f"cooldown={cooldown_hours}h  "
+                f"decision={'RETRAIN' if should_retrain else 'SKIP'}  "
+                f"reason={reason}"
+            )
+
+            if not should_retrain:
+                skipped += 1
+                _last_retrain_results.append({
+                    'symbol': symbol,
+                    'timeframe': timeframe,
+                    'status': 'skipped',
+                    'reason': reason,
+                    'old_f1': 0.0,
+                    'new_f1': 0.0,
+                })
+                continue
+
+            # ── Retrain ─────────────────────────────────────────────────
+            df = load_data(symbol, timeframe)
+            if df is None or len(df) < 100:
+                logger.warning(
+                    f"Insufficient data for {symbol} {timeframe}"
+                )
+                failed += 1
+                _last_retrain_results.append({
+                    'symbol': symbol,
+                    'timeframe': timeframe,
+                    'status': 'failed',
+                    'reason': 'insufficient_data',
+                    'old_f1': 0.0,
+                    'new_f1': 0.0,
+                })
+                continue
+
+            old_f1 = get_current_model_f1(symbol, timeframe)
+
+            btc_df = None if symbol == 'BTCUSDT' else (
+                btc_1h if timeframe == '1h' else btc_4h
+            )
+            eth_df = eth_1h if timeframe == '1h' else eth_4h
+            spy_df = spy_1h if timeframe == '1h' else spy_4h
+
+            try:
+                train_results = train_model(
+                    df=df,
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    btc_df=btc_df,
+                    eth_df=eth_df,
+                    spy_df=spy_df,
+                    dominance_df=dominance_df,
+                )
+
+                new_f1 = train_results['avg_f1_weighted']
+                candidate_path = train_results['model_path']
+
+                governance_result = compare_and_promote(
+                    candidate_path=candidate_path,
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    improvement_threshold=F1_THRESHOLD,
+                )
+
+                status = governance_result.get('status', 'unknown')
+                gov_reason = governance_result.get('reason', '')
+
+                _last_retrain_results.append({
+                    'symbol': symbol,
+                    'timeframe': timeframe,
+                    'status': status,
+                    'reason': gov_reason,
+                    'old_f1': old_f1,
+                    'new_f1': new_f1,
+                    'governance': governance_result,
+                })
+
+                retrained += 1
+                logger.info(
+                    f"Retrain complete: {symbol} {timeframe} | "
+                    f"old_f1={old_f1:.4f} new_f1={new_f1:.4f} | "
+                    f"governance={status} ({gov_reason})"
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"Training failed for {symbol} {timeframe}: {e}\n"
+                    f"{traceback.format_exc()}"
+                )
+                failed += 1
+                _last_retrain_results.append({
+                    'symbol': symbol,
+                    'timeframe': timeframe,
+                    'status': 'failed',
+                    'reason': str(e),
+                    'old_f1': old_f1,
+                    'new_f1': 0.0,
+                })
+
+    # ── Step 5: Summary ─────────────────────────────────────────────────
+    logger.info("Step 5: Logging results...")
+    log_retrain_results(_last_retrain_results)
+
+    logger.info(
+        f"Adaptive retraining summary: "
+        f"retrained={retrained}  skipped={skipped}  failed={failed}"
+    )
+
+    logger.info("=" * 80)
+    logger.info("Adaptive retraining decision cycle complete")
+    logger.info("=" * 80)
 
 
 def market_dominance_job():
@@ -529,11 +711,12 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    # ── Adaptive retrain (replaces static daily + weekly) ─────────────
     _scheduler.add_job(
-        retrain_job,
+        adaptive_retrain_job,
         trigger=IntervalTrigger(hours=24),
-        id='retrain_job',
-        name='Auto-retrain all models',
+        id='adaptive_retrain_job',
+        name='Adaptive drift-based retrain for all models',
         replace_existing=True,
     )
 
@@ -562,17 +745,6 @@ def start_scheduler():
     )
 
     _scheduler.add_job(
-        weekly_retrain_job,
-        trigger='cron',
-        day_of_week='sun',
-        hour=3,
-        minute=0,
-        id='weekly_retrain_job',
-        name='Weekly retrain tier 2 models',
-        replace_existing=True,
-    )
-
-    _scheduler.add_job(
         account_equity_snapshot_job,
         trigger=IntervalTrigger(minutes=5),
         id='account_equity_snapshot_job',
@@ -591,7 +763,7 @@ def start_scheduler():
     _scheduler.start()
     logger.info(
         f"Scheduler started - trade sync every {sync_interval_hours}h, "
-        "retrain every 24h, dominance/signals/outcomes every 1h, "
+        "adaptive retrain every 24h, dominance/signals/outcomes every 1h, "
         "account equity snapshot every 5m, drift snapshot every 1h"
     )
 
@@ -617,7 +789,7 @@ def get_scheduler_status():
             'results': [],
         }
 
-    next_run = _scheduler.get_job('retrain_job').next_run_time if _scheduler.get_job('retrain_job') else None
+    next_run = _scheduler.get_job('adaptive_retrain_job').next_run_time if _scheduler.get_job('adaptive_retrain_job') else None
 
     return {
         'running': True,
