@@ -340,7 +340,6 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
 
     # Calculate drift metrics for each feature
     feature_drifts = []
-    max_psi = 0.0
     psi_excluded = _load_feature_drift_excludes()
 
     for feature in feature_cols:
@@ -373,10 +372,6 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
                 else:
                     psi = 0.0
 
-            # Only non-excluded PSI contributes to max_psi / status
-            if psi is not None:
-                max_psi = max(max_psi, psi)
-
             feature_drifts.append({
                 'feature': feature,
                 'mean_shift': round(mean_shift, 4),
@@ -390,6 +385,24 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
             })
 
     # Determine status based on max PSI (from non-excluded features only)
+    valid_psis = [f['psi'] for f in feature_drifts if f.get('psi') is not None]
+
+    if not valid_psis:
+        # All features excluded or no PSI could be computed — degrade safely.
+        return {
+            'status': 'unknown',
+            'max_psi': None,
+            'max_psi_features_only': True,
+            'excluded_count': len([f for f in feature_drifts if f.get('excluded')]),
+            'feature_count': len(feature_drifts),
+            'top_drifting_features': [],
+            'all_features': feature_drifts,
+            'live_sample_size': len(df_clean),
+            'timestamp': datetime.now().isoformat(),
+        }
+
+    max_psi = max(valid_psis)
+
     if max_psi > 0.25:
         status = 'critical'
     elif max_psi > 0.1:
@@ -397,8 +410,14 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
     else:
         status = 'normal'
 
-    # Sort by PSI descending
-    feature_drifts.sort(key=lambda x: x['psi'], reverse=True)
+    # Sort by PSI descending — excluded features (psi=None) sink to bottom.
+    feature_drifts.sort(
+        key=lambda x: x['psi'] if x['psi'] is not None else -1.0,
+        reverse=True,
+    )
+
+    # Top-drifting list: only features with a numeric PSI.
+    top_scoring = [f for f in feature_drifts if f.get('psi') is not None][:10]
 
     return {
         'status': status,
@@ -406,7 +425,7 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
         'max_psi_features_only': True,  # flag: excludes price-level/categorical
         'excluded_count': len([f for f in feature_drifts if f.get('excluded')]),
         'feature_count': len(feature_drifts),
-        'top_drifting_features': feature_drifts[:10],
+        'top_drifting_features': top_scoring,
         'all_features': feature_drifts,
         'live_sample_size': len(df_clean),
         'timestamp': datetime.now().isoformat()
