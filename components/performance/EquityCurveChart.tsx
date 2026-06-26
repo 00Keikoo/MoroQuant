@@ -17,6 +17,7 @@ import type {
   EquitySnapshot,
   EquityRange,
 } from '@/lib/services/performanceService';
+import { MASK_AXIS, MASK_MONETARY } from '@/lib/format/privacy';
 
 // ─── Shared chart geometry ────────────────────────────────────────
 const CHART_HEIGHT = 360;
@@ -64,9 +65,10 @@ function RangeSelector({ selected, onSelect, disabled }: RangeSelectorProps) {
 interface TrueEquityTooltipProps {
   active?: boolean;
   payload?: { payload: EquitySnapshot }[];
+  privacy?: boolean;
 }
 
-function TrueEquityTooltip({ active, payload }: TrueEquityTooltipProps) {
+function TrueEquityTooltip({ active, payload, privacy }: TrueEquityTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const point = payload[0].payload;
   const date = new Date(point.timestamp).toLocaleString(undefined, {
@@ -76,6 +78,7 @@ function TrueEquityTooltip({ active, payload }: TrueEquityTooltipProps) {
     minute: '2-digit',
   });
   const pnlColor = point.unrealized_pnl >= 0 ? '#00ff87' : '#ff0055';
+  const pnlText = `${point.unrealized_pnl >= 0 ? '+' : ''}$${point.unrealized_pnl.toFixed(2)}`;
 
   return (
     <div
@@ -93,19 +96,19 @@ function TrueEquityTooltip({ active, payload }: TrueEquityTooltipProps) {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '2px' }}>
         <span style={{ fontSize: '10px', color: '#8e8e93' }}>Equity:</span>
         <span style={{ fontSize: '13px', fontWeight: 700, color: '#00f0ff' }}>
-          ${point.equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {privacy ? MASK_MONETARY : `$${point.equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '2px' }}>
         <span style={{ fontSize: '10px', color: '#8e8e93' }}>Wallet:</span>
         <span style={{ fontSize: '12px', fontWeight: 600, color: '#e4e4e7' }}>
-          ${point.wallet_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {privacy ? MASK_MONETARY : `$${point.wallet_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
         <span style={{ fontSize: '10px', color: '#8e8e93' }}>Unrealized:</span>
         <span style={{ fontSize: '12px', fontWeight: 600, color: pnlColor }}>
-          {point.unrealized_pnl >= 0 ? '+' : ''}${point.unrealized_pnl.toFixed(2)}
+          {privacy ? MASK_MONETARY : pnlText}
         </span>
       </div>
     </div>
@@ -115,6 +118,7 @@ function TrueEquityTooltip({ active, payload }: TrueEquityTooltipProps) {
 interface TrueEquityCurveProps {
   data: EquitySnapshot[];
   height?: number;
+  privacy?: boolean;
 }
 
 /**
@@ -122,8 +126,11 @@ interface TrueEquityCurveProps {
  * snapshots. Equity = margin_balance = wallet_balance + unrealized_pnl,
  * which best reflects the live account value (captures funding, deposits,
  * withdrawals, transfers, and unrealized PnL).
+ *
+ * When `privacy` is set, Y-axis ticks and tooltip monetary values are masked
+ * so the trend/shape remains visible without revealing exact balances.
  */
-export function TrueEquityCurve({ data, height = CHART_HEIGHT }: TrueEquityCurveProps) {
+export function TrueEquityCurve({ data, height = CHART_HEIGHT, privacy = false }: TrueEquityCurveProps) {
   const chartData = data.map((point) => {
     const date = new Date(point.timestamp);
     return {
@@ -177,10 +184,10 @@ export function TrueEquityCurve({ data, height = CHART_HEIGHT }: TrueEquityCurve
           axisLine={{ stroke: '#27272a' }}
           width={60}
           domain={['dataMin - 1', 'dataMax + 1']}
-          tickFormatter={(value: number) => `$${value.toFixed(0)}`}
+          tickFormatter={(value: number) => (privacy ? MASK_AXIS : `$${value.toFixed(0)}`)}
         />
 
-        <Tooltip content={<TrueEquityTooltip />} cursor={{ stroke: '#00f0ff', strokeWidth: 1, strokeDasharray: '4 4' }} />
+        <Tooltip content={<TrueEquityTooltip privacy={privacy} />} cursor={{ stroke: '#00f0ff', strokeWidth: 1, strokeDasharray: '4 4' }} />
 
         <Area
           type="monotone"
@@ -210,13 +217,15 @@ export function TrueEquityCurve({ data, height = CHART_HEIGHT }: TrueEquityCurve
 interface ClosedTradeTooltipProps {
   active?: boolean;
   payload?: { payload: EquityPoint }[];
+  privacy?: boolean;
 }
 
-function ClosedTradeTooltip({ active, payload }: ClosedTradeTooltipProps) {
+function ClosedTradeTooltip({ active, payload, privacy }: ClosedTradeTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const point = payload[0].payload;
   const equity = typeof point.equity === 'number' ? point.equity : point.cumulative_pnl;
   const tradeColor = point.trade_pnl >= 0 ? '#00ff87' : '#ff0055';
+  const tradeText = `${point.trade_pnl >= 0 ? '+' : ''}$${point.trade_pnl.toFixed(2)}`;
 
   return (
     <div
@@ -234,13 +243,13 @@ function ClosedTradeTooltip({ active, payload }: ClosedTradeTooltipProps) {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '2px' }}>
         <span style={{ fontSize: '10px', color: '#8e8e93' }}>Equity:</span>
         <span style={{ fontSize: '13px', fontWeight: 700, color: '#00f0ff' }}>
-          ${equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {privacy ? MASK_MONETARY : `$${equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
         <span style={{ fontSize: '10px', color: '#8e8e93' }}>This trade:</span>
         <span style={{ fontSize: '12px', fontWeight: 600, color: tradeColor }}>
-          {point.trade_pnl >= 0 ? '+' : ''}${point.trade_pnl.toFixed(2)}
+          {privacy ? MASK_MONETARY : tradeText}
         </span>
       </div>
     </div>
@@ -250,16 +259,20 @@ function ClosedTradeTooltip({ active, payload }: ClosedTradeTooltipProps) {
 interface ClosedTradeEquityCurveProps {
   data: EquityPoint[];
   height?: number;
+  privacy?: boolean;
 }
 
 /**
  * Legacy synthetic closed-trade equity curve.
  * equity[n] = starting_balance + Σ(net_realized_pnl[0:n]).
  * Retained for realized-trade strategy analysis.
+ *
+ * When `privacy` is set, Y-axis ticks and tooltip monetary values are masked.
  */
 export function ClosedTradeEquityCurve({
   data,
   height = CHART_HEIGHT,
+  privacy = false,
 }: ClosedTradeEquityCurveProps) {
   const chartData = [...data]
     .sort((a, b) => a.trade_count - b.trade_count)
@@ -308,10 +321,10 @@ export function ClosedTradeEquityCurve({
           tickLine={false}
           axisLine={{ stroke: '#27272a' }}
           width={60}
-          tickFormatter={(value: number) => `$${value.toFixed(0)}`}
+          tickFormatter={(value: number) => (privacy ? MASK_AXIS : `$${value.toFixed(0)}`)}
         />
 
-        <Tooltip content={<ClosedTradeTooltip />} cursor={{ stroke: '#00f0ff', strokeWidth: 1, strokeDasharray: '4 4' }} />
+        <Tooltip content={<ClosedTradeTooltip privacy={privacy} />} cursor={{ stroke: '#00f0ff', strokeWidth: 1, strokeDasharray: '4 4' }} />
 
         <Area
           type="monotone"

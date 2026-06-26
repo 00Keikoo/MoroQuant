@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMarketStore } from '@/lib/stores/marketStore';
+import { usePrivacy } from '@/lib/stores/privacyStore';
 import { TOP_FUTURES_PAIRS } from '@/lib/api/binance';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -59,6 +60,38 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
 ];
+
+/**
+ * Global Privacy Mode toggle pill.
+ *
+ * When enabled, sensitive monetary values across the dashboard are masked so
+ * the app is safe to screen-share, screenshot, present, or stream. State
+ * persists across refreshes via the privacy store.
+ */
+function PrivacyToggle() {
+  const { isPrivacyMode, togglePrivacyMode } = usePrivacy();
+
+  return (
+    <button
+      type="button"
+      onClick={togglePrivacyMode}
+      aria-pressed={isPrivacyMode}
+      title={
+        isPrivacyMode
+          ? 'Privacy Mode is ON — balances and PnL are hidden. Click to show values.'
+          : 'Privacy Mode is OFF — values are visible. Click to hide balances and PnL.'
+      }
+      className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-[10px] font-bold tracking-wider uppercase transition-colors cursor-pointer ${
+        isPrivacyMode
+          ? 'border-mq-accent/40 bg-mq-accent/10 text-mq-accent'
+          : 'border-mq-panel-border bg-black/20 text-neutral-400 hover:text-white hover:border-white/10'
+      }`}
+    >
+      <span className="text-sm leading-none">{isPrivacyMode ? '🙈' : '👁'}</span>
+      <span>{isPrivacyMode ? 'Privacy: On' : 'Visible'}</span>
+    </button>
+  );
+}
 
 /**
  * Reusable sidebar body: branding, navigation, watchlist, footer.
@@ -174,7 +207,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-mq-panel-border shrink-0">
+      <div className="px-5 py-3 border-t border-mq-panel-border shrink-0 space-y-3">
+        <PrivacyToggle />
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-neutral-600 font-medium tracking-wider uppercase">
             MoroQuant

@@ -3,6 +3,9 @@
 import React from 'react';
 import type { LiveMetrics } from '@/lib/services/performanceService';
 
+import { useIsPrivacyMode } from '@/lib/stores/privacyStore';
+import { maskOr, MASK_MONETARY, MASK_PERCENT } from '@/lib/format/privacy';
+
 interface StatisticsGridProps {
   metrics: LiveMetrics;
 }
@@ -53,26 +56,27 @@ function fmtNum(value: number | null | undefined, digits = 2): string {
  * Displays gross profit/loss, average win/loss, counts, ROI, drawdown %.
  */
 export default function StatisticsGrid({ metrics }: StatisticsGridProps) {
+  const privacy = useIsPrivacyMode();
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <StatItem
         label="Gross Profit"
-        value={fmtUsd(metrics.gross_profit)}
+        value={maskOr(fmtUsd(metrics.gross_profit), MASK_MONETARY, privacy)}
         status={metrics.gross_profit > 0 ? 'positive' : 'neutral'}
       />
       <StatItem
         label="Gross Loss"
-        value={fmtUsd(metrics.gross_loss)}
+        value={maskOr(fmtUsd(metrics.gross_loss), MASK_MONETARY, privacy)}
         status={metrics.gross_loss < 0 ? 'negative' : 'neutral'}
       />
       <StatItem
         label="Average Win"
-        value={fmtUsd(metrics.avg_win)}
+        value={maskOr(fmtUsd(metrics.avg_win), MASK_MONETARY, privacy)}
         status={metrics.avg_win > 0 ? 'positive' : 'neutral'}
       />
       <StatItem
         label="Average Loss"
-        value={fmtUsd(metrics.avg_loss)}
+        value={maskOr(fmtUsd(metrics.avg_loss), MASK_MONETARY, privacy)}
         status={metrics.avg_loss < 0 ? 'negative' : 'neutral'}
       />
       <StatItem
@@ -87,12 +91,12 @@ export default function StatisticsGrid({ metrics }: StatisticsGridProps) {
       />
       <StatItem
         label="ROI"
-        value={`${fmtNum(metrics.roi)}%`}
+        value={maskOr(`${fmtNum(metrics.roi)}%`, MASK_PERCENT, privacy)}
         status={metrics.roi >= 0 ? 'positive' : 'negative'}
       />
       <StatItem
         label="Max Drawdown"
-        value={`${fmtNum(metrics.max_drawdown_pct)}%`}
+        value={maskOr(`${fmtNum(metrics.max_drawdown_pct)}%`, MASK_PERCENT, privacy)}
         status="negative"
       />
     </div>

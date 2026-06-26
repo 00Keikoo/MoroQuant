@@ -246,10 +246,18 @@ export async function getLivePerformanceReport(): Promise<LivePerformanceReport>
  * Fetch recent CLOSED POSITIONS (completed round trips), newest first.
  * GET /api/analytics/recent-trades
  */
-export async function getRecentTrades(limit = 50): Promise<RecentTrade[]> {
+export async function getRecentTrades(
+  optsOrLimit?: number | { limit?: number; symbol?: string; daysBack?: number },
+): Promise<RecentTrade[]> {
   const base = getApiBaseUrl();
+  const opts = typeof optsOrLimit === 'number' ? { limit: optsOrLimit } : (optsOrLimit ?? {});
+  const params = new URLSearchParams();
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  if (opts.symbol) params.set('symbol', opts.symbol);
+  if (opts.daysBack !== undefined) params.set('days_back', String(opts.daysBack));
+  const qs = params.toString();
   const response = await fetchWithRetry(
-    `${base}/analytics/recent-trades?limit=${limit}`,
+    `${base}/analytics/recent-trades${qs ? `?${qs}` : ''}`,
   );
   const data = await response.json();
   return data.trades || [];

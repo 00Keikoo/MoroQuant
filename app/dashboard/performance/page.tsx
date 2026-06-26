@@ -29,10 +29,14 @@ import {
   type ConfidenceBucket,
   type AccountEquity,
 } from '@/lib/services/performanceService';
+import { useIsPrivacyMode } from '@/lib/stores/privacyStore';
+import { maskOr, MASK_MONETARY, MASK_PERCENT, MASK_PRICE } from '@/lib/format/privacy';
+import SensitiveValue from '@/components/common/SensitiveValue';
 
 const AUTO_REFRESH_MS = 30_000;
 
 export default function PerformanceDashboard() {
+  const privacy = useIsPrivacyMode();
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
   const [accountEquity, setAccountEquity] = useState<AccountEquity | null>(null);
@@ -262,19 +266,19 @@ export default function PerformanceDashboard() {
                 <>
                   <PerformanceCard
                     label="Account Equity"
-                    value={`$${fmtNum(accountEquity.margin_balance)}`}
+                    value={maskOr(`$${fmtNum(accountEquity.margin_balance)}`, MASK_MONETARY, privacy)}
                     sublabel="Binance Futures margin"
                     status="neutral"
                   />
                   <PerformanceCard
                     label="Wallet Balance"
-                    value={`$${fmtNum(accountEquity.wallet_balance)}`}
-                    sublabel={`Unrealized ${fmtUsd(accountEquity.unrealized_pnl)}`}
+                    value={maskOr(`$${fmtNum(accountEquity.wallet_balance)}`, MASK_MONETARY, privacy)}
+                    sublabel={maskOr(`Unrealized ${fmtUsd(accountEquity.unrealized_pnl)}`, MASK_MONETARY, privacy, 'Unrealized —')}
                     status={accountEquity.unrealized_pnl !== null ? pnlStatus(accountEquity.unrealized_pnl) : 'neutral'}
                   />
                   <PerformanceCard
                     label="Available Balance"
-                    value={`$${fmtNum(accountEquity.available_balance)}`}
+                    value={maskOr(`$${fmtNum(accountEquity.available_balance)}`, MASK_MONETARY, privacy)}
                     sublabel="For new orders"
                     status={accountEquity.available_balance !== null && accountEquity.available_balance > 0 ? 'positive' : 'negative'}
                   />
@@ -313,8 +317,8 @@ export default function PerformanceDashboard() {
                   />
                   <PerformanceCard
                     label="Net PnL"
-                    value={fmtUsd(metrics.total_pnl)}
-                    sublabel={`ROI ${fmtNum(metrics.roi)}%`}
+                    value={maskOr(fmtUsd(metrics.total_pnl), MASK_MONETARY, privacy)}
+                    sublabel={maskOr(`ROI ${fmtNum(metrics.roi)}%`, MASK_PERCENT, privacy)}
                     status={pnlStatus(metrics.total_pnl)}
                   />
                   <PerformanceCard
@@ -325,7 +329,7 @@ export default function PerformanceDashboard() {
                   />
                   <PerformanceCard
                     label="Expectancy"
-                    value={fmtUsd(metrics.expectancy)}
+                    value={maskOr(fmtUsd(metrics.expectancy), MASK_MONETARY, privacy)}
                     sublabel="Per trade"
                     status={pnlStatus(metrics.expectancy)}
                   />
@@ -337,8 +341,8 @@ export default function PerformanceDashboard() {
                   />
                   <PerformanceCard
                     label="Max Drawdown"
-                    value={fmtUsd(metrics.max_drawdown)}
-                    sublabel={`${fmtNum(metrics.max_drawdown_pct)}% peak-to-trough`}
+                    value={maskOr(fmtUsd(metrics.max_drawdown), MASK_MONETARY, privacy)}
+                    sublabel={maskOr(`${fmtNum(metrics.max_drawdown_pct)}% peak-to-trough`, MASK_PERCENT, privacy)}
                     status="negative"
                   />
                   <PerformanceCard
@@ -365,7 +369,7 @@ export default function PerformanceDashboard() {
                   </div>
                   <RangeSelector selected={equityRange} onSelect={setEquityRange} />
                 </div>
-                <TrueEquityCurve data={equityHistory} height={360} />
+                <TrueEquityCurve data={equityHistory} height={360} privacy={privacy} />
               </section>
 
               {/* ─── Confidence Analysis ──────────────────────────── */}
@@ -405,7 +409,7 @@ export default function PerformanceDashboard() {
                               <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{bucket.total_trades}</td>
                               <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{fmtNum(bucket.win_rate)}%</td>
                               <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${profitable ? 'text-mq-long' : 'text-mq-short'}`}>
-                                {fmtUsd(bucket.total_pnl)}
+                                <SensitiveValue value={bucket.total_pnl} formatter={(v) => fmtUsd(Number(v))} />
                               </td>
                             </tr>
                           );
@@ -476,7 +480,7 @@ export default function PerformanceDashboard() {
                                 {regime.profit_factor}
                               </td>
                               <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${regime.expectancy >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
-                                {fmtUsd(regime.expectancy)}
+                                <SensitiveValue value={regime.expectancy} formatter={(v) => fmtUsd(Number(v))} />
                               </td>
                             </tr>
                           );
@@ -508,7 +512,7 @@ export default function PerformanceDashboard() {
                     starting_balance + Σ net realized PnL
                   </span>
                 </div>
-                <ClosedTradeEquityCurve data={closedTradeEquity} height={260} />
+                <ClosedTradeEquityCurve data={closedTradeEquity} height={260} privacy={privacy} />
               </section>
             )}
 
@@ -548,10 +552,20 @@ export default function PerformanceDashboard() {
                             {pos.side}
                           </span>
                           <div className="text-xs text-neutral-400 font-mono">
-                            <span className="text-neutral-600">Entry:</span> ${pos.entry_price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                            <span className="text-neutral-600">Entry:</span>{' '}
+                            <SensitiveValue
+                              value={pos.entry_price}
+                              mask={MASK_PRICE}
+                              formatter={(v) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 4 })}`}
+                            />
                           </div>
                           <div className="text-xs text-neutral-400 font-mono">
-                            <span className="text-neutral-600">Mark:</span> ${pos.mark_price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                            <span className="text-neutral-600">Mark:</span>{' '}
+                            <SensitiveValue
+                              value={pos.mark_price}
+                              mask={MASK_PRICE}
+                              formatter={(v) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 4 })}`}
+                            />
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -571,7 +585,11 @@ export default function PerformanceDashboard() {
                           <div
                             className={`text-sm font-bold font-mono ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}
                           >
-                            {pnlPositive ? '+' : ''}${pos.unrealized_pnl.toFixed(2)}
+                            <SensitiveValue
+                              value={pos.unrealized_pnl}
+                              mask={MASK_MONETARY}
+                              formatter={(v) => `${pnlPositive ? '+' : ''}$${Number(v).toFixed(2)}`}
+                            />
                           </div>
                         </div>
                       </div>
@@ -631,19 +649,27 @@ export default function PerformanceDashboard() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">
-                              {fmtPrice(trade.entry_price)}
+                              <SensitiveValue value={trade.entry_price} mask={MASK_PRICE} formatter={(v) => fmtPrice(Number(v))} />
                             </td>
                             <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">
-                              {trade.exit_price !== null ? fmtPrice(trade.exit_price) : '—'}
+                              {trade.exit_price !== null ? (
+                                <SensitiveValue value={trade.exit_price} mask={MASK_PRICE} formatter={(v) => fmtPrice(Number(v))} />
+                              ) : (
+                                '—'
+                              )}
                             </td>
                             <td className="px-4 py-3 text-right font-mono text-neutral-400 text-xs">
                               {fmtDuration(trade.duration_minutes)}
                             </td>
                             <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}>
-                              {pnlPositive ? '+' : ''}{trade.net_pnl.toFixed(2)}
+                              <SensitiveValue
+                                value={trade.net_pnl}
+                                mask={MASK_MONETARY}
+                                formatter={(v) => `${pnlPositive ? '+' : ''}${Number(v).toFixed(2)}`}
+                              />
                             </td>
                             <td className="px-4 py-3 text-right font-mono text-neutral-500 text-xs">
-                              {trade.commission.toFixed(4)}
+                              <SensitiveValue value={trade.commission} mask={MASK_PRICE} formatter={(v) => Number(v).toFixed(4)} />
                             </td>
                             <td className="px-4 py-3 text-neutral-400 text-xs capitalize">
                               {trade.regime || '—'}

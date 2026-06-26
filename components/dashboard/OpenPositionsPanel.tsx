@@ -12,6 +12,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getOpenPositions, type Position } from '@/lib/services/performanceService';
+import { useIsPrivacyMode } from '@/lib/stores/privacyStore';
+import { maskOr, MASK_MONETARY, MASK_PERCENT, MASK_PRICE } from '@/lib/format/privacy';
 
 const REFRESH_INTERVAL_MS = 30_000;
 
@@ -34,6 +36,7 @@ function pnlPct(p: Position): number | null {
 }
 
 export default function OpenPositionsPanel() {
+  const privacy = useIsPrivacyMode();
   const [positions, setPositions] = useState<Position[]>([]);
   const [totalPnl, setTotalPnl] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -80,8 +83,7 @@ export default function OpenPositionsPanel() {
                 totalPnl >= 0 ? 'text-mq-long' : 'text-mq-short'
               }`}
             >
-              Total: {totalPnl >= 0 ? '+' : ''}
-              {totalPnl.toFixed(2)} USDT
+              Total: {maskOr(`${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)} USDT`, MASK_MONETARY, privacy)}
             </span>
           )}
           {lastUpdated && (
@@ -149,17 +151,16 @@ export default function OpenPositionsPanel() {
                           </span>
                         </td>
                         <td className="py-2 pr-3 text-right font-mono text-neutral-300">
-                          {formatPrice(p.entry_price)}
+                          {maskOr(formatPrice(p.entry_price), MASK_PRICE, privacy)}
                         </td>
                         <td className="py-2 pr-3 text-right font-mono text-neutral-300">
-                          {formatPrice(p.mark_price)}
+                          {maskOr(formatPrice(p.mark_price), MASK_PRICE, privacy)}
                         </td>
                         <td className={`py-2 pr-3 text-right font-mono font-semibold ${profit ? 'text-mq-long' : 'text-mq-short'}`}>
-                          {profit ? '+' : ''}
-                          {pnl.toFixed(2)}
+                          {maskOr(`${profit ? '+' : ''}${pnl.toFixed(2)}`, MASK_MONETARY, privacy)}
                         </td>
                         <td className={`py-2 pr-3 text-right font-mono ${profit ? 'text-mq-long' : 'text-mq-short'}`}>
-                          {pct !== null ? `${profit ? '+' : ''}${pct.toFixed(2)}%` : '-'}
+                          {maskOr(pct !== null ? `${profit ? '+' : ''}${pct.toFixed(2)}%` : '-', MASK_PERCENT, privacy)}
                         </td>
                       </tr>
                     );
@@ -197,23 +198,22 @@ export default function OpenPositionsPanel() {
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-mq-muted">Entry</span>
-                        <div className="font-mono text-neutral-300">{formatPrice(p.entry_price)}</div>
+                        <div className="font-mono text-neutral-300">{maskOr(formatPrice(p.entry_price), MASK_PRICE, privacy)}</div>
                       </div>
                       <div>
                         <span className="text-mq-muted">Mark</span>
-                        <div className="font-mono text-neutral-300">{formatPrice(p.mark_price)}</div>
+                        <div className="font-mono text-neutral-300">{maskOr(formatPrice(p.mark_price), MASK_PRICE, privacy)}</div>
                       </div>
                       <div>
                         <span className="text-mq-muted">uPnL</span>
                         <div className={`font-mono font-semibold ${profit ? 'text-mq-long' : 'text-mq-short'}`}>
-                          {profit ? '+' : ''}
-                          {pnl.toFixed(2)}
+                          {maskOr(`${profit ? '+' : ''}${pnl.toFixed(2)}`, MASK_MONETARY, privacy)}
                         </div>
                       </div>
                       <div>
                         <span className="text-mq-muted">PnL %</span>
                         <div className={`font-mono ${profit ? 'text-mq-long' : 'text-mq-short'}`}>
-                          {pct !== null ? `${profit ? '+' : ''}${pct.toFixed(2)}%` : '-'}
+                          {maskOr(pct !== null ? `${profit ? '+' : ''}${pct.toFixed(2)}%` : '-', MASK_PERCENT, privacy)}
                         </div>
                       </div>
                     </div>
