@@ -404,7 +404,7 @@ def signal_generation_job():
     for symbol in SYMBOLS:
         for timeframe in TIMEFRAMES:
             try:
-                signal = generate_signal(symbol=symbol, timeframe=timeframe)
+                signal = generate_signal(symbol=symbol, timeframe=timeframe, persist=True)
 
                 if signal:
                     logger.info(

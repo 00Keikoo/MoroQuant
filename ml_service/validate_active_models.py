@@ -35,7 +35,7 @@ for symbol, timeframe in TARGET_PAIRS:
     print(f"Testing {symbol} {timeframe}...")
 
     try:
-        signal = generate_signal(symbol, timeframe, n_candles=300, skip_mtf=True)
+        signal = generate_signal(symbol, timeframe, n_candles=300, skip_mtf=True, persist=False)
 
         if signal:
             print(f"  ✓ SUCCESS")

@@ -233,6 +233,7 @@ def generate_signal(
     skip_mtf: bool = False,
     confidence_threshold: float = 0.0,
     override_timestamp: Optional[int] = None,
+    persist: bool = True,
 ) -> Optional[Dict]:
     """
     Generate trading signal for a symbol/timeframe.
@@ -241,6 +242,9 @@ def generate_signal(
         symbol: Trading symbol
         timeframe: Timeframe
         n_candles: Number of recent candles to load for feature calculation
+        persist: If True (default), save the signal to the database. Realtime
+            API inference, MTF recursive lookups, and validation scripts must
+            pass persist=False to avoid duplicate writes.
 
     Returns:
         Signal dictionary or None if generation fails
@@ -500,7 +504,8 @@ def generate_signal(
                 n_candles=n_candles,
                 skip_mtf=True,
                 confidence_threshold=confidence_threshold,
-                override_timestamp=override_timestamp
+                override_timestamp=override_timestamp,
+                persist=False,  # MTF lookup must never write to DB
             )
 
             if higher_tf_signal is not None:
@@ -516,7 +521,8 @@ def generate_signal(
         except Exception as e:
             logger.warning(f"MTF check failed: {e}")
 
-    save_signal_to_db(signal)
+    if persist:
+        save_signal_to_db(signal)
 
     # Cache signal without price field (price is always fetched fresh in routes.py)
     signal_to_cache = {k: v for k, v in signal.items() if k != 'price'}
@@ -593,7 +599,7 @@ def save_signal_to_db(signal: Dict) -> None:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO signals (
+            INSERT OR IGNORE INTO signals (
                 symbol, timeframe, timestamp, direction, confidence, features_json,
                 tp_multiplier, sl_multiplier, labeling_method, atr, regime, model_version,
                 entry_price, take_profit, stop_loss,

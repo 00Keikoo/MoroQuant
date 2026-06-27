@@ -982,7 +982,7 @@ def get_position_signal_comparison(positions: List[Dict]) -> List[Dict]:
 
         position_side = 'long' if position_amt > 0 else 'short'
 
-        signal = generate_signal(symbol=symbol, timeframe='1h')
+        signal = generate_signal(symbol=symbol, timeframe='1h', persist=False)
 
         agreement = 'unknown'
         if signal:

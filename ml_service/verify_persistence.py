@@ -27,7 +27,7 @@ def main():
 
     for symbol, timeframe in pairs:
         print(f"\nGenerating {symbol} {timeframe}...")
-        signal = generate_signal(symbol, timeframe, n_candles=300)
+        signal = generate_signal(symbol, timeframe, n_candles=300, persist=True)
 
         if signal:
             print(f"  ✓ {signal['direction']} (confidence: {signal['confidence']}%)")
