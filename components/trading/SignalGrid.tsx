@@ -151,7 +151,10 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
   const filteredSignals = useMemo(() => {
     const query = searchQuery.toLowerCase();
     const filtered = signals.filter(s => {
-      if (s.error) return true; // show error cards regardless
+      // Filter out inactive signals (API returns error=signal_inactive)
+      if (s.error === 'signal_inactive') return false;
+      if (s.signal_status && s.signal_status !== 'ACTIVE') return false;
+      if (s.error) return true; // show other error cards (no_signal, etc.)
       if (directionFilter !== 'all' && s.direction !== directionFilter) return false;
       if (s.confidence < minConfidence) return false;
       if (query && !s.symbol.toLowerCase().includes(query)) return false;
@@ -177,7 +180,7 @@ export default function SignalGrid({ timeframe }: SignalGridProps) {
 
   const signalStats = signals.reduce(
     (acc, signal) => {
-      if (!signal.error) {
+      if (!signal.error && (!signal.signal_status || signal.signal_status === 'ACTIVE')) {
         acc.total++;
         if (signal.direction === 'long') acc.long++;
         else if (signal.direction === 'short') acc.short++;

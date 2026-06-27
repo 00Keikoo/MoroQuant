@@ -599,9 +599,9 @@ def save_signal_to_db(signal: Dict) -> None:
                 entry_price, take_profit, stop_loss,
                 prob_short, prob_neutral, prob_long,
                 mtf_alignment, raw_probability_max, calibrated_probability_max,
-                calibration_method
+                calibration_method, valid_until
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 signal['symbol'],
@@ -626,6 +626,7 @@ def save_signal_to_db(signal: Dict) -> None:
                 signal.get('raw_probability_max'),
                 signal.get('calibrated_probability_max'),
                 signal.get('calibration_method'),
+                signal.get('valid_until'),
             )
         )
 
@@ -653,7 +654,8 @@ def get_latest_signal_from_db(symbol: str, timeframe: str) -> Optional[Dict]:
                 id, symbol, timeframe, timestamp, direction, confidence,
                 features_json, tp_multiplier, sl_multiplier, labeling_method,
                 atr, regime, model_version, created_at,
-                entry_price, take_profit, stop_loss
+                entry_price, take_profit, stop_loss,
+                valid_until, signal_status
             FROM signals
             WHERE symbol = ? AND timeframe = ?
             ORDER BY created_at DESC
@@ -698,6 +700,8 @@ def get_latest_signal_from_db(symbol: str, timeframe: str) -> Optional[Dict]:
             'entry_price': row[14],
             'take_profit': row[15],
             'stop_loss': row[16],
+            'valid_until': row[17],
+            'signal_status': row[18] or 'ACTIVE',
         }
 
         logger.info(f"Retrieved signal from database: {symbol} {timeframe} (age: {age_minutes} min)")

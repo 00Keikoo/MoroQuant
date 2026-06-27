@@ -17,6 +17,8 @@ export interface MLSignal {
   generated_at: string;
   model_type: string;
   mtf_conflict?: boolean;
+  signal_status?: 'ACTIVE' | 'TP_HIT' | 'SL_HIT' | 'EXPIRED';
+  status_reason?: string;
   error?: string;
   message?: string;
 }

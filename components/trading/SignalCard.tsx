@@ -34,6 +34,37 @@ const directionConfig = {
   },
 };
 
+const statusConfig = {
+  ACTIVE: {
+    label: 'ACTIVE',
+    bg: 'bg-emerald-500/15',
+    text: 'text-emerald-400',
+    border: 'border-emerald-500/40',
+    icon: '●',
+  },
+  TP_HIT: {
+    label: 'TP HIT',
+    bg: 'bg-green-500/15',
+    text: 'text-green-400',
+    border: 'border-green-500/40',
+    icon: '✓',
+  },
+  SL_HIT: {
+    label: 'SL HIT',
+    bg: 'bg-red-500/15',
+    text: 'text-red-400',
+    border: 'border-red-500/40',
+    icon: '✕',
+  },
+  EXPIRED: {
+    label: 'EXPIRED',
+    bg: 'bg-gray-500/15',
+    text: 'text-gray-400',
+    border: 'border-gray-500/40',
+    icon: '◷',
+  },
+};
+
 const MiniSparkline = ({ data }: { data: number[] }) => {
   if (!data || data.length === 0) return null;
 
@@ -92,6 +123,23 @@ export default function SignalCard({ signal }: SignalCardProps) {
   }, [signal.price]);
 
   if (signal.error) {
+    // Handle signal_inactive error from API
+    if (signal.error === 'signal_inactive') {
+      return (
+        <div className="bg-gray-900/60 rounded-xl p-4 sm:p-5 border border-gray-800/50 transition-all duration-300 opacity-50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-500 truncate">{displayName}</h3>
+              <span className="text-xs text-gray-600">{signal.timeframe}</span>
+            </div>
+            <span className="text-xs font-bold text-gray-500 bg-gray-800 px-2 py-1 rounded border border-gray-700">
+              {signal.signal_status || 'INACTIVE'}
+            </span>
+          </div>
+          <p className="text-xs text-gray-600">{signal.reason || signal.message}</p>
+        </div>
+      );
+    }
     return (
       <div className="bg-gray-900 rounded-lg p-4 border border-gray-800 transition-all duration-300 hover:border-gray-700 animate-fade-in">
         <div className="flex items-center justify-between mb-3">
@@ -112,12 +160,16 @@ export default function SignalCard({ signal }: SignalCardProps) {
 
   const topFeatures = Object.entries(signal.top_features || {}).slice(0, 5);
   const config = directionConfig[signal.direction];
+  const signalStatus = signal.signal_status || 'ACTIVE';
+  const statusCfg = statusConfig[signalStatus];
+  const isInactive = signalStatus !== 'ACTIVE';
 
   return (
     <div
       className={`relative bg-gray-900 rounded-xl p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] space-y-3 sm:space-y-4 animate-fade-in group
         before:absolute before:inset-0 before:rounded-xl before:p-[2px] before:bg-gradient-to-r before:${config.borderGradient} before:-z-10
-        hover:shadow-2xl hover:${config.glowColor}`}
+        hover:shadow-2xl hover:${config.glowColor}
+        ${isInactive ? 'opacity-40 grayscale-[30%]' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -130,10 +182,17 @@ export default function SignalCard({ signal }: SignalCardProps) {
           )}
           <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">{signal.timeframe}</span>
         </div>
-        <div className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg ${config.bg} border-2 ${config.border} flex-shrink-0`}>
-          <span className={`text-2xl sm:text-3xl ${config.text} font-bold`}>{config.icon}</span>
-          <span className={`text-xs sm:text-sm font-extrabold ${config.text} uppercase tracking-wide`}>
-            {signal.direction}
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <span className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg ${config.bg} border-2 ${config.border}`}>
+            <span className={`text-2xl sm:text-3xl ${config.text} font-bold`}>{config.icon}</span>
+            <span className={`text-xs sm:text-sm font-extrabold ${config.text} uppercase tracking-wide`}>
+              {signal.direction}
+            </span>
+          </span>
+          {/* Status badge */}
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+            <span>{statusCfg.icon}</span>
+            {statusCfg.label}
           </span>
         </div>
       </div>
