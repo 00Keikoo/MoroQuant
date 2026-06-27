@@ -1,4 +1,4 @@
-import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse } from '@/lib/types/ml';
+import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse, TradingModeResponse, TradingModeUpdate } from '@/lib/types/ml';
 
 const ML_API_BASE = typeof window !== 'undefined' ? `http://${window.location.hostname}:8000/api` : 'http://localhost:8000/api';
 
@@ -166,6 +166,69 @@ export async function getTradeHistory(): Promise<TradeHistoryResponse> {
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error('ML API is offline. Please start the FastAPI server on port 8000.');
+    }
+    throw error;
+  }
+}
+
+// ── Trading Mode Manager ──────────────────────────────────────────────
+
+export async function getTradingMode(): Promise<TradingModeResponse> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/trading/mode`, {
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch trading mode: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function setTradingMode(mode: string): Promise<TradingModeUpdate> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/trading/mode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to set trading mode: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function emergencyStop(): Promise<TradingModeUpdate> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/trading/emergency-stop`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to execute emergency stop: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
     }
     throw error;
   }

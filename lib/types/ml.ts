@@ -122,3 +122,21 @@ export interface TradeHistoryResponse {
     worst_trade: ClosedTrade | null;
   };
 }
+
+// ── Trading Mode Manager ──────────────────────────────────────────────
+
+export type TradingMode = 'OFF' | 'PAPER' | 'LIVE' | 'MAINTENANCE';
+
+export interface TradingModeResponse {
+  mode: TradingMode;
+  updated_at: string | null;
+}
+
+export interface TradingModeUpdate {
+  success: boolean;
+  old_mode: TradingMode;
+  new_mode: TradingMode;
+  error?: string;
+  message?: string;
+  valid_modes?: TradingMode[];
+}

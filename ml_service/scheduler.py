@@ -394,6 +394,14 @@ def signal_generation_job():
         should_send_telegram_alert,
     )
 
+    # ── Trading mode check (infrastructure logging only) ──────────────
+    from ml_service.trading.mode_manager import can_open_new_positions, get_trading_mode
+    current_mode = get_trading_mode()
+    can_open = can_open_new_positions()
+    logger.info(f"Trading mode: {current_mode} | can_open_new_positions={can_open}")
+    # NOTE: Signal generation continues regardless of mode.  The execution
+    # layer will later honour the mode manager gates.
+
     logger.info("="*80)
     logger.info("Starting signal generation job")
     logger.info("="*80)

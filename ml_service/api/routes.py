@@ -15,6 +15,11 @@ from services.proxy_price_service import get_proxy_service
 
 router = APIRouter()
 
+# ── Trading Mode Manager request model ──────────────────────────────────
+
+class TradingModeRequest(BaseModel):
+    mode: str
+
 
 class ClosedTrade(BaseModel):
     symbol: str
@@ -846,3 +851,59 @@ async def get_model_drift(symbol: str, timeframe: str) -> Dict:
     # functional before the first snapshot job has executed.
     report = get_drift_report(symbol, timeframe)
     return report
+
+
+# ── Trading Mode Manager ──────────────────────────────────────────────────
+
+@router.get("/trading/mode")
+async def get_trading_mode_endpoint() -> Dict:
+    """Return the current autonomous trading mode and when it was last changed."""
+    from trading.mode_manager import get_trading_mode
+    from data.database import get_database
+
+    mode = get_trading_mode()
+
+    db = get_database()
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        row = cursor.execute(
+            "SELECT updated_at FROM trading_system_state WHERE id = 1"
+        ).fetchone()
+        updated_at = row[0] if row else None
+
+    return {"mode": mode, "updated_at": updated_at}
+
+
+@router.post("/trading/mode")
+async def set_trading_mode_endpoint(req: TradingModeRequest) -> Dict:
+    """Change the trading mode.
+
+    Accepts only ``OFF``, ``PAPER``, ``LIVE``, or ``MAINTENANCE``.
+    """
+    from trading.mode_manager import get_trading_mode, set_trading_mode, VALID_MODES
+
+    mode = req.mode.strip().upper()
+    if mode not in VALID_MODES:
+        return {
+            "success": False,
+            "error": "invalid_mode",
+            "valid_modes": VALID_MODES,
+            "message": f"Invalid mode '{mode}'. Must be one of: {VALID_MODES}",
+        }
+
+    old_mode = get_trading_mode()
+    ok = set_trading_mode(mode)
+
+    if not ok:
+        return {"success": False, "error": "update_failed"}
+
+    return {"success": True, "old_mode": old_mode, "new_mode": mode}
+
+
+@router.post("/trading/emergency-stop")
+async def emergency_stop_endpoint() -> Dict:
+    """Immediately switch trading mode to OFF (kill switch)."""
+    from trading.mode_manager import emergency_stop
+
+    result = emergency_stop()
+    return result
