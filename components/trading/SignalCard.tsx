@@ -136,7 +136,7 @@ export default function SignalCard({ signal }: SignalCardProps) {
               {signal.signal_status || 'INACTIVE'}
             </span>
           </div>
-          <p className="text-xs text-gray-600">{signal.reason || signal.message}</p>
+          <p className="text-xs text-gray-600">{signal.status_reason || signal.message}</p>
         </div>
       );
     }
