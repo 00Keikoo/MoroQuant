@@ -402,6 +402,16 @@ def signal_generation_job():
     # NOTE: Signal generation continues regardless of mode.  The execution
     # layer will later honour the mode manager gates.
 
+    # Paper broker is only active in PAPER mode. Loaded lazily so the
+    # import never affects OFF / LIVE / MAINTENANCE deployments.
+    paper_broker = None
+    if current_mode == "PAPER":
+        try:
+            from ml_service.trading import paper_broker
+        except Exception as e:
+            logger.error(f"Failed to load paper broker: {e}")
+            paper_broker = None
+
     logger.info("="*80)
     logger.info("Starting signal generation job")
     logger.info("="*80)
@@ -442,6 +452,17 @@ def signal_generation_job():
                         logger.error(
                             f"Telegram alert failed for {symbol} {timeframe}: {notify_err}"
                         )
+
+                    # ── Paper broker: open position on non-neutral signal ─
+                    # Skips neutral, respects max positions and one-per-symbol.
+                    if paper_broker is not None:
+                        try:
+                            paper_broker.open_paper_position(signal)
+                        except Exception as pb_err:
+                            logger.error(
+                                f"Paper broker open failed for {symbol} {timeframe}: {pb_err}"
+                            )
+
                 else:
                     logger.warning(f"Failed to generate signal for {symbol} {timeframe}")
                     failed_count += 1
@@ -689,6 +710,33 @@ def drift_snapshot_job():
     )
 
 
+def paper_lifecycle_job():
+    """Paper broker lifecycle pass - runs every hour.
+
+    Only executes when the trading mode is PAPER. Refreshes prices,
+    evaluates TP / SL / expiration on open paper positions, and closes
+    positions that need to close. Signal generation is NOT affected.
+    """
+    from ml_service.trading.mode_manager import get_trading_mode
+    from ml_service.trading import paper_broker
+
+    mode = get_trading_mode()
+    if mode != "PAPER":
+        logger.debug(f"Paper lifecycle skipped: mode={mode}")
+        return
+
+    logger.info("Paper broker lifecycle started")
+    try:
+        summary = paper_broker.update_open_positions()
+        logger.info(
+            f"Paper broker lifecycle complete: "
+            f"checked={summary['checked']} tp={summary['tp']} "
+            f"sl={summary['sl']} expired={summary['expired']}"
+        )
+    except Exception as e:
+        logger.error(f"Paper broker lifecycle failed: {e}")
+
+
 def start_scheduler():
     """Start the background scheduler."""
     global _scheduler
@@ -768,11 +816,20 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    _scheduler.add_job(
+        paper_lifecycle_job,
+        trigger=IntervalTrigger(hours=1),
+        id='paper_lifecycle_job',
+        name='Paper broker lifecycle (TP/SL/expiry) every 1h',
+        replace_existing=True,
+    )
+
     _scheduler.start()
     logger.info(
         f"Scheduler started - trade sync every {sync_interval_hours}h, "
         "adaptive retrain every 24h, dominance/signals/outcomes every 1h, "
-        "account equity snapshot every 5m, drift snapshot every 1h"
+        "account equity snapshot every 5m, drift snapshot every 1h, "
+        "paper lifecycle every 1h"
     )
 
 

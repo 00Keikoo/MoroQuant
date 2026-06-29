@@ -140,3 +140,53 @@ export interface TradingModeUpdate {
   message?: string;
   valid_modes?: TradingMode[];
 }
+
+// ── Paper Broker ──────────────────────────────────────────────────────
+
+export type PaperPositionStatus = 'OPEN' | 'TP_HIT' | 'SL_HIT' | 'EXPIRED' | 'MANUAL_CLOSE';
+
+export interface PaperAccount {
+  id: number;
+  balance: number;
+  equity: number;
+  unrealized_pnl: number;
+  updated_at: string;
+}
+
+export interface PaperPosition {
+  id: number;
+  symbol: string;
+  direction: 'LONG' | 'SHORT';
+  entry_price: number;
+  current_price: number | null;
+  size_usdt: number;
+  qty: number;
+  stop_loss: number | null;
+  take_profit: number | null;
+  signal_id: number | null;
+  status: PaperPositionStatus;
+  realized_pnl: number;
+  opened_at: string;
+  closed_at: string | null;
+}
+
+export interface PaperStats {
+  open_count: number;
+  closed_count: number;
+  wins: number;
+  losses: number;
+  win_rate: number;
+  total_realized_pnl: number;
+  starting_balance: number;
+  max_open_positions: number;
+  risk_per_trade_pct: number;
+}
+
+export interface PaperPortfolioSummary {
+  status: string;
+  account: PaperAccount;
+  open_positions: PaperPosition[];
+  closed_positions: PaperPosition[];
+  stats: PaperStats;
+  timestamp?: string;
+}

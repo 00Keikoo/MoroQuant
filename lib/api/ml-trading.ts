@@ -1,4 +1,4 @@
-import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse, TradingModeResponse, TradingModeUpdate } from '@/lib/types/ml';
+import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse, TradingModeResponse, TradingModeUpdate, PaperAccount, PaperPosition, PaperPortfolioSummary } from '@/lib/types/ml';
 
 const ML_API_BASE = typeof window !== 'undefined' ? `http://${window.location.hostname}:8000/api` : 'http://localhost:8000/api';
 
@@ -225,6 +225,71 @@ export async function emergencyStop(): Promise<TradingModeUpdate> {
       throw new Error(`Failed to execute emergency stop: ${response.statusText}`);
     }
 
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+// ── Paper Broker ──────────────────────────────────────────────────────
+
+export async function getPaperAccount(): Promise<PaperAccount> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/account`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper account: ${response.statusText}`);
+    const data = await response.json();
+    return data.account;
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperOpenPositions(): Promise<PaperPosition[]> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/positions/open`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch open positions: ${response.statusText}`);
+    const data = await response.json();
+    return data.positions || [];
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperClosedPositions(limit = 100): Promise<PaperPosition[]> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/positions/closed?limit=${limit}`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch closed positions: ${response.statusText}`);
+    const data = await response.json();
+    return data.positions || [];
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperSummary(): Promise<PaperPortfolioSummary> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/summary`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper summary: ${response.statusText}`);
     return response.json();
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {

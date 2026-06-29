@@ -33,6 +33,7 @@ import { useIsPrivacyMode } from '@/lib/stores/privacyStore';
 import { maskOr, MASK_MONETARY, MASK_PERCENT, MASK_PRICE } from '@/lib/format/privacy';
 import SensitiveValue from '@/components/common/SensitiveValue';
 import TradingModeManager from '@/components/trading/TradingModeManager';
+import PaperPortfolio from '@/components/trading/PaperPortfolio';
 
 const AUTO_REFRESH_MS = 30_000;
 
@@ -260,10 +261,13 @@ export default function PerformanceDashboard() {
               </div>
             )}
 
-            {/* ─── Trading Mode Manager ────────────────────────────── */}
+            {/* ─── Trading Mode Manager + Paper Portfolio ─────────────── */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <div className="xl:col-span-1">
                 <TradingModeManager />
+              </div>
+              <div className="xl:col-span-1">
+                <PaperPortfolio />
               </div>
             </div>
 

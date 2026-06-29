@@ -907,3 +907,59 @@ async def emergency_stop_endpoint() -> Dict:
 
     result = emergency_stop()
     return result
+
+
+# ── Paper Broker ──────────────────────────────────────────────────────────
+
+@router.get("/paper/account")
+async def get_paper_account_endpoint() -> Dict:
+    """Return the paper trading account snapshot (balance, equity, PnL)."""
+    from trading.paper_broker import get_account
+
+    account = get_account()
+    return {
+        "status": "success",
+        "account": account,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/positions/open")
+async def get_paper_open_positions_endpoint() -> Dict:
+    """Return all currently-open paper positions."""
+    from trading.paper_broker import get_open_positions
+
+    positions = get_open_positions()
+    return {
+        "status": "success",
+        "positions": positions,
+        "count": len(positions),
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/positions/closed")
+async def get_paper_closed_positions_endpoint(
+    limit: int = Query(100, description="Max number of closed positions")
+) -> Dict:
+    """Return recently closed paper positions, newest first."""
+    from trading.paper_broker import get_closed_positions
+
+    positions = get_closed_positions(limit=limit)
+    return {
+        "status": "success",
+        "positions": positions,
+        "count": len(positions),
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/summary")
+async def get_paper_summary_endpoint() -> Dict:
+    """Return the full paper portfolio summary (account + positions + stats)."""
+    from trading.paper_broker import get_portfolio_summary
+
+    summary = get_portfolio_summary()
+    summary["status"] = "success"
+    summary["timestamp"] = datetime.now().isoformat()
+    return summary
