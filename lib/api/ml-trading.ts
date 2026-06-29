@@ -1,4 +1,4 @@
-import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse, TradingModeResponse, TradingModeUpdate, PaperAccount, PaperPosition, PaperPortfolioSummary } from '@/lib/types/ml';
+import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse, TradingModeResponse, TradingModeUpdate, PaperAccount, PaperPosition, PaperPortfolioSummary, PaperEquityPoint, PaperAnalytics, PaperTrade } from '@/lib/types/ml';
 
 const ML_API_BASE = typeof window !== 'undefined' ? `http://${window.location.hostname}:8000/api` : 'http://localhost:8000/api';
 
@@ -290,6 +290,53 @@ export async function getPaperSummary(): Promise<PaperPortfolioSummary> {
       signal: AbortSignal.timeout(10000),
     });
     if (!response.ok) throw new Error(`Failed to fetch paper summary: ${response.statusText}`);
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperTrades(limit = 100): Promise<{ trades: PaperTrade[]; count: number }> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/trades?limit=${limit}`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper trades: ${response.statusText}`);
+    const data = await response.json();
+    return { trades: data.trades || [], count: data.count || 0 };
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperEquityHistory(range?: '1d' | '7d' | '30d' | 'all'): Promise<PaperEquityPoint[]> {
+  try {
+    const query = range ? `?range=${range}` : '';
+    const response = await fetch(`${ML_API_BASE}/paper/equity-history${query}`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper equity history: ${response.statusText}`);
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperAnalytics(): Promise<PaperAnalytics> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/analytics`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper analytics: ${response.statusText}`);
     return response.json();
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {

@@ -23,7 +23,7 @@ This module is infrastructure only.  No live Binance execution happens here.
 """
 
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -359,7 +359,7 @@ def update_open_positions() -> Dict:
     finally:
         conn.close()
 
-    now = datetime.utcnow()
+    now = datetime.now(tz=None)  # naive UTC, matches SQLite timestamps
 
     for pid in position_ids:
         # Need to re-open a connection per close to avoid overlap with close logic
@@ -501,7 +501,7 @@ def get_closed_positions(limit: int = 100) -> List[Dict]:
     try:
         rows = conn.execute(
             "SELECT * FROM paper_positions WHERE status != 'OPEN' "
-            "ORDER BY closed_at DESC LIMIT ?",
+            "ORDER BY closed_at DESC, id DESC LIMIT ?",
             (limit,),
         ).fetchall()
         return [_row_to_dict(r) for r in rows]
@@ -516,5 +516,202 @@ def get_account() -> Dict:
         _ensure_account(conn)
         account = _get_account(conn)
         return _row_to_dict(account)
+    finally:
+        conn.close()
+
+
+# ── Equity History ──────────────────────────────────────────────────────
+
+def _ensure_equity_history_table(conn: sqlite3.Connection):
+    """Create paper_equity_history table if it doesn't exist."""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS paper_equity_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            equity REAL NOT NULL,
+            balance REAL NOT NULL,
+            unrealized_pnl REAL NOT NULL,
+            snapshot_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_paper_equity_snapshot_time "
+        "ON paper_equity_history(snapshot_time)"
+    )
+    conn.commit()
+
+
+def capture_equity_snapshot() -> bool:
+    """Capture a paper equity snapshot.
+
+    Recomputes equity first, then inserts a row into
+    ``paper_equity_history``.  Called by the scheduler every 5 minutes
+    when mode == PAPER.
+
+    Returns True on success.
+    """
+    equity_data = calculate_equity()
+    conn = _get_connection()
+    try:
+        _ensure_equity_history_table(conn)
+        conn.execute(
+            "INSERT INTO paper_equity_history (equity, balance, unrealized_pnl) "
+            "VALUES (?, ?, ?)",
+            (equity_data["equity"], equity_data["balance"], equity_data["unrealized_pnl"]),
+        )
+        conn.commit()
+        logger.debug(
+            f"Paper equity snapshot: equity={equity_data['equity']:.2f}"
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Paper equity snapshot failed: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def get_equity_history(range_hours: Optional[int] = None) -> List[Dict]:
+    """Return paper equity history, optionally filtered by time range.
+
+    Args:
+        range_hours: If provided, limit to last N hours. Otherwise all.
+
+    Returns a list of ``{timestamp, equity}`` dicts.
+    """
+    conn = _get_connection()
+    try:
+        _ensure_equity_history_table(conn)
+
+        if range_hours is not None:
+            rows = conn.execute(
+                "SELECT snapshot_time, equity, balance, unrealized_pnl "
+                "FROM paper_equity_history "
+                "WHERE snapshot_time >= datetime('now', ? || ' hours') "
+                "ORDER BY snapshot_time ASC",
+                (f"-{range_hours}",),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT snapshot_time, equity, balance, unrealized_pnl "
+                "FROM paper_equity_history ORDER BY snapshot_time ASC"
+            ).fetchall()
+
+        return [
+            {
+                "timestamp": r[0],
+                "equity": r[1],
+                "balance": r[2],
+                "unrealized_pnl": r[3],
+            }
+            for r in rows
+        ]
+    finally:
+        conn.close()
+
+
+# ── Analytics ───────────────────────────────────────────────────────────
+
+def compute_paper_analytics() -> Dict:
+    """Compute trading analytics from closed paper positions.
+
+    Returns a dict with the same shape as the live analytics endpoint so
+    the dashboard can reuse the same widgets.
+    """
+    conn = _get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT symbol, direction, entry_price, realized_pnl, opened_at, closed_at "
+            "FROM paper_positions WHERE status != 'OPEN'"
+        ).fetchall()
+        open_count = conn.execute(
+            "SELECT COUNT(*) AS c FROM paper_positions WHERE status = 'OPEN'"
+        ).fetchone()["c"]
+    finally:
+        conn.close()
+
+    total_trades = len(rows)
+    if total_trades == 0:
+        return {
+            "total_trades": 0,
+            "win_rate": 0.0,
+            "total_realized_pnl": 0.0,
+            "avg_trade_pnl": 0.0,
+            "profit_factor": 0.0,
+            "expectancy": 0.0,
+            "avg_hold_hours": 0.0,
+            "open_positions": open_count,
+            "closed_positions": 0,
+        }
+
+    wins = [r for r in rows if r["realized_pnl"] > 0]
+    losses = [r for r in rows if r["realized_pnl"] <= 0]
+    win_rate = len(wins) / total_trades * 100.0
+    total_pnl = sum(r["realized_pnl"] for r in rows)
+    avg_pnl = total_pnl / total_trades
+    gross_profit = sum(r["realized_pnl"] for r in wins) if wins else 0.0
+    gross_loss = abs(sum(r["realized_pnl"] for r in losses)) if losses else 0.0
+    profit_factor = gross_profit / gross_loss if gross_loss > 0 else float("inf")
+    expectancy = avg_pnl  # per-trade expectancy in USDT
+
+    # Average hold time
+    hold_hours_list = []
+    for r in rows:
+        try:
+            opened = datetime.strptime(
+                r["opened_at"].replace("Z", ""), "%Y-%m-%d %H:%M:%S"
+            )
+            closed_str = r["closed_at"] or r["opened_at"]
+            closed = datetime.strptime(
+                closed_str.replace("Z", ""), "%Y-%m-%d %H:%M:%S"
+            )
+            hold_hours_list.append((closed - opened).total_seconds() / 3600.0)
+        except Exception:
+            pass
+    avg_hold = sum(hold_hours_list) / len(hold_hours_list) if hold_hours_list else 0.0
+
+    return {
+        "total_trades": total_trades,
+        "win_rate": round(win_rate, 2),
+        "total_realized_pnl": round(total_pnl, 2),
+        "avg_trade_pnl": round(avg_pnl, 2),
+        "profit_factor": round(profit_factor, 2),
+        "expectancy": round(expectancy, 2),
+        "avg_hold_hours": round(avg_hold, 1),
+        "open_positions": open_count,
+        "closed_positions": total_trades,
+    }
+
+
+# ── Trades endpoint helper ───────────────────────────────────────────────
+
+def get_paper_trades(limit: int = 100) -> List[Dict]:
+    """Return closed paper positions as a flat trade list.
+
+    Maps ``paper_positions WHERE status != 'OPEN'`` into the trade
+    shape expected by the dashboard.
+    """
+    conn = _get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT symbol, direction, entry_price, current_price AS exit_price, "
+            "realized_pnl, opened_at, closed_at, status "
+            "FROM paper_positions WHERE status != 'OPEN' "
+            "ORDER BY closed_at DESC, id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+
+        return [
+            {
+                "symbol": r[0],
+                "direction": r[1],
+                "entry_price": r[2],
+                "exit_price": r[3],
+                "realized_pnl": r[4],
+                "opened_at": r[5],
+                "closed_at": r[6],
+                "status": r[7],
+            }
+            for r in rows
+        ]
     finally:
         conn.close()

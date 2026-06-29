@@ -4,21 +4,15 @@ import sys
 import sqlite3
 import tempfile
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+import pytest
 
 # Ensure ml_service root is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# ── Override DB path to a temp file BEFORE importing modules ──────────
-_tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-_tmp.close()
-_TEST_DB_PATH = Path(_tmp.name)
-
 import trading.mode_manager as mm
 import trading.paper_broker as pb
-mm._DB_PATH = _TEST_DB_PATH
-pb._DB_PATH = _TEST_DB_PATH
-
 from trading.mode_manager import set_trading_mode, get_trading_mode, VALID_MODES
 from trading.paper_broker import (
     STARTING_BALANCE,
@@ -35,11 +29,28 @@ from trading.paper_broker import (
 )
 
 
-def _reset_db():
-    """Wipe and recreate both tables so each test starts clean."""
-    if _TEST_DB_PATH.exists():
-        _TEST_DB_PATH.unlink()
-    conn = sqlite3.connect(str(_TEST_DB_PATH))
+@pytest.fixture(autouse=True)
+def db_path(monkeypatch):
+    """Each test gets its own temp DB; module-level _DB_PATH is saved & restored."""
+    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmp.close()
+    test_db = Path(tmp.name)
+    saved_mm = mm._DB_PATH
+    saved_pb = pb._DB_PATH
+    monkeypatch.setattr(mm, "_DB_PATH", test_db)
+    monkeypatch.setattr(pb, "_DB_PATH", test_db)
+    yield test_db
+    mm._DB_PATH = saved_mm
+    pb._DB_PATH = saved_pb
+    if test_db.exists():
+        test_db.unlink()
+
+
+def _reset_db(db_path: Path):
+    """Wipe and recreate all tables so each test starts clean."""
+    if db_path.exists():
+        db_path.unlink()
+    conn = sqlite3.connect(str(db_path))
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS trading_system_state (
             id INTEGER PRIMARY KEY CHECK(id = 1),
@@ -104,18 +115,19 @@ def _make_signal(symbol="BTCUSDT", direction="long", price=100.0,
     }
 
 
-def _insert_open_position(symbol, direction, entry_price, qty=1.0,
-                          current_price=None, tp=None, sl=None,
+def _insert_open_position(db_path: Path, symbol, direction, entry_price,
+                          qty=1.0, current_price=None, tp=None, sl=None,
                           opened_at=None):
     """Insert a raw OPEN position bypassing the open() logic."""
-    conn = sqlite3.connect(str(_TEST_DB_PATH))
+    conn = sqlite3.connect(str(db_path))
     conn.execute(
         """INSERT INTO paper_positions
            (symbol, direction, entry_price, current_price, size_usdt, qty,
             stop_loss, take_profit, status, realized_pnl, opened_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', 0.0, ?)""",
         (symbol, direction, entry_price, current_price or entry_price,
-         qty * entry_price, qty, sl, tp, opened_at or datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")),
+         qty * entry_price, qty, sl, tp,
+         opened_at or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")),
     )
     conn.commit()
     conn.close()
@@ -123,8 +135,8 @@ def _insert_open_position(symbol, direction, entry_price, qty=1.0,
 
 # ─── 1. Account initialization ───────────────────────────────────────────
 
-def test_account_default_balance():
-    _reset_db()
+def test_account_default_balance(db_path):
+    _reset_db(db_path)
     acct = get_account()
     assert acct["balance"] == STARTING_BALANCE
     assert acct["equity"] == STARTING_BALANCE
@@ -138,8 +150,8 @@ def test_starting_balance_is_10000():
 
 # ─── 2. Mode gating ──────────────────────────────────────────────────────
 
-def test_open_refused_when_mode_off():
-    _reset_db()
+def test_open_refused_when_mode_off(db_path):
+    _reset_db(db_path)
     set_trading_mode("OFF")
     result = open_paper_position(_make_signal(direction="long"))
     assert result is None
@@ -147,16 +159,16 @@ def test_open_refused_when_mode_off():
     print("✓ open_paper_position refused when mode=OFF")
 
 
-def test_open_refused_when_mode_live():
-    _reset_db()
+def test_open_refused_when_mode_live(db_path):
+    _reset_db(db_path)
     set_trading_mode("LIVE")
     result = open_paper_position(_make_signal(direction="long"))
     assert result is None
     print("✓ open_paper_position refused when mode=LIVE")
 
 
-def test_open_refused_when_mode_maintenance():
-    _reset_db()
+def test_open_refused_when_mode_maintenance(db_path):
+    _reset_db(db_path)
     set_trading_mode("MAINTENANCE")
     result = open_paper_position(_make_signal(direction="long"))
     assert result is None
@@ -165,8 +177,8 @@ def test_open_refused_when_mode_maintenance():
 
 # ─── 3. Neutral signal rejection ─────────────────────────────────────────
 
-def test_neutral_signal_skipped():
-    _reset_db()
+def test_neutral_signal_skipped(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     result = open_paper_position(_make_signal(direction="neutral"))
     assert result is None
@@ -176,8 +188,8 @@ def test_neutral_signal_skipped():
 
 # ─── 4. Successful open ──────────────────────────────────────────────────
 
-def test_open_long_position():
-    _reset_db()
+def test_open_long_position(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     sig = _make_signal(symbol="BTCUSDT", direction="long", price=100.0,
                        tp=110.0, sl=90.0)
@@ -190,8 +202,8 @@ def test_open_long_position():
     print(f"✓ Opened LONG position id={result['position_id']}")
 
 
-def test_open_short_position():
-    _reset_db()
+def test_open_short_position(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     sig = _make_signal(symbol="ETHUSDT", direction="short", price=200.0)
     result = open_paper_position(sig)
@@ -202,8 +214,8 @@ def test_open_short_position():
 
 # ─── 5. Position sizing ──────────────────────────────────────────────────
 
-def test_position_size_is_1pct_of_equity():
-    _reset_db()
+def test_position_size_is_1pct_of_equity(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     sig = _make_signal(symbol="BTCUSDT", direction="long", price=50.0)
     result = open_paper_position(sig)
@@ -212,8 +224,8 @@ def test_position_size_is_1pct_of_equity():
     print(f"✓ Position size = {result['size_usdt']} (1% of {STARTING_BALANCE})")
 
 
-def test_qty_computed_from_size_and_price():
-    _reset_db()
+def test_qty_computed_from_size_and_price(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     sig = _make_signal(direction="long", price=100.0)
     result = open_paper_position(sig)
@@ -224,8 +236,8 @@ def test_qty_computed_from_size_and_price():
 
 # ─── 6. Max open positions limit ──────────────────────────────────────────
 
-def test_max_open_positions_enforced():
-    _reset_db()
+def test_max_open_positions_enforced(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     # Open MAX_OPEN_POSITIONS distinct symbols
     for i in range(MAX_OPEN_POSITIONS):
@@ -239,8 +251,8 @@ def test_max_open_positions_enforced():
 
 # ─── 7. One position per symbol ───────────────────────────────────────────
 
-def test_one_position_per_symbol():
-    _reset_db()
+def test_one_position_per_symbol(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     open_paper_position(_make_signal(symbol="BTCUSDT", direction="long", price=100.0))
     result = open_paper_position(_make_signal(symbol="BTCUSDT", direction="long", price=101.0))
@@ -251,21 +263,21 @@ def test_one_position_per_symbol():
 
 # ─── 8. Missing price handling ────────────────────────────────────────────
 
-def test_open_without_price_returns_none():
-    _reset_db()
+def test_open_without_price_returns_none(db_path, monkeypatch):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     sig = _make_signal(direction="long", price=None)
-    # _fetch_price will fail in test env (no network), so this should be None
+    # Force _fetch_price to return None (no network access in tests)
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     result = open_paper_position(sig)
-    # If price is None and fetch fails, open is refused
     assert result is None
     print("✓ Missing entry price handled gracefully")
 
 
-# ─── 9. Close position ────────────────────────────────────────────────────
+# ─── 9. Close position ──────────────────────────────────────────────────
 
-def test_close_manual_close():
-    _reset_db()
+def test_close_manual_close(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     result = open_paper_position(_make_signal(direction="long", price=100.0))
     pid = result["position_id"]
@@ -276,8 +288,8 @@ def test_close_manual_close():
     print("✓ MANUAL_CLOSE closes position")
 
 
-def test_close_invalid_status_rejected():
-    _reset_db()
+def test_close_invalid_status_rejected(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     result = open_paper_position(_make_signal(direction="long", price=100.0))
     pid = result["position_id"]
@@ -286,17 +298,17 @@ def test_close_invalid_status_rejected():
     print("✓ Invalid close status rejected")
 
 
-def test_close_nonexistent_position_returns_none():
-    _reset_db()
+def test_close_nonexistent_position_returns_none(db_path):
+    _reset_db(db_path)
     closed = close_paper_position(9999, status="MANUAL_CLOSE")
     assert closed is None
     print("✓ Closing nonexistent position returns None")
 
 
-# ─── 10. PnL realization ─────────────────────────────────────────────────
+# ─── 10. PnL realization ───────────────────────────────────────────────
 
-def test_long_winning_pnl_positive():
-    _reset_db()
+def test_long_winning_pnl_positive(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     result = open_paper_position(_make_signal(direction="long", price=100.0))
     pid = result["position_id"]
@@ -308,8 +320,8 @@ def test_long_winning_pnl_positive():
     print(f"✓ LONG win pnl={closed['realized_pnl']}")
 
 
-def test_short_winning_pnl_positive():
-    _reset_db()
+def test_short_winning_pnl_positive(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     result = open_paper_position(_make_signal(symbol="ETHUSDT", direction="short", price=200.0))
     pid = result["position_id"]
@@ -319,8 +331,8 @@ def test_short_winning_pnl_positive():
     print(f"✓ SHORT win pnl={closed['realized_pnl']}")
 
 
-def test_losing_pnl_negative():
-    _reset_db()
+def test_losing_pnl_negative(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     result = open_paper_position(_make_signal(direction="long", price=100.0))
     pid = result["position_id"]
@@ -329,8 +341,8 @@ def test_losing_pnl_negative():
     print(f"✓ Losing position pnl={closed['realized_pnl']}")
 
 
-def test_realized_pnl_updates_balance():
-    _reset_db()
+def test_realized_pnl_updates_balance(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     result = open_paper_position(_make_signal(direction="long", price=100.0))
     pid = result["position_id"]
@@ -341,23 +353,23 @@ def test_realized_pnl_updates_balance():
     print(f"✓ Balance updated to {acct['balance']} after realized pnl")
 
 
-# ─── 11. Equity calculation ──────────────────────────────────────────────
+# ─── 11. Equity calculation ────────────────────────────────────────────────
 
-def test_equity_equals_balance_with_no_open():
-    _reset_db()
+def test_equity_equals_balance_with_no_open(db_path):
+    _reset_db(db_path)
     eq = calculate_equity()
     assert abs(eq["equity"] - STARTING_BALANCE) < 0.01
     assert abs(eq["unrealized_pnl"]) < 0.01
     print("✓ Equity == balance with no open positions")
 
 
-def test_equity_reflects_unrealized_long_profit():
-    _reset_db()
+def test_equity_reflects_unrealized_long_profit(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     # Open LONG at 100, qty=1.0
     open_paper_position(_make_signal(direction="long", price=100.0))
     # Manually bump current_price to 110 to simulate unrealized profit
-    conn = sqlite3.connect(str(_TEST_DB_PATH))
+    conn = sqlite3.connect(str(db_path))
     conn.execute("UPDATE paper_positions SET current_price = 110.0 WHERE status = 'OPEN'")
     conn.commit()
     conn.close()
@@ -368,18 +380,17 @@ def test_equity_reflects_unrealized_long_profit():
     print(f"✓ Equity reflects unrealized LONG profit: {eq['equity']}")
 
 
-def test_equity_reflects_unrealized_short_profit():
-    _reset_db()
+def test_equity_reflects_unrealized_short_profit(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     open_paper_position(_make_signal(symbol="ETHUSDT", direction="short", price=200.0))
     # SHORT at 200, qty=0.5; price drops to 190 → SHORT profit
-    conn = sqlite3.connect(str(_TEST_DB_PATH))
+    conn = sqlite3.connect(str(db_path))
     conn.execute("UPDATE paper_positions SET current_price = 190.0 WHERE status = 'OPEN'")
     conn.commit()
     conn.close()
     eq = calculate_equity()
-    # unrealized = 0.5 * 200 * (-(190-200)/200) * -1 ... wait
-    # SHORT: move = -(price-entry)/entry = -(-10/200) = 0.05
+    # SHORT: move = -(190-200)/200 = 0.05
     # pnl = qty * entry * move = 0.5 * 200 * 0.05 = 5.0
     assert abs(eq["unrealized_pnl"] - 5.0) < 0.01
     print(f"✓ Equity reflects unrealized SHORT profit: {eq['unrealized_pnl']}")
@@ -387,69 +398,75 @@ def test_equity_reflects_unrealized_short_profit():
 
 # ─── 12. Lifecycle / update_open_positions ────────────────────────────────
 
-def test_lifecycle_closes_tp_hit_long():
-    _reset_db()
+def test_lifecycle_closes_tp_hit_long(db_path, monkeypatch):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
-    # LONG entry=100, tp=110; price service unavailable → use current_price
-    _insert_open_position("BTCUSDT", "LONG", 100.0, qty=1.0,
-                          current_price=115.0, tp=110.0, sl=90.0)
+    # LONG entry=100, tp=110; force _fetch_price to return None so current_price is used
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
+    _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
+                         current_price=115.0, tp=110.0, sl=90.0)
     summary = update_open_positions()
     assert summary["tp"] == 1
     assert len(get_open_positions()) == 0
     print("✓ Lifecycle closed LONG on TP hit")
 
 
-def test_lifecycle_closes_sl_hit_long():
-    _reset_db()
+def test_lifecycle_closes_sl_hit_long(db_path, monkeypatch):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
-    _insert_open_position("BTCUSDT", "LONG", 100.0, qty=1.0,
-                          current_price=85.0, tp=110.0, sl=90.0)
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
+    _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
+                         current_price=85.0, tp=110.0, sl=90.0)
     summary = update_open_positions()
     assert summary["sl"] == 1
     print("✓ Lifecycle closed LONG on SL hit")
 
 
-def test_lifecycle_closes_tp_hit_short():
-    _reset_db()
+def test_lifecycle_closes_tp_hit_short(db_path, monkeypatch):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     # SHORT: tp below entry. price 85 <= tp 90 → TP hit
-    _insert_open_position("ETHUSDT", "SHORT", 100.0, qty=1.0,
-                          current_price=85.0, tp=90.0, sl=110.0)
+    _insert_open_position(db_path, "ETHUSDT", "SHORT", 100.0, qty=1.0,
+                         current_price=85.0, tp=90.0, sl=110.0)
     summary = update_open_positions()
     assert summary["tp"] == 1
     print("✓ Lifecycle closed SHORT on TP hit")
 
 
-def test_lifecycle_closes_sl_hit_short():
-    _reset_db()
+def test_lifecycle_closes_sl_hit_short(db_path, monkeypatch):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     # SHORT: sl above entry. price 115 >= sl 110 → SL hit
-    _insert_open_position("ETHUSDT", "SHORT", 100.0, qty=1.0,
-                          current_price=115.0, tp=90.0, sl=110.0)
+    _insert_open_position(db_path, "ETHUSDT", "SHORT", 100.0, qty=1.0,
+                         current_price=115.0, tp=90.0, sl=110.0)
     summary = update_open_positions()
     assert summary["sl"] == 1
     print("✓ Lifecycle closed SHORT on SL hit")
 
 
-def test_lifecycle_no_close_when_price_in_range():
-    _reset_db()
+def test_lifecycle_no_close_when_price_in_range(db_path, monkeypatch):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
-    _insert_open_position("BTCUSDT", "LONG", 100.0, qty=1.0,
-                          current_price=105.0, tp=110.0, sl=90.0)
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
+    _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
+                         current_price=105.0, tp=110.0, sl=90.0)
     summary = update_open_positions()
     assert summary["tp"] == 0 and summary["sl"] == 0 and summary["expired"] == 0
     assert len(get_open_positions()) == 1
     print("✓ Lifecycle keeps position open when in range")
 
 
-def test_lifecycle_closes_expired():
-    _reset_db()
+def test_lifecycle_closes_expired(db_path, monkeypatch):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     # opened 8 days ago → expired
-    old_ts = (datetime.utcnow() - timedelta(days=8)).strftime("%Y-%m-%d %H:%M:%S")
-    _insert_open_position("BTCUSDT", "LONG", 100.0, qty=1.0,
-                          current_price=100.0, tp=110.0, sl=90.0,
-                          opened_at=old_ts)
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=8)).strftime("%Y-%m-%d %H:%M:%S")
+    _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
+                         current_price=100.0, tp=110.0, sl=90.0,
+                         opened_at=old_ts)
     summary = update_open_positions()
     assert summary["expired"] == 1
     print("✓ Lifecycle closed expired position")
@@ -457,8 +474,8 @@ def test_lifecycle_closes_expired():
 
 # ─── 13. Portfolio summary & win rate ────────────────────────────────────
 
-def test_portfolio_summary_structure():
-    _reset_db()
+def test_portfolio_summary_structure(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     summary = get_portfolio_summary()
     assert "account" in summary
@@ -469,8 +486,8 @@ def test_portfolio_summary_structure():
     print("✓ Portfolio summary has correct structure")
 
 
-def test_win_rate_calculation():
-    _reset_db()
+def test_win_rate_calculation(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     # Open and close 2 positions: 1 win, 1 loss
     r1 = open_paper_position(_make_signal(symbol="BTCUSDT", direction="long", price=100.0))
@@ -486,82 +503,11 @@ def test_win_rate_calculation():
     print(f"✓ Win rate = {summary['stats']['win_rate']}% (1W/1L)")
 
 
-def test_total_realized_pnl_in_summary():
-    _reset_db()
+def test_total_realized_pnl_in_summary(db_path):
+    _reset_db(db_path)
     set_trading_mode("PAPER")
     r = open_paper_position(_make_signal(direction="long", price=100.0))
     close_paper_position(r["position_id"], status="TP_HIT", close_price=110.0)  # +10
     summary = get_portfolio_summary()
     assert abs(summary["stats"]["total_realized_pnl"] - 10.0) < 0.01
     print(f"✓ total_realized_pnl = {summary['stats']['total_realized_pnl']}")
-
-
-# ─── Run all ──────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    tests = [
-        # 1. Account
-        test_account_default_balance,
-        test_starting_balance_is_10000,
-        # 2. Mode gating
-        test_open_refused_when_mode_off,
-        test_open_refused_when_mode_live,
-        test_open_refused_when_mode_maintenance,
-        # 3. Neutral
-        test_neutral_signal_skipped,
-        # 4. Successful open
-        test_open_long_position,
-        test_open_short_position,
-        # 5. Sizing
-        test_position_size_is_1pct_of_equity,
-        test_qty_computed_from_size_and_price,
-        # 6. Max positions
-        test_max_open_positions_enforced,
-        # 7. One per symbol
-        test_one_position_per_symbol,
-        # 8. Missing price
-        test_open_without_price_returns_none,
-        # 9. Close
-        test_close_manual_close,
-        test_close_invalid_status_rejected,
-        test_close_nonexistent_position_returns_none,
-        # 10. PnL
-        test_long_winning_pnl_positive,
-        test_short_winning_pnl_positive,
-        test_losing_pnl_negative,
-        test_realized_pnl_updates_balance,
-        # 11. Equity
-        test_equity_equals_balance_with_no_open,
-        test_equity_reflects_unrealized_long_profit,
-        test_equity_reflects_unrealized_short_profit,
-        # 12. Lifecycle
-        test_lifecycle_closes_tp_hit_long,
-        test_lifecycle_closes_sl_hit_long,
-        test_lifecycle_closes_tp_hit_short,
-        test_lifecycle_closes_sl_hit_short,
-        test_lifecycle_no_close_when_price_in_range,
-        test_lifecycle_closes_expired,
-        # 13. Summary
-        test_portfolio_summary_structure,
-        test_win_rate_calculation,
-        test_total_realized_pnl_in_summary,
-    ]
-
-    passed = 0
-    failed = 0
-    for t in tests:
-        try:
-            t()
-            passed += 1
-        except Exception as e:
-            print(f"✗ {t.__name__}: {e}")
-            failed += 1
-
-    print(f"\n{'='*50}")
-    print(f"Paper Broker: {passed} passed, {failed} failed out of {len(tests)}")
-    if failed:
-        sys.exit(1)
-
-    # Cleanup
-    if _TEST_DB_PATH.exists():
-        _TEST_DB_PATH.unlink()

@@ -737,6 +737,25 @@ def paper_lifecycle_job():
         logger.error(f"Paper broker lifecycle failed: {e}")
 
 
+def paper_equity_snapshot_job():
+    """Capture paper equity snapshot - runs every 5 minutes.
+
+    Only executes when the trading mode is PAPER. Computes current
+    equity and persists it to paper_equity_history.
+    """
+    from ml_service.trading.mode_manager import get_trading_mode
+    from ml_service.trading import paper_broker
+
+    mode = get_trading_mode()
+    if mode != "PAPER":
+        return
+
+    try:
+        paper_broker.capture_equity_snapshot()
+    except Exception as e:
+        logger.error(f"Paper equity snapshot failed: {e}")
+
+
 def start_scheduler():
     """Start the background scheduler."""
     global _scheduler
@@ -824,12 +843,20 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    _scheduler.add_job(
+        paper_equity_snapshot_job,
+        trigger=IntervalTrigger(minutes=5),
+        id='paper_equity_snapshot_job',
+        name='Capture paper equity snapshot every 5m',
+        replace_existing=True,
+    )
+
     _scheduler.start()
     logger.info(
         f"Scheduler started - trade sync every {sync_interval_hours}h, "
         "adaptive retrain every 24h, dominance/signals/outcomes every 1h, "
         "account equity snapshot every 5m, drift snapshot every 1h, "
-        "paper lifecycle every 1h"
+        "paper lifecycle every 1h, paper equity snapshot every 5m"
     )
 
 

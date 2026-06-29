@@ -34,11 +34,20 @@ import { maskOr, MASK_MONETARY, MASK_PERCENT, MASK_PRICE } from '@/lib/format/pr
 import SensitiveValue from '@/components/common/SensitiveValue';
 import TradingModeManager from '@/components/trading/TradingModeManager';
 import PaperPortfolio from '@/components/trading/PaperPortfolio';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
+import {
+  getPaperAccount,
+  getPaperOpenPositions,
+  getPaperEquityHistory,
+  getPaperAnalytics,
+  getPaperTrades,
+} from '@/lib/api/ml-trading';
 
 const AUTO_REFRESH_MS = 30_000;
 
 export default function PerformanceDashboard() {
   const privacy = useIsPrivacyMode();
+  const { isPaper } = useTradingMode();
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
   const [accountEquity, setAccountEquity] = useState<AccountEquity | null>(null);
@@ -62,51 +71,149 @@ export default function PerformanceDashboard() {
     }
 
     try {
-      const [
-        report,
-        positionsData,
-        regimesData,
-        confidenceData,
-        equityData,
-        historyData,
-        closedTradeData,
-      ] = await Promise.all([
-        getLivePerformanceReport(),
-        getOpenPositions(),
-        getRegimePerformance(),
-        getConfidenceBuckets(),
-        getAccountEquity(),
-        // True Binance equity history respects the active range selector.
-        getAccountEquityHistory(equityRange),
-        // Legacy synthetic closed-trade equity curve.
-        getClosedTradeEquity(),
-      ]);
+      if (isPaper) {
+        // ── PAPER mode: fetch from paper broker endpoints ───────────
+        const [paperAcct, paperPositions, paperEquityHist, paperAnalytics, paperTradesResp] =
+          await Promise.all([
+            getPaperAccount(),
+            getPaperOpenPositions(),
+            getPaperEquityHistory(equityRange),
+            getPaperAnalytics(),
+            getPaperTrades(20),
+          ]);
 
-      if (report.status === 'success') {
-        setMetrics(report.metrics);
-        setEquityCurve(report.equity_curve || []);
-        // Recent closed positions come pre-built from the backend with the
-        // full schema (symbol/side/entry/exit/fees/regime). Prefer the
-        // embedded array; fall back to the dedicated endpoint if absent.
-        if (report.recent_trades && report.recent_trades.length > 0) {
-          setRecentTrades(report.recent_trades);
-        } else {
-          try {
-            const trades = await getRecentTrades(20);
-            setRecentTrades(trades);
-          } catch {
-            setRecentTrades([]);
+        // Map paper account → AccountEquity
+        setAccountEquity({
+          wallet_balance: paperAcct.balance,
+          unrealized_pnl: paperAcct.unrealized_pnl,
+          margin_balance: paperAcct.equity,
+          available_balance: paperAcct.balance,
+          source: 'binance',
+        });
+
+        // Map paper equity history → EquitySnapshot[]
+        setEquityHistory(
+          paperEquityHist.map((p) => ({
+            timestamp: p.timestamp,
+            equity: p.equity,
+            wallet_balance: p.balance,
+            unrealized_pnl: p.unrealized_pnl,
+          })),
+        );
+
+        // Map paper analytics → LiveMetrics
+        const a = paperAnalytics;
+        setMetrics({
+          total_trades: a.closed_positions,
+          winning_trades: 0,
+          losing_trades: 0,
+          win_rate: a.win_rate,
+          total_pnl: a.total_realized_pnl,
+          avg_pnl: a.avg_trade_pnl,
+          avg_win: 0,
+          avg_loss: 0,
+          profit_factor: Number.isFinite(a.profit_factor) ? a.profit_factor : 0,
+          expectancy: a.expectancy,
+          roi: a.total_realized_pnl,
+          gross_profit: 0,
+          gross_loss: 0,
+          sharpe_ratio: null,
+          max_drawdown: 0,
+          max_drawdown_pct: 0,
+          avg_hold_time_hours: a.avg_hold_hours,
+        });
+
+        // Map paper positions → Position[]
+        setPositions(
+          paperPositions.map((p) => ({
+            symbol: p.symbol,
+            side: p.direction === 'LONG' ? 'long' : 'short',
+            entry_price: p.entry_price,
+            mark_price: p.current_price ?? p.entry_price,
+            unrealized_pnl: 0,
+            agreement: 'match',
+          })),
+        );
+
+        // Map paper trades → RecentTrade[]
+        setRecentTrades(
+          paperTradesResp.trades.map((t) => ({
+            symbol: t.symbol,
+            side: t.direction === 'LONG' ? 'long' : 'short',
+            direction: t.direction === 'LONG' ? 'long' : 'short',
+            entry_time: new Date(t.opened_at).getTime() / 1000,
+            exit_time: new Date(t.closed_at ?? t.opened_at).getTime() / 1000,
+            duration_minutes:
+              ((new Date(t.closed_at ?? t.opened_at).getTime() -
+                new Date(t.opened_at).getTime()) /
+                60000) || 0,
+            entry_price: t.entry_price,
+            exit_price: t.exit_price,
+            quantity: 0,
+            gross_pnl: t.realized_pnl,
+            commission: 0,
+            net_pnl: t.realized_pnl,
+            regime: t.status,
+            confidence: null,
+            outcome: (t.realized_pnl > 0 ? 'win' : t.realized_pnl < 0 ? 'loss' : 'breakeven') as
+              | 'win'
+              | 'loss'
+              | 'breakeven',
+            matched_signal_id: null,
+            fill_count: 1,
+          })),
+        );
+
+        // Paper has no equity curve / regime / confidence analytics
+        setEquityCurve([]);
+        setClosedTradeEquity([]);
+        setRegimes({});
+        setConfidence({});
+      } else {
+        // ── LIVE / OFF / MAINTENANCE: existing Binance data flow ──
+        const [
+          report,
+          positionsData,
+          regimesData,
+          confidenceData,
+          equityData,
+          historyData,
+          closedTradeData,
+        ] = await Promise.all([
+          getLivePerformanceReport(),
+          getOpenPositions(),
+          getRegimePerformance(),
+          getConfidenceBuckets(),
+          getAccountEquity(),
+          // True Binance equity history respects the active range selector.
+          getAccountEquityHistory(equityRange),
+          // Legacy synthetic closed-trade equity curve.
+          getClosedTradeEquity(),
+        ]);
+
+        if (report.status === 'success') {
+          setMetrics(report.metrics);
+          setEquityCurve(report.equity_curve || []);
+          if (report.recent_trades && report.recent_trades.length > 0) {
+            setRecentTrades(report.recent_trades);
+          } else {
+            try {
+              const trades = await getRecentTrades(20);
+              setRecentTrades(trades);
+            } catch {
+              setRecentTrades([]);
+            }
           }
         }
+
+        setAccountEquity(equityData);
+        setEquityHistory(historyData);
+        setClosedTradeEquity(closedTradeData);
+        setPositions(positionsData);
+        setRegimes(regimesData);
+        setConfidence(confidenceData);
       }
 
-      setAccountEquity(equityData);
-      setEquityHistory(historyData);
-      setClosedTradeEquity(closedTradeData);
-
-      setPositions(positionsData);
-      setRegimes(regimesData);
-      setConfidence(confidenceData);
       setError(null);
       setLastUpdated(new Date().toISOString());
     } catch (err) {
@@ -118,7 +225,7 @@ export default function PerformanceDashboard() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [equityRange]);
+  }, [equityRange, isPaper]);
 
   // Refetch equity history whenever the range selector changes, without
   // forcing the full loading spinner (only the chart refreshes).
@@ -126,8 +233,22 @@ export default function PerformanceDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const historyData = await getAccountEquityHistory(equityRange);
-        if (!cancelled) setEquityHistory(historyData);
+        if (isPaper) {
+          const historyData = await getPaperEquityHistory(equityRange);
+          if (!cancelled) {
+            setEquityHistory(
+              historyData.map((p) => ({
+                timestamp: p.timestamp,
+                equity: p.equity,
+                wallet_balance: p.balance,
+                unrealized_pnl: p.unrealized_pnl,
+              })),
+            );
+          }
+        } else {
+          const historyData = await getAccountEquityHistory(equityRange);
+          if (!cancelled) setEquityHistory(historyData);
+        }
       } catch {
         // Swallow — keep the previous data.
       }
@@ -135,7 +256,7 @@ export default function PerformanceDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [equityRange]);
+  }, [equityRange, isPaper]);
 
   useEffect(() => {
     fetchAllData(true);
@@ -279,7 +400,7 @@ export default function PerformanceDashboard() {
                   <PerformanceCard
                     label="Account Equity"
                     value={maskOr(`$${fmtNum(accountEquity.margin_balance)}`, MASK_MONETARY, privacy)}
-                    sublabel="Binance Futures margin"
+                    sublabel={isPaper ? 'Paper broker equity' : 'Binance Futures margin'}
                     status="neutral"
                   />
                   <PerformanceCard
@@ -373,10 +494,10 @@ export default function PerformanceDashboard() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-baseline gap-2">
                     <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                      True Account Equity Curve
+                      {isPaper ? 'Paper Account Equity Curve' : 'True Account Equity Curve'}
                     </h3>
                     <span className="text-[10px] text-neutral-500 font-mono">
-                      Binance · {equityHistory.length} snapshots
+                      {isPaper ? 'Paper broker' : 'Binance'} · {equityHistory.length} snapshots
                     </span>
                   </div>
                   <RangeSelector selected={equityRange} onSelect={setEquityRange} />

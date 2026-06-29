@@ -190,3 +190,41 @@ export interface PaperPortfolioSummary {
   stats: PaperStats;
   timestamp?: string;
 }
+
+// ── Paper Equity History ───────────────────────────────────────────────
+
+export interface PaperEquityPoint {
+  timestamp: string;
+  equity: number;
+  balance: number;
+  unrealized_pnl: number;
+}
+
+// ── Paper Analytics ────────────────────────────────────────────────────
+
+export interface PaperAnalytics {
+  total_trades: number;
+  win_rate: number;
+  total_realized_pnl: number;
+  avg_trade_pnl: number;
+  profit_factor: number;
+  expectancy: number;
+  avg_hold_hours: number;
+  open_positions: number;
+  closed_positions: number;
+  status?: string;
+  timestamp?: string;
+}
+
+// ── Paper Trade (flat list item) ─────────────────────────────────────
+
+export interface PaperTrade {
+  symbol: string;
+  direction: string;
+  entry_price: number;
+  exit_price: number | null;
+  realized_pnl: number;
+  opened_at: string;
+  closed_at: string | null;
+  status: string;
+}

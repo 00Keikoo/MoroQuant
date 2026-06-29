@@ -963,3 +963,46 @@ async def get_paper_summary_endpoint() -> Dict:
     summary["status"] = "success"
     summary["timestamp"] = datetime.now().isoformat()
     return summary
+
+
+@router.get("/paper/trades")
+async def get_paper_trades_endpoint(
+    limit: int = Query(100, description="Max number of closed trades")
+) -> Dict:
+    """Return closed paper trades as a flat trade list."""
+    from trading.paper_broker import get_paper_trades
+
+    trades = get_paper_trades(limit=limit)
+    return {
+        "status": "success",
+        "trades": trades,
+        "count": len(trades),
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/equity-history")
+async def get_paper_equity_history_endpoint(
+    range: Optional[str] = Query(None, description="Time range: '1d', '7d', '30d', or 'all'")
+) -> List[Dict]:
+    """Return paper equity history snapshots.
+
+    Query params:
+        range: '1d' | '7d' | '30d' | 'all' (default: 'all')
+    """
+    from trading.paper_broker import get_equity_history
+
+    range_map = {"1d": 24, "7d": 168, "30d": 720}
+    range_hours = range_map.get(range) if range else None
+    return get_equity_history(range_hours=range_hours)
+
+
+@router.get("/paper/analytics")
+async def get_paper_analytics_endpoint() -> Dict:
+    """Return trading analytics computed from closed paper positions."""
+    from trading.paper_broker import compute_paper_analytics
+
+    analytics = compute_paper_analytics()
+    analytics["status"] = "success"
+    analytics["timestamp"] = datetime.now().isoformat()
+    return analytics
