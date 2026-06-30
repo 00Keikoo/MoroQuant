@@ -150,7 +150,7 @@ export function TrueEquityCurve({ data, height = CHART_HEIGHT, privacy = false }
         className="flex items-center justify-center text-neutral-500 text-sm"
         style={{ height }}
       >
-        No equity snapshots yet — waiting for Binance data
+        No equity snapshots yet — waiting for data
       </div>
     );
   }

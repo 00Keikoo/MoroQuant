@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { getTradingMode } from '@/lib/api/ml-trading';
+import { useEffect } from 'react';
+import { useTradingModeStore } from '@/lib/stores/tradingModeStore';
 import type { TradingMode } from '@/lib/types/ml';
 
 const REFRESH_MS = 30_000;
@@ -17,34 +17,22 @@ export interface UseTradingModeResult {
 
 /**
  * React hook that subscribes to the current trading mode and
- * auto-refreshes every 30 seconds.
+ * auto-refreshes every 30 seconds via a shared Zustand store.
  *
  * Returns convenience flags `isPaper` and `isLive` so consumers can
  * branch data-source selection without re-implementing the mode check.
  */
 export function useTradingMode(): UseTradingModeResult {
-  const [mode, setMode] = useState<TradingMode | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    try {
-      const data = await getTradingMode();
-      setMode(data.mode);
-      setError(null);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load mode';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { mode, loading, error, refresh } = useTradingModeStore();
 
   useEffect(() => {
-    refresh();
+    // Fetch initial state if it's not yet populated
+    if (mode === null && loading) {
+      refresh();
+    }
     const interval = setInterval(refresh, REFRESH_MS);
     return () => clearInterval(interval);
-  }, [refresh]);
+  }, [refresh, mode, loading]);
 
   return {
     mode,
@@ -55,3 +43,4 @@ export function useTradingMode(): UseTradingModeResult {
     refresh,
   };
 }
+

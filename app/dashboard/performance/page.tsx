@@ -92,14 +92,24 @@ export default function PerformanceDashboard() {
         });
 
         // Map paper equity history → EquitySnapshot[]
-        setEquityHistory(
-          paperEquityHist.map((p) => ({
-            timestamp: p.timestamp,
-            equity: p.equity,
-            wallet_balance: p.balance,
-            unrealized_pnl: p.unrealized_pnl,
-          })),
-        );
+        const mappedHistory = paperEquityHist.map((p) => ({
+          timestamp: p.timestamp,
+          equity: p.equity,
+          wallet_balance: p.balance,
+          unrealized_pnl: p.unrealized_pnl,
+        }));
+        setEquityHistory(mappedHistory);
+
+        // Map paper equity history → EquityPoint[]
+        const mappedEquityCurve = paperEquityHist.map((p, idx) => ({
+          trade_count: idx + 1,
+          equity: p.equity,
+          cumulative_pnl: p.equity - paperAcct.balance, // relative pnl
+          trade_pnl: 0,
+          timestamp: new Date(p.timestamp).getTime(),
+        }));
+        setEquityCurve(mappedEquityCurve);
+        setClosedTradeEquity(mappedEquityCurve);
 
         // Map paper analytics → LiveMetrics
         const a = paperAnalytics;
@@ -164,9 +174,7 @@ export default function PerformanceDashboard() {
           })),
         );
 
-        // Paper has no equity curve / regime / confidence analytics
-        setEquityCurve([]);
-        setClosedTradeEquity([]);
+        // Paper has no regime / confidence analytics
         setRegimes({});
         setConfidence({});
       } else {
@@ -244,6 +252,15 @@ export default function PerformanceDashboard() {
                 unrealized_pnl: p.unrealized_pnl,
               })),
             );
+            const mappedEquityCurve = historyData.map((p, idx) => ({
+              trade_count: idx + 1,
+              equity: p.equity,
+              cumulative_pnl: 0,
+              trade_pnl: 0,
+              timestamp: new Date(p.timestamp).getTime(),
+            }));
+            setEquityCurve(mappedEquityCurve);
+            setClosedTradeEquity(mappedEquityCurve);
           }
         } else {
           const historyData = await getAccountEquityHistory(equityRange);

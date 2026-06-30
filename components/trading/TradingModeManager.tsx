@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Save, Power } from 'lucide-react';
 import { getTradingMode, setTradingMode, emergencyStop } from '@/lib/api/ml-trading';
 import type { TradingMode, TradingModeResponse } from '@/lib/types/ml';
+import { useTradingModeStore } from '@/lib/stores/tradingModeStore';
 
 const MODE_OPTIONS: { value: TradingMode; label: string; description: string }[] = [
   { value: 'OFF', label: 'OFF', description: 'No new trades, no execution' },
@@ -39,6 +40,8 @@ export default function TradingModeManager() {
       const data = await getTradingMode();
       setCurrentMode(data);
       setSelectedMode(data.mode);
+      // Sync global store immediately
+      useTradingModeStore.getState().setModeState(data.mode);
       setError(null);
     } catch {
       setError('Failed to load trading mode');
