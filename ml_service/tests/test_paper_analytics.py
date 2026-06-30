@@ -78,7 +78,15 @@ def _reset_db(db_path: Path):
             status TEXT NOT NULL DEFAULT 'OPEN',
             realized_pnl REAL NOT NULL DEFAULT 0.0,
             opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            closed_at TIMESTAMP
+            closed_at TIMESTAMP,
+            confidence INTEGER,
+            regime TEXT,
+            timeframe TEXT,
+            prob_short REAL,
+            prob_neutral REAL,
+            prob_long REAL,
+            execution_edge REAL,
+            skip_reason TEXT
         );
 
         CREATE TABLE IF NOT EXISTS paper_equity_history (

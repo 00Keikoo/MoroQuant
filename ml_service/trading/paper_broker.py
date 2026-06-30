@@ -34,9 +34,17 @@ logger = get_logger()
 # ── Configuration ────────────────────────────────────────────────────────
 
 STARTING_BALANCE = 10000.0
-MAX_OPEN_POSITIONS = 3
+MAX_OPEN_POSITIONS = None
 RISK_PER_TRADE_PCT = 0.01  # 1%
 POSITION_EXPIRY_HOURS = 24 * 7  # 7 days
+
+MIN_EXECUTION_CONFIDENCE = 70
+BLOCKED_REGIMES = [
+    "choppy_low_vol",
+    "choppy_normal_vol",
+]
+MIN_PROBABILITY_EDGE = 0.20
+COOLDOWN_AFTER_SL_HOURS = 6
 
 # DB path shared with the rest of ml_service
 _DB_PATH: Path = Path(__file__).parent.parent / "storage" / "database.db"
@@ -164,6 +172,10 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
     Honors:
       * Trading mode == PAPER (refuses otherwise).
       * Direction != neutral (skips neutral signals).
+      * confidence filter.
+      * regime filter.
+      * edge filter.
+      * cooldown after stop loss.
       * max_open_positions.
       * Existing open position on the same symbol (one-trade-per-symbol).
 
@@ -188,6 +200,46 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
         logger.warning("Paper broker: signal has no symbol")
         return None
 
+    # ── 1. Confidence Filter ───────────────────────────────────────────
+    confidence = signal.get("confidence")
+    if confidence is not None:
+        try:
+            conf_val = int(confidence)
+            if conf_val < MIN_EXECUTION_CONFIDENCE:
+                logger.info(
+                    f"Paper broker skipped {symbol}: "
+                    f"confidence {conf_val} < required {MIN_EXECUTION_CONFIDENCE}"
+                )
+                return None
+        except (ValueError, TypeError):
+            pass
+
+    # ── 2. Regime Filter ───────────────────────────────────────────────
+    regime = signal.get("regime")
+    if regime in BLOCKED_REGIMES:
+        logger.info(
+            f"Paper broker skipped {symbol}: regime {regime} is blocked"
+        )
+        return None
+
+    # ── 3. Edge Filter ─────────────────────────────────────────────────
+    prob_short = signal.get("prob_short")
+    prob_neutral = signal.get("prob_neutral")
+    prob_long = signal.get("prob_long")
+    probs_list = [prob_short, prob_neutral, prob_long]
+    if all(p is not None for p in probs_list):
+        try:
+            prob_vals = [float(p) for p in probs_list]
+            prob_vals.sort(reverse=True)
+            edge = prob_vals[0] - prob_vals[1]
+            if edge < MIN_PROBABILITY_EDGE:
+                logger.info(
+                    f"Paper broker skipped {symbol}: probability edge {edge:.2f} < required {MIN_PROBABILITY_EDGE:.2f}"
+                )
+                return None
+        except (ValueError, TypeError):
+            pass
+
     entry_price = signal.get("price")
     if entry_price is None or entry_price <= 0:
         entry_price = _fetch_price(symbol)
@@ -199,15 +251,35 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
     try:
         _ensure_account(conn)
 
-        # ── Max open positions ─────────────────────────────────────────
-        open_count = conn.execute(
-            "SELECT COUNT(*) AS c FROM paper_positions WHERE status = 'OPEN'"
-        ).fetchone()["c"]
-        if open_count >= MAX_OPEN_POSITIONS:
-            logger.info(
-                f"Paper broker: max open positions ({MAX_OPEN_POSITIONS}) reached"
-            )
-            return None
+        # ── 4. Cooldown After Stop Loss ──────────────────────────────────
+        cooldown_row = conn.execute(
+            """
+            SELECT (julianday('now') - julianday(closed_at)) * 24 AS hours_ago
+            FROM paper_positions
+            WHERE symbol = ? AND direction = ? AND status = 'SL_HIT'
+            ORDER BY closed_at DESC LIMIT 1
+            """,
+            (symbol, direction_raw),
+        ).fetchone()
+        if cooldown_row:
+            hours_ago = cooldown_row["hours_ago"]
+            if hours_ago is not None and hours_ago < COOLDOWN_AFTER_SL_HOURS:
+                logger.info(
+                    f"{symbol} {direction_raw} skipped: "
+                    f"cooldown active (last SL {hours_ago:.1f}h ago)"
+                )
+                return None
+
+        # ── 5. Max open positions ─────────────────────────────────────────
+        if MAX_OPEN_POSITIONS is not None:
+            open_count = conn.execute(
+                "SELECT COUNT(*) AS c FROM paper_positions WHERE status = 'OPEN'"
+            ).fetchone()["c"]
+            if open_count >= MAX_OPEN_POSITIONS:
+                logger.info(
+                    f"Paper broker: max open positions ({MAX_OPEN_POSITIONS}) reached"
+                )
+                return None
 
         # ── One open position per symbol ───────────────────────────────
         existing = conn.execute(
@@ -242,17 +314,33 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
 
         stop_loss = signal.get("stop_loss")
         take_profit = signal.get("take_profit")
+        timeframe = signal.get("timeframe")
+
+        execution_edge = None
+        if all(p is not None for p in probs_list):
+            try:
+                prob_vals = [float(p) for p in probs_list]
+                prob_vals.sort(reverse=True)
+                execution_edge = prob_vals[0] - prob_vals[1]
+            except (ValueError, TypeError):
+                pass
 
         cursor = conn.cursor()
         cursor.execute(
             """
             INSERT INTO paper_positions
                 (symbol, direction, entry_price, current_price, size_usdt, qty,
-                 stop_loss, take_profit, signal_id, status, realized_pnl, opened_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', 0.0, CURRENT_TIMESTAMP)
+                 stop_loss, take_profit, signal_id, status, realized_pnl, opened_at,
+                 confidence, regime, timeframe, prob_short, prob_neutral, prob_long,
+                 execution_edge, skip_reason)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', 0.0, CURRENT_TIMESTAMP,
+                    ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (symbol, direction_raw, float(entry_price), float(entry_price),
-             size_usdt, qty, stop_loss, take_profit, signal_id),
+             size_usdt, qty, stop_loss, take_profit, signal_id,
+             confidence, regime, timeframe,
+             prob_short, prob_neutral, prob_long,
+             execution_edge, None),
         )
         conn.commit()
         position_id = cursor.lastrowid

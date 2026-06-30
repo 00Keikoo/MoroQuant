@@ -83,7 +83,15 @@ def _reset_db(db_path: Path):
             status TEXT NOT NULL DEFAULT 'OPEN',
             realized_pnl REAL NOT NULL DEFAULT 0.0,
             opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            closed_at TIMESTAMP
+            closed_at TIMESTAMP,
+            confidence INTEGER,
+            regime TEXT,
+            timeframe TEXT,
+            prob_short REAL,
+            prob_neutral REAL,
+            prob_long REAL,
+            execution_edge REAL,
+            skip_reason TEXT
         );
 
         CREATE TABLE IF NOT EXISTS signals (
@@ -239,14 +247,18 @@ def test_qty_computed_from_size_and_price(db_path):
 def test_max_open_positions_enforced(db_path):
     _reset_db(db_path)
     set_trading_mode("PAPER")
-    # Open MAX_OPEN_POSITIONS distinct symbols
-    for i in range(MAX_OPEN_POSITIONS):
-        open_paper_position(_make_signal(symbol=f"SYM{i}", direction="long", price=10.0))
-    # Next open should be refused
-    result = open_paper_position(_make_signal(symbol="EXTRA", direction="long", price=10.0))
-    assert result is None
-    assert len(get_open_positions()) == MAX_OPEN_POSITIONS
-    print(f"✓ Max open positions ({MAX_OPEN_POSITIONS}) enforced")
+    # Temporarily set MAX_OPEN_POSITIONS to 3 for testing
+    try:
+        pb.MAX_OPEN_POSITIONS = 3
+        for i in range(3):
+            open_paper_position(_make_signal(symbol=f"SYM{i}", direction="long", price=10.0))
+        # Next open should be refused
+        result = open_paper_position(_make_signal(symbol="EXTRA", direction="long", price=10.0))
+        assert result is None
+        assert len(get_open_positions()) == 3
+        print("✓ Max open positions enforced when set to 3")
+    finally:
+        pb.MAX_OPEN_POSITIONS = None
 
 
 # ─── 7. One position per symbol ───────────────────────────────────────────
@@ -511,3 +523,115 @@ def test_total_realized_pnl_in_summary(db_path):
     summary = get_portfolio_summary()
     assert abs(summary["stats"]["total_realized_pnl"] - 10.0) < 0.01
     print(f"✓ total_realized_pnl = {summary['stats']['total_realized_pnl']}")
+
+
+# ─── 14. Execution Intelligence Layer Filters ───────────────────────────
+
+def test_confidence_filter(db_path):
+    _reset_db(db_path)
+    set_trading_mode("PAPER")
+    
+    # 60 confidence -> skipped
+    sig_low = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)
+    sig_low["confidence"] = 60
+    r_low = open_paper_position(sig_low)
+    assert r_low is None
+    
+    # 75 confidence -> accepted
+    sig_high = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)
+    sig_high["confidence"] = 75
+    r_high = open_paper_position(sig_high)
+    assert r_high is not None
+    print("✓ Confidence filter verified (60 skipped, 75 accepted)")
+
+
+def test_regime_filter(db_path):
+    _reset_db(db_path)
+    set_trading_mode("PAPER")
+    
+    # choppy_low_vol -> skipped
+    sig_choppy = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)
+    sig_choppy["regime"] = "choppy_low_vol"
+    r_choppy = open_paper_position(sig_choppy)
+    assert r_choppy is None
+    
+    # trending_normal_vol -> accepted
+    sig_trending = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)
+    sig_trending["regime"] = "trending_normal_vol"
+    r_trending = open_paper_position(sig_trending)
+    assert r_trending is not None
+    print("✓ Regime filter verified (choppy_low_vol skipped, trending_normal_vol accepted)")
+
+
+def test_edge_filter(db_path):
+    _reset_db(db_path)
+    set_trading_mode("PAPER")
+    
+    # 0.10 edge -> skipped (short 0.10, neutral 0.40, long 0.50) -> 0.50 - 0.40 = 0.10
+    sig_low_edge = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)
+    sig_low_edge["prob_short"] = 0.10
+    sig_low_edge["prob_neutral"] = 0.40
+    sig_low_edge["prob_long"] = 0.50
+    r_low = open_paper_position(sig_low_edge)
+    assert r_low is None
+    
+    # 0.25 edge -> accepted (short 0.10, neutral 0.30, long 0.60) -> 0.60 - 0.30 = 0.30 >= 0.20
+    sig_high_edge = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)
+    sig_high_edge["prob_short"] = 0.10
+    sig_high_edge["prob_neutral"] = 0.30
+    sig_high_edge["prob_long"] = 0.60
+    r_high = open_paper_position(sig_high_edge)
+    assert r_high is not None
+    print("✓ Edge filter verified (0.10 edge skipped, 0.30 edge accepted)")
+
+
+def test_cooldown_filter(db_path):
+    _reset_db(db_path)
+    set_trading_mode("PAPER")
+    
+    # Open and hit SL
+    r1 = open_paper_position(_make_signal(symbol="BTCUSDT", direction="long", price=100.0))
+    assert r1 is not None
+    close_paper_position(r1["position_id"], status="SL_HIT", close_price=90.0)
+    
+    # Attempt to open same symbol, same direction immediately -> skipped
+    r2 = open_paper_position(_make_signal(symbol="BTCUSDT", direction="long", price=100.0))
+    assert r2 is None
+    
+    # Bypassing the cooldown using a different direction -> accepted
+    r3 = open_paper_position(_make_signal(symbol="BTCUSDT", direction="short", price=100.0))
+    assert r3 is not None
+    
+    # Wait, what if SL was 8 hours ago?
+    # We can insert a raw closed position with closed_at set to 8 hours ago
+    conn = sqlite3.connect(str(db_path))
+    eight_hours_ago = (datetime.now(timezone.utc) - timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
+    conn.execute(
+        """INSERT INTO paper_positions
+           (symbol, direction, entry_price, current_price, size_usdt, qty,
+            status, realized_pnl, opened_at, closed_at)
+           VALUES ('ETHUSDT', 'LONG', 100.0, 90.0, 100.0, 1.0, 'SL_HIT', -10.0, ?, ?)""",
+        ((datetime.now(timezone.utc) - timedelta(hours=9)).strftime("%Y-%m-%d %H:%M:%S"),
+         eight_hours_ago),
+    )
+    conn.commit()
+    conn.close()
+    
+    r4 = open_paper_position(_make_signal(symbol="ETHUSDT", direction="long", price=100.0))
+    assert r4 is not None
+    print("✓ Cooldown filter verified (recent SL hit skipped, older SL hit accepted)")
+
+
+def test_unlimited_positions(db_path):
+    _reset_db(db_path)
+    set_trading_mode("PAPER")
+    
+    # Open 20 symbols -> accepted
+    for i in range(20):
+        r = open_paper_position(_make_signal(symbol=f"SYM{i}", direction="long", price=100.0))
+        assert r is not None
+        
+    # Duplicate symbol -> rejected
+    r_dup = open_paper_position(_make_signal(symbol="SYM0", direction="long", price=100.0))
+    assert r_dup is None
+    print("✓ Unlimited positions filter verified (20 distinct accepted, duplicate symbol rejected)")
