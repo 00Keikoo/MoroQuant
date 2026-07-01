@@ -14,15 +14,15 @@ logger = get_logger()
 
 
 MIGRATION_DETECTORS = {
-    "014_add_signal_lifecycle.sql": lambda cursor: _check_column(cursor, "signals", "lifecycle_stage"),
-    "015_dedup_signals_unique_index.sql": lambda cursor: _check_index(cursor, "idx_signals_unique_symbol_timestamp"),
+    "014_add_signal_lifecycle.sql": lambda cursor: _check_column(cursor, "signals", "signal_status"),
+    "015_dedup_signals_unique_index.sql": lambda cursor: _check_index(cursor, "idx_unique_signal"),
     "016_trading_mode_manager.sql": lambda cursor: _check_table(cursor, "trading_system_state"),
     "017_create_paper_account.sql": lambda cursor: _check_table(cursor, "paper_account"),
     "018_create_paper_positions.sql": lambda cursor: _check_table(cursor, "paper_positions"),
     "019_paper_equity_history.sql": lambda cursor: _check_table(cursor, "paper_equity_history"),
-    "020_execution_metadata.sql": lambda cursor: _check_column(cursor, "paper_positions", "entry_metadata"),
+    "020_execution_metadata.sql": lambda cursor: _check_column(cursor, "paper_positions", "confidence"),
     "021_execution_intelligence.sql": lambda cursor: _check_column(cursor, "paper_positions", "mae"),
-    "022_execution_policy_refinement.sql": lambda cursor: _check_column(cursor, "paper_positions", "pre_market_gap_pct"),
+    "022_execution_policy_refinement.sql": lambda cursor: _check_column(cursor, "paper_positions", "execution_policy"),
 }
 
 
