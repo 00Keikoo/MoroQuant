@@ -1006,3 +1006,81 @@ async def get_paper_analytics_endpoint() -> Dict:
     analytics["status"] = "success"
     analytics["timestamp"] = datetime.now().isoformat()
     return analytics
+
+
+@router.get("/paper/analytics/confidence")
+async def get_paper_confidence_analytics_endpoint() -> Dict:
+    """Return confidence bucket breakdown analytics for research."""
+    from services.paper_analytics_service import compute_confidence_analytics
+
+    buckets = compute_confidence_analytics()
+    return {
+        "status": "success",
+        "confidence_buckets": buckets,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/analytics/regime")
+async def get_paper_regime_analytics_endpoint() -> Dict:
+    """Return market regime breakdown analytics for research."""
+    from services.paper_analytics_service import compute_regime_analytics
+
+    regimes = compute_regime_analytics()
+    return {
+        "status": "success",
+        "regimes": regimes,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/analytics/execution")
+async def get_paper_execution_analytics_endpoint() -> Dict:
+    """Return execution quality analytics from closed paper positions.
+
+    Milestone 5: Execution Intelligence & Trade Quality Engine
+    Returns: EQS, MAE, MFE, profit capture, trailing stop usage, exit reasons.
+    """
+    from services.paper_analytics_service import compute_execution_analytics
+
+    execution = compute_execution_analytics()
+    return {
+        "status": "success",
+        "execution": execution,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/analytics/summary")
+async def get_paper_research_summary_endpoint() -> Dict:
+    """Return research summary card with key health indicators."""
+    from services.paper_analytics_service import get_research_summary
+
+    summary = get_research_summary()
+    summary["status"] = "success"
+    return summary
+
+
+@router.get("/paper/positions/live")
+async def get_paper_live_positions_endpoint() -> Dict:
+    """Return open positions with live mark prices and floating PnL."""
+    from services.market_state_service import get_live_open_positions
+
+    positions = get_live_open_positions()
+    return {
+        "status": "success",
+        "positions": positions,
+        "count": len(positions),
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get("/paper/account/live")
+async def get_paper_live_account_endpoint() -> Dict:
+    """Return paper account with live unrealized PnL from mark prices."""
+    from services.market_state_service import get_live_account_equity
+
+    account = get_live_account_equity()
+    account["status"] = "success"
+    account["timestamp"] = datetime.now().isoformat()
+    return account

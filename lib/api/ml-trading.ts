@@ -345,3 +345,96 @@ export async function getPaperAnalytics(): Promise<PaperAnalytics> {
     throw error;
   }
 }
+
+export async function getPaperConfidenceAnalytics(): Promise<Record<string, any>> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/analytics/confidence`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper confidence analytics: ${response.statusText}`);
+    const data = await response.json();
+    return data.confidence_buckets || {};
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperRegimeAnalytics(): Promise<Record<string, any>> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/analytics/regime`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper regime analytics: ${response.statusText}`);
+    const data = await response.json();
+    return data.regimes || {};
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getPaperResearchSummary(): Promise<any> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/analytics/summary`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch paper research summary: ${response.statusText}`);
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getLivePaperPositions(): Promise<any[]> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/positions/live`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch live paper positions: ${response.statusText}`);
+    const data = await response.json();
+    return data.positions || [];
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getExecutionAnalytics(): Promise<any> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/analytics/execution`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch execution analytics: ${response.statusText}`);
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
+
+export async function getLivePaperAccount(): Promise<any> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/paper/account/live`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch live paper account: ${response.statusText}`);
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}

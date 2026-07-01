@@ -34,20 +34,16 @@ import { maskOr, MASK_MONETARY, MASK_PERCENT, MASK_PRICE } from '@/lib/format/pr
 import SensitiveValue from '@/components/common/SensitiveValue';
 import TradingModeManager from '@/components/trading/TradingModeManager';
 import PaperPortfolio from '@/components/trading/PaperPortfolio';
+import ResearchSummaryCard from '@/components/trading/ResearchSummaryCard';
+import LiveOpenPositions from '@/components/trading/LiveOpenPositions';
 import { useTradingMode } from '@/lib/hooks/useTradingMode';
-import {
-  getPaperAccount,
-  getPaperOpenPositions,
-  getPaperEquityHistory,
-  getPaperAnalytics,
-  getPaperTrades,
-} from '@/lib/api/ml-trading';
+import { getDataProvider } from '@/lib/providers';
 
 const AUTO_REFRESH_MS = 30_000;
 
 export default function PerformanceDashboard() {
   const privacy = useIsPrivacyMode();
-  const { isPaper } = useTradingMode();
+  const { mode, isPaper } = useTradingMode();
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
   const [accountEquity, setAccountEquity] = useState<AccountEquity | null>(null);
@@ -71,156 +67,37 @@ export default function PerformanceDashboard() {
     }
 
     try {
-      if (isPaper) {
-        // ── PAPER mode: fetch from paper broker endpoints ───────────
-        const [paperAcct, paperPositions, paperEquityHist, paperAnalytics, paperTradesResp] =
-          await Promise.all([
-            getPaperAccount(),
-            getPaperOpenPositions(),
-            getPaperEquityHistory(equityRange),
-            getPaperAnalytics(),
-            getPaperTrades(20),
-          ]);
+      const provider = getDataProvider(mode);
 
-        // Map paper account → AccountEquity
-        setAccountEquity({
-          wallet_balance: paperAcct.balance,
-          unrealized_pnl: paperAcct.unrealized_pnl,
-          margin_balance: paperAcct.equity,
-          available_balance: paperAcct.balance,
-          source: 'binance',
-        });
+      const [
+        equityData,
+        historyData,
+        metricsData,
+        positionsData,
+        tradesData,
+        regimesData,
+        confidenceData,
+        equityCurveData,
+      ] = await Promise.all([
+        provider.getAccountEquity(),
+        provider.getEquityHistory(equityRange),
+        provider.getMetrics(),
+        provider.getOpenPositions(),
+        provider.getRecentTrades(20),
+        provider.getRegimePerformance(),
+        provider.getConfidenceBuckets(),
+        provider.getEquityCurve(),
+      ]);
 
-        // Map paper equity history → EquitySnapshot[]
-        const mappedHistory = paperEquityHist.map((p) => ({
-          timestamp: p.timestamp,
-          equity: p.equity,
-          wallet_balance: p.balance,
-          unrealized_pnl: p.unrealized_pnl,
-        }));
-        setEquityHistory(mappedHistory);
-
-        // Map paper equity history → EquityPoint[]
-        const mappedEquityCurve = paperEquityHist.map((p, idx) => ({
-          trade_count: idx + 1,
-          equity: p.equity,
-          cumulative_pnl: p.equity - paperAcct.balance, // relative pnl
-          trade_pnl: 0,
-          timestamp: new Date(p.timestamp).getTime(),
-        }));
-        setEquityCurve(mappedEquityCurve);
-        setClosedTradeEquity(mappedEquityCurve);
-
-        // Map paper analytics → LiveMetrics
-        const a = paperAnalytics;
-        setMetrics({
-          total_trades: a.closed_positions,
-          winning_trades: 0,
-          losing_trades: 0,
-          win_rate: a.win_rate,
-          total_pnl: a.total_realized_pnl,
-          avg_pnl: a.avg_trade_pnl,
-          avg_win: 0,
-          avg_loss: 0,
-          profit_factor: Number.isFinite(a.profit_factor) ? a.profit_factor : 0,
-          expectancy: a.expectancy,
-          roi: a.total_realized_pnl,
-          gross_profit: 0,
-          gross_loss: 0,
-          sharpe_ratio: null,
-          max_drawdown: 0,
-          max_drawdown_pct: 0,
-          avg_hold_time_hours: a.avg_hold_hours,
-        });
-
-        // Map paper positions → Position[]
-        setPositions(
-          paperPositions.map((p) => ({
-            symbol: p.symbol,
-            side: p.direction === 'LONG' ? 'long' : 'short',
-            entry_price: p.entry_price,
-            mark_price: p.current_price ?? p.entry_price,
-            unrealized_pnl: 0,
-            agreement: 'match',
-          })),
-        );
-
-        // Map paper trades → RecentTrade[]
-        setRecentTrades(
-          paperTradesResp.trades.map((t) => ({
-            symbol: t.symbol,
-            side: t.direction === 'LONG' ? 'long' : 'short',
-            direction: t.direction === 'LONG' ? 'long' : 'short',
-            entry_time: new Date(t.opened_at).getTime() / 1000,
-            exit_time: new Date(t.closed_at ?? t.opened_at).getTime() / 1000,
-            duration_minutes:
-              ((new Date(t.closed_at ?? t.opened_at).getTime() -
-                new Date(t.opened_at).getTime()) /
-                60000) || 0,
-            entry_price: t.entry_price,
-            exit_price: t.exit_price,
-            quantity: 0,
-            gross_pnl: t.realized_pnl,
-            commission: 0,
-            net_pnl: t.realized_pnl,
-            regime: t.status,
-            confidence: null,
-            outcome: (t.realized_pnl > 0 ? 'win' : t.realized_pnl < 0 ? 'loss' : 'breakeven') as
-              | 'win'
-              | 'loss'
-              | 'breakeven',
-            matched_signal_id: null,
-            fill_count: 1,
-          })),
-        );
-
-        // Paper has no regime / confidence analytics
-        setRegimes({});
-        setConfidence({});
-      } else {
-        // ── LIVE / OFF / MAINTENANCE: existing Binance data flow ──
-        const [
-          report,
-          positionsData,
-          regimesData,
-          confidenceData,
-          equityData,
-          historyData,
-          closedTradeData,
-        ] = await Promise.all([
-          getLivePerformanceReport(),
-          getOpenPositions(),
-          getRegimePerformance(),
-          getConfidenceBuckets(),
-          getAccountEquity(),
-          // True Binance equity history respects the active range selector.
-          getAccountEquityHistory(equityRange),
-          // Legacy synthetic closed-trade equity curve.
-          getClosedTradeEquity(),
-        ]);
-
-        if (report.status === 'success') {
-          setMetrics(report.metrics);
-          setEquityCurve(report.equity_curve || []);
-          if (report.recent_trades && report.recent_trades.length > 0) {
-            setRecentTrades(report.recent_trades);
-          } else {
-            try {
-              const trades = await getRecentTrades(20);
-              setRecentTrades(trades);
-            } catch {
-              setRecentTrades([]);
-            }
-          }
-        }
-
-        setAccountEquity(equityData);
-        setEquityHistory(historyData);
-        setClosedTradeEquity(closedTradeData);
-        setPositions(positionsData);
-        setRegimes(regimesData);
-        setConfidence(confidenceData);
-      }
+      setAccountEquity(equityData);
+      setEquityHistory(historyData);
+      setMetrics(metricsData);
+      setPositions(positionsData);
+      setRecentTrades(tradesData);
+      setRegimes(regimesData);
+      setConfidence(confidenceData);
+      setEquityCurve(equityCurveData);
+      setClosedTradeEquity(equityCurveData);
 
       setError(null);
       setLastUpdated(new Date().toISOString());
@@ -241,30 +118,13 @@ export default function PerformanceDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        if (isPaper) {
-          const historyData = await getPaperEquityHistory(equityRange);
-          if (!cancelled) {
-            setEquityHistory(
-              historyData.map((p) => ({
-                timestamp: p.timestamp,
-                equity: p.equity,
-                wallet_balance: p.balance,
-                unrealized_pnl: p.unrealized_pnl,
-              })),
-            );
-            const mappedEquityCurve = historyData.map((p, idx) => ({
-              trade_count: idx + 1,
-              equity: p.equity,
-              cumulative_pnl: 0,
-              trade_pnl: 0,
-              timestamp: new Date(p.timestamp).getTime(),
-            }));
-            setEquityCurve(mappedEquityCurve);
-            setClosedTradeEquity(mappedEquityCurve);
-          }
-        } else {
-          const historyData = await getAccountEquityHistory(equityRange);
-          if (!cancelled) setEquityHistory(historyData);
+        const provider = getDataProvider(mode);
+        const historyData = await provider.getEquityHistory(equityRange);
+        if (!cancelled) {
+          setEquityHistory(historyData);
+          const equityCurveData = await provider.getEquityCurve();
+          setEquityCurve(equityCurveData);
+          setClosedTradeEquity(equityCurveData);
         }
       } catch {
         // Swallow — keep the previous data.
@@ -273,7 +133,7 @@ export default function PerformanceDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [equityRange, isPaper]);
+  }, [equityRange, mode]);
 
   useEffect(() => {
     fetchAllData(true);
@@ -399,7 +259,7 @@ export default function PerformanceDashboard() {
               </div>
             )}
 
-            {/* ─── Trading Mode Manager + Paper Portfolio ─────────────── */}
+            {/* ─── Trading Mode Manager + Paper Portfolio + Research Summary ─── */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <div className="xl:col-span-1">
                 <TradingModeManager />
@@ -407,6 +267,11 @@ export default function PerformanceDashboard() {
               <div className="xl:col-span-1">
                 <PaperPortfolio />
               </div>
+              {isPaper && (
+                <div className="xl:col-span-1">
+                  <ResearchSummaryCard />
+                </div>
+              )}
             </div>
 
             {/* ─── KPI Cards (4x2) ─────────────────────────────── */}
@@ -485,7 +350,7 @@ export default function PerformanceDashboard() {
                   />
                   <PerformanceCard
                     label="Sharpe Ratio"
-                    value={metrics.sharpe_ratio !== null ? fmtNum(metrics.sharpe_ratio) : 'N/A'}
+                    value={metrics.sharpe_ratio !== null ? fmtNum(metrics.sharpe_ratio) : 'Calculating...'}
                     sublabel="Risk-adjusted return"
                     status={metrics.sharpe_ratio !== null && metrics.sharpe_ratio >= 1 ? 'positive' : 'neutral'}
                   />
@@ -666,8 +531,11 @@ export default function PerformanceDashboard() {
               </section>
             )}
 
-            {/* ─── Open Positions ───────────────────────────────── */}
-            {positions.length > 0 && (
+            {/* ─── Live Open Positions (Paper Mode Real-time) ───────── */}
+            {isPaper && <LiveOpenPositions />}
+
+            {/* ─── Open Positions (Live Mode Static) ───────────────── */}
+            {!isPaper && positions.length > 0 && (
               <section className="glass-card overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
                   <div className="flex items-baseline gap-2">

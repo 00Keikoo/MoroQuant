@@ -168,6 +168,21 @@ export interface PaperPosition {
   realized_pnl: number;
   opened_at: string;
   closed_at: string | null;
+  mae?: number;
+  mfe?: number;
+  mae_timestamp?: string;
+  mfe_timestamp?: string;
+  eqs?: number;
+  profit_capture_ratio?: number;
+  final_exit_reason?: string;
+  trailing_stop_activated?: number;
+  sl_move_count?: number;
+  break_even_triggered?: number;
+  confidence?: number;
+  regime?: string;
+  timeframe?: string;
+  execution_policy?: 'OFF' | 'FIXED_SL' | 'BREAK_EVEN' | 'TRAILING';
+  additional_profit_saved?: number;
 }
 
 export interface PaperStats {
@@ -214,6 +229,74 @@ export interface PaperAnalytics {
   closed_positions: number;
   status?: string;
   timestamp?: string;
+}
+
+export interface PaperConfidenceBucket {
+  bucket: string;
+  total_trades: number;
+  win_rate: number;
+  total_pnl: number;
+  avg_pnl: number;
+  profit_factor: number;
+}
+
+export interface PaperRegimeMetrics {
+  regime: string;
+  total_trades: number;
+  win_rate: number;
+  total_pnl: number;
+  avg_pnl: number;
+}
+
+export interface PaperResearchSummary {
+  trades: number;
+  win_rate: number;
+  profit_factor: number;
+  sharpe: number | null;
+  expectancy: number;
+  avg_hold_hours: number;
+  open_positions: number;
+  last_updated: string;
+}
+
+export interface ExecutionAnalytics {
+  total_trades: number;
+  avg_eqs: number;
+  avg_mae: number;
+  avg_mfe: number;
+  avg_lost_opportunity: number;
+  avg_profit_capture: number;
+  avg_hold_hours: number;
+  trailing_activated: number;
+  break_even_saves: number;
+  avg_sl_moves: number;
+  additional_profit_saved: number;
+  exit_reasons: Record<string, number>;
+}
+
+export interface LivePaperPosition {
+  id: number;
+  symbol: string;
+  direction: 'LONG' | 'SHORT';
+  entry_price: number;
+  mark_price: number;
+  qty: number;
+  size_usdt: number;
+  floating_pnl: number;
+  roi_pct: number;
+  duration_hours: number;
+  confidence: number | null;
+  regime: string | null;
+  stop_loss: number | null;
+  take_profit: number | null;
+  opened_at: string;
+}
+
+export interface LivePaperAccount {
+  balance: number;
+  equity: number;
+  unrealized_pnl: number;
+  available_balance: number;
 }
 
 // ── Paper Trade (flat list item) ─────────────────────────────────────

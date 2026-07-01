@@ -46,6 +46,15 @@ BLOCKED_REGIMES = [
 MIN_PROBABILITY_EDGE = 0.20
 COOLDOWN_AFTER_SL_HOURS = 6
 
+# Execution Policy Configuration
+# Allows comparing different execution strategies in paper trading
+EXECUTION_POLICY = "TRAILING"  # OFF | FIXED_SL | BREAK_EVEN | TRAILING
+
+# Trailing Stop Parameters (used when policy = BREAK_EVEN or TRAILING)
+BREAK_EVEN_AT_R = 1.0  # Move SL to break-even at +1R
+TRAIL_AT_R = 2.0  # Start trailing at +2R (only for TRAILING policy)
+TRAIL_DISTANCE_R = 0.5  # Trail distance in R multiples
+
 # DB path shared with the rest of ml_service
 _DB_PATH: Path = Path(__file__).parent.parent / "storage" / "database.db"
 
@@ -332,15 +341,15 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
                 (symbol, direction, entry_price, current_price, size_usdt, qty,
                  stop_loss, take_profit, signal_id, status, realized_pnl, opened_at,
                  confidence, regime, timeframe, prob_short, prob_neutral, prob_long,
-                 execution_edge, skip_reason)
+                 execution_edge, skip_reason, execution_policy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', 0.0, CURRENT_TIMESTAMP,
-                    ?, ?, ?, ?, ?, ?, ?, ?)
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (symbol, direction_raw, float(entry_price), float(entry_price),
              size_usdt, qty, stop_loss, take_profit, signal_id,
              confidence, regime, timeframe,
              prob_short, prob_neutral, prob_long,
-             execution_edge, None),
+             execution_edge, None, EXECUTION_POLICY),
         )
         conn.commit()
         position_id = cursor.lastrowid
@@ -386,6 +395,9 @@ def close_paper_position(position_id: int, status: str = "MANUAL_CLOSE",
         entry = row["entry_price"]
         qty = row["qty"]
         direction = row["direction"]
+        size_usdt = row["size_usdt"]
+        mae = row["mae"] or 0.0
+        mfe = row["mfe"] or 0.0
 
         price = close_price if (close_price and close_price > 0) else row["current_price"]
         if price is None or price <= 0:
@@ -396,13 +408,22 @@ def close_paper_position(position_id: int, status: str = "MANUAL_CLOSE",
             move = -move
         realized_pnl = qty * entry * move
 
+        # Compute raw execution metrics (EQS derived later from these)
+        profit_capture_ratio = None
+        if mfe > 0.01 and size_usdt > 0:
+            profit_capture_ratio = (realized_pnl / size_usdt) / mfe
+            profit_capture_ratio = max(0.0, min(1.0, profit_capture_ratio))
+
+        final_exit_reason = status
+
         conn.execute(
             """
             UPDATE paper_positions
-            SET status = ?, realized_pnl = ?, current_price = ?, closed_at = CURRENT_TIMESTAMP
+            SET status = ?, realized_pnl = ?, current_price = ?, closed_at = CURRENT_TIMESTAMP,
+                profit_capture_ratio = ?, final_exit_reason = ?
             WHERE id = ?
             """,
-            (status, realized_pnl, price, position_id),
+            (status, realized_pnl, price, profit_capture_ratio, final_exit_reason, position_id),
         )
 
         # Realize PnL into balance
@@ -482,10 +503,95 @@ def update_open_positions() -> Dict:
         else:
             price = row["current_price"] or entry
 
-        # ── TP / SL evaluation ─────────────────────────────────────────
+        # ── MAE / MFE Tracking ─────────────────────────────────────────
+        if price and price > 0 and entry > 0:
+            move_pct = (price - entry) / entry
+            if direction == "SHORT":
+                move_pct = -move_pct
+
+            current_mae = row["mae"] or 0.0
+            current_mfe = row["mfe"] or 0.0
+
+            updates = {}
+            if move_pct < current_mae:
+                updates["mae"] = move_pct
+                updates["mae_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if move_pct > current_mfe:
+                updates["mfe"] = move_pct
+                updates["mfe_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if updates:
+                conn = _get_connection()
+                try:
+                    set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+                    values = list(updates.values()) + [pid]
+                    conn.execute(
+                        f"UPDATE paper_positions SET {set_clause} WHERE id = ?",
+                        values,
+                    )
+                    conn.commit()
+                finally:
+                    conn.close()
+
+        # ── Execution Policy Logic ────────────────────────────────────
         tp = row["take_profit"]
         sl = row["stop_loss"]
+        execution_policy = row.get("execution_policy", "FIXED_SL")
 
+        # Apply dynamic SL logic based on policy
+        if execution_policy in ("BREAK_EVEN", "TRAILING") and sl and entry > 0 and price > 0:
+            initial_risk = abs(entry - sl)
+            if initial_risk > 0:
+                current_profit_r = 0.0
+                if direction == "LONG":
+                    current_profit_r = (price - entry) / initial_risk
+                else:  # SHORT
+                    current_profit_r = (entry - price) / initial_risk
+
+                sl_updates = {}
+                sl_move_count = row.get("sl_move_count", 0)
+                break_even_triggered = row.get("break_even_triggered", 0)
+
+                # Break-even logic (for BREAK_EVEN and TRAILING policies)
+                if not break_even_triggered and current_profit_r >= BREAK_EVEN_AT_R:
+                    sl = entry
+                    sl_updates["stop_loss"] = sl
+                    sl_updates["break_even_triggered"] = 1
+                    sl_updates["sl_move_count"] = sl_move_count + 1
+                    logger.info(f"Position {pid} [{execution_policy}] moved to break-even at +{current_profit_r:.1f}R")
+
+                # Trailing logic (only for TRAILING policy)
+                elif execution_policy == "TRAILING" and current_profit_r >= TRAIL_AT_R:
+                    if direction == "LONG":
+                        new_sl = price - (initial_risk * TRAIL_DISTANCE_R)
+                        if new_sl > sl:
+                            sl = new_sl
+                            sl_updates["stop_loss"] = sl
+                            sl_updates["trailing_stop_activated"] = 1
+                            sl_updates["sl_move_count"] = sl_move_count + 1
+                    else:  # SHORT
+                        new_sl = price + (initial_risk * TRAIL_DISTANCE_R)
+                        if new_sl < sl:
+                            sl = new_sl
+                            sl_updates["stop_loss"] = sl
+                            sl_updates["trailing_stop_activated"] = 1
+                            sl_updates["sl_move_count"] = sl_move_count + 1
+
+                if sl_updates:
+                    conn = _get_connection()
+                    try:
+                        set_clause = ", ".join(f"{k} = ?" for k in sl_updates.keys())
+                        values = list(sl_updates.values()) + [pid]
+                        conn.execute(
+                            f"UPDATE paper_positions SET {set_clause} WHERE id = ?",
+                            values,
+                        )
+                        conn.commit()
+                    finally:
+                        conn.close()
+
+        # ── TP / SL evaluation ─────────────────────────────────────────
         hit = None
         if direction == "LONG":
             if tp and price >= tp:

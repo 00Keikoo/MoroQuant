@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertTriangle, Save, Power } from 'lucide-react';
 import { getTradingMode, setTradingMode, emergencyStop } from '@/lib/api/ml-trading';
 import type { TradingMode, TradingModeResponse } from '@/lib/types/ml';
@@ -28,32 +28,37 @@ const MODE_DOT_COLORS: Record<TradingMode, string> = {
 };
 
 export default function TradingModeManager() {
-  const [currentMode, setCurrentMode] = useState<TradingModeResponse | null>(null);
-  const [selectedMode, setSelectedMode] = useState<TradingMode>('OFF');
+  const { mode: currentMode, refresh, setModeState } = useTradingModeStore();
+  const [selectedMode, setSelectedMode] = useState<TradingMode>(currentMode || 'OFF');
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [emergencyStopping, setEmergencyStopping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const fetchMode = useCallback(async () => {
-    try {
-      const data = await getTradingMode();
-      setCurrentMode(data);
-      setSelectedMode(data.mode);
-      // Sync global store immediately
-      useTradingModeStore.getState().setModeState(data.mode);
-      setError(null);
-    } catch {
-      setError('Failed to load trading mode');
-    }
-  }, []);
+  useEffect(() => {
+    const fetchAndSync = async () => {
+      try {
+        const data = await getTradingMode();
+        setModeState(data.mode);
+        setSelectedMode(data.mode);
+        setLastUpdated(data.updated_at || null);
+        setError(null);
+      } catch {
+        setError('Failed to load trading mode');
+      }
+    };
+    fetchAndSync();
+  }, [setModeState]);
 
   useEffect(() => {
-    fetchMode();
-  }, [fetchMode]);
+    if (currentMode) {
+      setSelectedMode(currentMode);
+    }
+  }, [currentMode]);
 
   const handleSaveMode = async () => {
-    if (!currentMode || selectedMode === currentMode.mode) return;
+    if (!currentMode || selectedMode === currentMode) return;
 
     setSaving(true);
     setError(null);
@@ -62,7 +67,9 @@ export default function TradingModeManager() {
       const result = await setTradingMode(selectedMode);
       if (result.success) {
         setSuccessMsg(`Mode changed: ${result.old_mode} → ${result.new_mode}`);
-        await fetchMode();
+        setModeState(result.new_mode);
+        setLastUpdated(new Date().toISOString());
+        await refresh();
       } else {
         setError(result.message || 'Failed to update mode');
       }
@@ -81,7 +88,9 @@ export default function TradingModeManager() {
       const result = await emergencyStop();
       if (result.success) {
         setSuccessMsg(`EMERGENCY STOP: ${result.old_mode} → OFF`);
-        await fetchMode();
+        setModeState('OFF');
+        setLastUpdated(new Date().toISOString());
+        await refresh();
       } else {
         setError('Emergency stop failed');
       }
@@ -101,18 +110,18 @@ export default function TradingModeManager() {
         </h3>
         {currentMode && (
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider border ${MODE_COLORS[currentMode.mode]}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider border ${MODE_COLORS[currentMode]}`}
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${MODE_DOT_COLORS[currentMode.mode]}`} />
-            {currentMode.mode}
+            <span className={`h-1.5 w-1.5 rounded-full ${MODE_DOT_COLORS[currentMode]}`} />
+            {currentMode}
           </span>
         )}
       </div>
 
       {/* Current mode info */}
-      {currentMode && (
+      {lastUpdated && (
         <div className="text-xs text-gray-500">
-          Last updated: {currentMode.updated_at || 'N/A'}
+          Last updated: {lastUpdated}
         </div>
       )}
 
@@ -138,7 +147,7 @@ export default function TradingModeManager() {
       {/* Save Mode button */}
       <button
         onClick={handleSaveMode}
-        disabled={saving || !currentMode || selectedMode === currentMode.mode}
+        disabled={saving || !currentMode || selectedMode === currentMode}
         className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
           bg-mq-accent/20 text-mq-accent border border-mq-accent/40
           hover:bg-mq-accent/30 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -150,7 +159,7 @@ export default function TradingModeManager() {
       {/* Emergency Stop */}
       <button
         onClick={handleEmergencyStop}
-        disabled={emergencyStopping || (currentMode?.mode === 'OFF')}
+        disabled={emergencyStopping || (currentMode === 'OFF')}
         className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200
           bg-red-600/20 text-red-400 border border-red-500/40
           hover:bg-red-600/40 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -181,12 +190,12 @@ export default function TradingModeManager() {
           <PermissionRow
             label="Open New Positions"
             allowed={
-              currentMode?.mode === 'PAPER' || currentMode?.mode === 'LIVE'
+              currentMode === 'PAPER' || currentMode === 'LIVE'
             }
           />
           <PermissionRow
             label="Live Execution"
-            allowed={currentMode?.mode === 'LIVE'}
+            allowed={currentMode === 'LIVE'}
           />
         </div>
       </div>
