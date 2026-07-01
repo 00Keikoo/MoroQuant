@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Execute database migrations for MoroQuant trading system."""
 
-import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Add ml_service directory to path BEFORE any imports so legacy imports work
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ml_service.data.database import get_database
-from ml_service.utils.logger import get_logger
+import sqlite3
+from data.database import get_database
+from utils.logger import get_logger
 
 logger = get_logger()
 
@@ -34,11 +35,18 @@ def apply_migration(migration_file: Path) -> bool:
         with db.get_connection() as conn:
             cursor = conn.cursor()
 
-            # Split and execute statements (SQLite doesn't support executescript with foreign keys)
-            for statement in sql_statements.split(';'):
-                statement = statement.strip()
-                if statement and not statement.startswith('--'):
-                    cursor.execute(statement)
+            # Check if migration uses temp tables (requires single execution context)
+            uses_temp_tables = 'TEMP TABLE' in sql_statements.upper()
+
+            if uses_temp_tables:
+                # Execute as a single script to preserve temp table context
+                cursor.executescript(sql_statements)
+            else:
+                # Split and execute statements individually
+                for statement in sql_statements.split(';'):
+                    statement = statement.strip()
+                    if statement and not statement.startswith('--'):
+                        cursor.execute(statement)
 
             conn.commit()
 
@@ -46,7 +54,14 @@ def apply_migration(migration_file: Path) -> bool:
         return True
 
     except sqlite3.OperationalError as e:
-        if "duplicate column name" in str(e).lower():
+        error_msg = str(e).lower()
+        # Skip migrations that are already applied
+        if any(phrase in error_msg for phrase in [
+            "duplicate column name",
+            "already another table or index",
+            "table already exists",
+            "index already exists"
+        ]):
             logger.warning(f"Migration already applied: {migration_file.name}")
             return True
         else:
