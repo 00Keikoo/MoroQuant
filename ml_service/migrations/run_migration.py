@@ -14,6 +14,44 @@ from utils.logger import get_logger
 logger = get_logger()
 
 
+def get_applied_migrations() -> set:
+    """
+    Query schema_migrations table to get list of already-applied migrations.
+
+    Returns:
+        Set of migration filenames that have been applied
+    """
+    db = get_database()
+
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT migration_name FROM schema_migrations")
+            rows = cursor.fetchall()
+            return {row[0] for row in rows}
+    except sqlite3.OperationalError:
+        # schema_migrations table doesn't exist yet
+        return set()
+
+
+def record_migration(migration_name: str) -> None:
+    """
+    Record a successfully applied migration in schema_migrations table.
+
+    Args:
+        migration_name: Name of the migration file
+    """
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO schema_migrations (migration_name, applied_at) VALUES (?, CURRENT_TIMESTAMP)",
+            (migration_name,)
+        )
+        conn.commit()
+
+
 def apply_migration(migration_file: Path) -> bool:
     """
     Apply a SQL migration file to the database.
@@ -50,23 +88,12 @@ def apply_migration(migration_file: Path) -> bool:
 
             conn.commit()
 
+        # Record successful migration
+        record_migration(migration_file.name)
+
         logger.info(f"✓ Migration applied: {migration_file.name}")
         return True
 
-    except sqlite3.OperationalError as e:
-        error_msg = str(e).lower()
-        # Skip migrations that are already applied
-        if any(phrase in error_msg for phrase in [
-            "duplicate column name",
-            "already another table or index",
-            "table already exists",
-            "index already exists"
-        ]):
-            logger.warning(f"Migration already applied: {migration_file.name}")
-            return True
-        else:
-            logger.error(f"✗ Migration failed: {e}")
-            return False
     except Exception as e:
         logger.error(f"✗ Migration failed: {e}")
         return False
@@ -81,9 +108,20 @@ def main():
         logger.warning("No migration files found")
         return
 
-    logger.info(f"Found {len(migration_files)} migration(s)")
+    applied_migrations = get_applied_migrations()
 
-    for migration_file in migration_files:
+    logger.info(f"Found {len(migration_files)} migration(s)")
+    logger.info(f"Already applied: {len(applied_migrations)} migration(s)")
+
+    pending_migrations = [f for f in migration_files if f.name not in applied_migrations]
+
+    if not pending_migrations:
+        logger.info("✓ No pending migrations")
+        return
+
+    logger.info(f"Pending: {len(pending_migrations)} migration(s)")
+
+    for migration_file in pending_migrations:
         success = apply_migration(migration_file)
         if not success:
             logger.error(f"Migration failed, stopping at: {migration_file.name}")
