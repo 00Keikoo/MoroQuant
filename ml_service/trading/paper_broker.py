@@ -811,6 +811,8 @@ def compute_paper_analytics() -> Dict:
     Returns a dict with the same shape as the live analytics endpoint so
     the dashboard can reuse the same widgets.
     """
+    from services.paper_analytics_service import compute_sharpe_ratio
+
     conn = _get_connection()
     try:
         rows = conn.execute(
@@ -835,6 +837,7 @@ def compute_paper_analytics() -> Dict:
             "avg_hold_hours": 0.0,
             "open_positions": open_count,
             "closed_positions": 0,
+            "sharpe_ratio": None,
         }
 
     wins = [r for r in rows if r["realized_pnl"] > 0]
@@ -863,6 +866,8 @@ def compute_paper_analytics() -> Dict:
             pass
     avg_hold = sum(hold_hours_list) / len(hold_hours_list) if hold_hours_list else 0.0
 
+    sharpe = compute_sharpe_ratio()
+
     return {
         "total_trades": total_trades,
         "win_rate": round(win_rate, 2),
@@ -873,6 +878,7 @@ def compute_paper_analytics() -> Dict:
         "avg_hold_hours": round(avg_hold, 1),
         "open_positions": open_count,
         "closed_positions": total_trades,
+        "sharpe_ratio": sharpe,
     }
 
 

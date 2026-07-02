@@ -45,7 +45,7 @@ export class PaperProvider implements TradingDataProvider {
       roi: analytics.total_realized_pnl,
       gross_profit: 0,
       gross_loss: 0,
-      sharpe_ratio: null,
+      sharpe_ratio: analytics.sharpe_ratio,
       max_drawdown: 0,
       max_drawdown_pct: 0,
       avg_hold_time_hours: analytics.avg_hold_hours,
