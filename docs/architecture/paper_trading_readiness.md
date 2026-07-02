@@ -1,7 +1,7 @@
 # Paper Trading Readiness Audit
 
 **Date:** 2026-06-16  
-**Auditor:** Lead Quant Engineer  
+**Auditor:** MoroQuant  
 **Status:** ASSESSMENT COMPLETE
 
 ---

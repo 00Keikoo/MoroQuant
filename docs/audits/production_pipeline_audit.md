@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-16  
 **Status:** AUDIT COMPLETED  
-**Auditor:** CybxAI Team
+**Auditor:** MoroQuant
 
 ---
 
@@ -467,5 +467,5 @@ python cli.py train --symbol BNBUSDT --timeframe 1h --retrain
 3. **This week:** Retrain all production models
 4. **Next week:** Add comprehensive diagnostics
 
-**Owner:** ML Engineering Team  
+**Owner:** MoroQuant  
 **Target Completion:** June 18, 2026
