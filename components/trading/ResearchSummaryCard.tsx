@@ -47,7 +47,7 @@ export default function ResearchSummaryCard() {
     { label: 'Trades', value: summary.trades, format: (v: number) => v.toString() },
     { label: 'Win Rate', value: summary.win_rate, format: (v: number) => `${v.toFixed(1)}%` },
     { label: 'Profit Factor', value: summary.profit_factor, format: (v: number) => v.toFixed(2) },
-    { label: 'Sharpe', value: summary.sharpe, format: (v: number | null) => v !== null ? v.toFixed(2) : 'Calculating...' },
+    { label: 'Sharpe', value: summary.sharpe, format: (v: number | null | undefined) => (v !== null && v !== undefined) ? v.toFixed(2) : 'Calculating...' },
     { label: 'Expectancy', value: summary.expectancy, format: (v: number) => `$${v.toFixed(2)}` },
     { label: 'Avg Hold', value: summary.avg_hold_hours, format: (v: number) => `${v.toFixed(1)}h` },
   ];

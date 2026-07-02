@@ -350,9 +350,9 @@ export default function PerformanceDashboard() {
                   />
                   <PerformanceCard
                     label="Sharpe Ratio"
-                    value={metrics.sharpe_ratio !== null ? fmtNum(metrics.sharpe_ratio) : 'Calculating...'}
+                    value={(metrics.sharpe_ratio !== null && metrics.sharpe_ratio !== undefined) ? fmtNum(metrics.sharpe_ratio) : 'Calculating...'}
                     sublabel="Risk-adjusted return"
-                    status={metrics.sharpe_ratio !== null && metrics.sharpe_ratio >= 1 ? 'positive' : 'neutral'}
+                    status={(metrics.sharpe_ratio !== null && metrics.sharpe_ratio !== undefined && metrics.sharpe_ratio >= 1) ? 'positive' : 'neutral'}
                   />
                   <PerformanceCard
                     label="Max Drawdown"
