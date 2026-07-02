@@ -274,7 +274,7 @@ def compute_execution_analytics() -> Dict:
             SELECT mae, mfe, profit_capture_ratio, opened_at, closed_at,
                    trailing_stop_activated, break_even_triggered, sl_move_count,
                    final_exit_reason, realized_pnl, size_usdt, status,
-                   additional_profit_saved
+                   entry_price, stop_loss
             FROM paper_positions
             WHERE status != 'OPEN'
             """
@@ -296,7 +296,6 @@ def compute_execution_analytics() -> Dict:
             "trailing_activated": 0,
             "break_even_saves": 0,
             "avg_sl_moves": 0.0,
-            "additional_profit_saved": 0.0,
             "exit_reasons": {},
             "execution_classifications": {},
             "execution_quality_score": 0.0,
@@ -355,9 +354,6 @@ def compute_execution_analytics() -> Dict:
     sl_moves = [r["sl_move_count"] for r in rows if r["sl_move_count"] is not None]
     avg_sl_moves = sum(sl_moves) / len(sl_moves) if sl_moves else 0.0
 
-    additional_profit_list = [r["additional_profit_saved"] for r in rows if r["additional_profit_saved"] is not None]
-    total_additional_profit = sum(additional_profit_list) if additional_profit_list else 0.0
-
     # Exit reasons
     exit_reasons = {}
     for r in rows:
@@ -379,7 +375,6 @@ def compute_execution_analytics() -> Dict:
         "trailing_activated": trailing_activated_count,
         "break_even_saves": break_even_count,
         "avg_sl_moves": round(avg_sl_moves, 2),
-        "additional_profit_saved": round(total_additional_profit, 2),
         "exit_reasons": exit_reasons,
         "execution_classifications": execution_classifications,
         "execution_quality_score": execution_quality_score,
