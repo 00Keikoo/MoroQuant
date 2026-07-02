@@ -260,7 +260,13 @@ def compute_execution_analytics() -> Dict:
     - Lost Opportunity
     - Profit Capture
     - Trailing Analytics
+    - Execution Classifications (model vs execution quality breakdown)
     """
+    from services.execution_intelligence import (
+        compute_execution_classifications,
+        compute_execution_quality_score,
+    )
+
     conn = _get_connection()
     try:
         rows = conn.execute(
@@ -292,6 +298,8 @@ def compute_execution_analytics() -> Dict:
             "avg_sl_moves": 0.0,
             "additional_profit_saved": 0.0,
             "exit_reasons": {},
+            "execution_classifications": {},
+            "execution_quality_score": 0.0,
         }
 
     # Derive EQS from raw metrics
@@ -356,6 +364,10 @@ def compute_execution_analytics() -> Dict:
         reason = r["final_exit_reason"] or "UNKNOWN"
         exit_reasons[reason] = exit_reasons.get(reason, 0) + 1
 
+    # Execution Intelligence: classify trades by model vs execution quality
+    execution_classifications = compute_execution_classifications()
+    execution_quality_score = compute_execution_quality_score()
+
     return {
         "total_trades": total_trades,
         "avg_eqs": round(avg_eqs, 1),
@@ -369,4 +381,6 @@ def compute_execution_analytics() -> Dict:
         "avg_sl_moves": round(avg_sl_moves, 2),
         "additional_profit_saved": round(total_additional_profit, 2),
         "exit_reasons": exit_reasons,
+        "execution_classifications": execution_classifications,
+        "execution_quality_score": execution_quality_score,
     }
