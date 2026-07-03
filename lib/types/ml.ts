@@ -224,6 +224,7 @@ export interface PaperAnalytics {
   avg_trade_pnl: number;
   profit_factor: number;
   expectancy: number;
+  sharpe_ratio: number | null;
   avg_hold_hours: number;
   open_positions: number;
   closed_positions: number;
