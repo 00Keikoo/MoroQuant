@@ -85,7 +85,7 @@ def _load_feature_drift_excludes() -> Set[str]:
     all_features = set()
     try:
         # Import lazily to avoid circular imports at module level.
-        from models.trainer import get_feature_columns
+        from ml_service.models.trainer import get_feature_columns
         all_features = set(get_feature_columns())
     except Exception:
         pass
@@ -327,7 +327,7 @@ def compute_feature_drift(symbol: str, timeframe: str, n_candles: int = 500) -> 
     df = df.sort_values('timestamp').reset_index(drop=True)
 
     # Prepare features using same pipeline as training
-    from models.trainer import prepare_features
+    from ml_service.models.trainer import prepare_features
     df = prepare_features(df, symbol=symbol)
 
     df_clean = df[feature_cols].dropna()
@@ -603,7 +603,7 @@ def compute_regime_drift(symbol: str, timeframe: str, days_back: int = 30) -> Di
     df = df.sort_values('timestamp').reset_index(drop=True)
 
     # Add regime features
-    from models.trainer import prepare_features
+    from ml_service.models.trainer import prepare_features
     df = prepare_features(df, symbol=symbol)
 
     if 'market_phase' not in df.columns:

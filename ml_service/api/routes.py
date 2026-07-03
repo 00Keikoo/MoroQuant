@@ -98,7 +98,7 @@ async def get_latest_signal(
     old_status = signal.get('_db_status', 'ACTIVE')
     if new_status != old_status:
         # Persist status transition
-        from data.database import get_database
+        from ml_service.data.database import get_database
         db = get_database()
         with db.get_connection() as conn:
             cursor = conn.cursor()
@@ -381,7 +381,7 @@ async def get_trade_history() -> Dict:
 @router.get("/positions/open")
 async def get_open_positions() -> Dict:
     """Get open positions from Binance Futures with ML signal comparison."""
-    from data.exchange_sync import (
+    from ml_service.data.exchange_sync import (
 	fetch_open_positions,
 	get_position_signal_comparison
     )
@@ -448,7 +448,7 @@ async def get_account_equity_endpoint() -> Dict:
     returns HTTP 200 with ``source: "unavailable"`` and null balances.
     Never crashes the API.
     """
-    from data.exchange_sync import get_account_equity
+    from ml_service.data.exchange_sync import get_account_equity
 
     return get_account_equity()
 
@@ -471,7 +471,7 @@ async def get_account_equity_history(
 
     Returns an empty list if no snapshots exist yet.
     """
-    from data.exchange_sync import get_equity_history
+    from ml_service.data.exchange_sync import get_equity_history
 
     # Validate range param — fall back to 'all' on anything unknown.
     valid_ranges = {'1d', '7d', '30d', 'all', None}
@@ -497,7 +497,7 @@ async def get_closed_trade_equity(
     chart now uses ``/api/account/equity-history`` (true Binance wallet
     snapshots); this endpoint powers the secondary "Closed Trade Curve".
     """
-    from analytics.live_metrics import get_equity_curve
+    from ml_service.analytics.live_metrics import get_equity_curve
 
     curve = get_equity_curve(symbol=symbol, days_back=days_back)
 
@@ -516,7 +516,7 @@ async def get_live_performance(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get live trading performance metrics from synced Binance trades."""
-    from analytics.live_metrics import (
+    from ml_service.analytics.live_metrics import (
         compute_live_metrics, get_equity_curve, get_recent_trades
     )
 
@@ -540,7 +540,7 @@ async def get_live_performance_report(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get comprehensive live trading performance report."""
-    from analytics.live_metrics import (
+    from ml_service.analytics.live_metrics import (
         compute_live_metrics, get_equity_curve, get_recent_trades
     )
 
@@ -569,7 +569,7 @@ async def get_recent_trades_endpoint(
     confidence, and outcome. Use this for the Recent Trades table instead
     of deriving it from raw fills or the equity curve.
     """
-    from analytics.live_metrics import get_recent_trades
+    from ml_service.analytics.live_metrics import get_recent_trades
 
     trades = get_recent_trades(symbol=symbol, days_back=days_back, limit=limit)
 
@@ -587,7 +587,7 @@ async def get_regime_performance(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get performance metrics grouped by market regime."""
-    from analytics.regime_performance import compute_regime_performance, get_regime_distribution
+    from ml_service.analytics.regime_performance import compute_regime_performance, get_regime_distribution
 
     metrics = compute_regime_performance(symbol=symbol, days_back=days_back)
 
@@ -604,7 +604,7 @@ async def get_confidence_performance(
     days_back: Optional[int] = Query(None, description="Days to look back")
 ) -> Dict:
     """Get performance metrics grouped by confidence buckets."""
-    from analytics.confidence_report import compute_confidence_performance, analyze_confidence_correlation
+    from ml_service.analytics.confidence_report import compute_confidence_performance, analyze_confidence_correlation
 
     metrics = compute_confidence_performance(symbol=symbol, days_back=days_back)
 
@@ -626,7 +626,7 @@ async def get_reconciliation(
     endpoint. Surfaces differences, duplicate fills, and still-open
     position residuals.
     """
-    from analytics.reconciliation import compare_dashboard_vs_binance
+    from ml_service.analytics.reconciliation import compare_dashboard_vs_binance
 
     return compare_dashboard_vs_binance(use_live=use_live)
 
@@ -707,7 +707,7 @@ async def get_enhanced_trade_history(
 @router.get("/models/{symbol}/{timeframe}/validation")
 async def get_model_validation(symbol: str, timeframe: str) -> Dict:
     """Get validation metrics from trained model for a symbol/timeframe."""
-    from models.predictor import load_latest_model
+    from ml_service.models.predictor import load_latest_model
 
     model_package = load_latest_model(symbol, timeframe)
 
@@ -747,7 +747,7 @@ async def get_model_validation(symbol: str, timeframe: str) -> Dict:
 @router.get("/outcomes/summary")
 async def get_outcomes_summary() -> Dict:
     """Get overall summary of signal outcomes."""
-    from data.outcome_tracking import get_outcome_summary
+    from ml_service.data.outcome_tracking import get_outcome_summary
 
     summary = get_outcome_summary()
     summary['timestamp'] = datetime.now().isoformat()
@@ -758,7 +758,7 @@ async def get_outcomes_summary() -> Dict:
 @router.get("/outcomes/by-confidence")
 async def get_outcomes_by_confidence() -> Dict:
     """Get win rate and performance by confidence bucket."""
-    from data.outcome_tracking import get_win_rate_by_confidence
+    from ml_service.data.outcome_tracking import get_win_rate_by_confidence
 
     results = get_win_rate_by_confidence()
 
@@ -772,7 +772,7 @@ async def get_outcomes_by_confidence() -> Dict:
 @router.get("/outcomes/by-regime")
 async def get_outcomes_by_regime() -> Dict:
     """Get win rate and performance by market regime."""
-    from data.outcome_tracking import get_win_rate_by_regime
+    from ml_service.data.outcome_tracking import get_win_rate_by_regime
 
     results = get_win_rate_by_regime()
 
@@ -786,7 +786,7 @@ async def get_outcomes_by_regime() -> Dict:
 @router.get("/outcomes/by-symbol")
 async def get_outcomes_by_symbol() -> Dict:
     """Get win rate and performance by trading symbol."""
-    from data.outcome_tracking import get_win_rate_by_symbol
+    from ml_service.data.outcome_tracking import get_win_rate_by_symbol
 
     results = get_win_rate_by_symbol()
 
@@ -800,7 +800,7 @@ async def get_outcomes_by_symbol() -> Dict:
 @router.get("/outcomes/by-model-version")
 async def get_outcomes_by_model_version() -> Dict:
     """Get PnL and performance by model version."""
-    from data.outcome_tracking import get_pnl_by_model_version
+    from ml_service.data.outcome_tracking import get_pnl_by_model_version
 
     results = get_pnl_by_model_version()
 
@@ -814,7 +814,7 @@ async def get_outcomes_by_model_version() -> Dict:
 @router.post("/outcomes/aggregate")
 async def aggregate_outcomes() -> Dict:
     """Aggregate trades into signal outcomes."""
-    from data.outcome_tracking import aggregate_positions_from_trades
+    from ml_service.data.outcome_tracking import aggregate_positions_from_trades
 
     inserted = aggregate_positions_from_trades()
 
@@ -839,7 +839,7 @@ async def get_model_drift(symbol: str, timeframe: str) -> Dict:
     Falls back to a live computation only if no snapshot exists yet
     (cold start), keeping backward compatibility.
     """
-    from analytics.drift_monitor import get_latest_drift_snapshot, get_drift_report
+    from ml_service.analytics.drift_monitor import get_latest_drift_snapshot, get_drift_report
 
     # Fast path: read from cache.
     snapshot = get_latest_drift_snapshot(symbol, timeframe)
@@ -858,8 +858,8 @@ async def get_model_drift(symbol: str, timeframe: str) -> Dict:
 @router.get("/trading/mode")
 async def get_trading_mode_endpoint() -> Dict:
     """Return the current autonomous trading mode and when it was last changed."""
-    from trading.mode_manager import get_trading_mode
-    from data.database import get_database
+    from ml_service.trading.mode_manager import get_trading_mode
+    from ml_service.data.database import get_database
 
     mode = get_trading_mode()
 
@@ -880,7 +880,7 @@ async def set_trading_mode_endpoint(req: TradingModeRequest) -> Dict:
 
     Accepts only ``OFF``, ``PAPER``, ``LIVE``, or ``MAINTENANCE``.
     """
-    from trading.mode_manager import get_trading_mode, set_trading_mode, VALID_MODES
+    from ml_service.trading.mode_manager import get_trading_mode, set_trading_mode, VALID_MODES
 
     mode = req.mode.strip().upper()
     if mode not in VALID_MODES:
@@ -903,7 +903,7 @@ async def set_trading_mode_endpoint(req: TradingModeRequest) -> Dict:
 @router.post("/trading/emergency-stop")
 async def emergency_stop_endpoint() -> Dict:
     """Immediately switch trading mode to OFF (kill switch)."""
-    from trading.mode_manager import emergency_stop
+    from ml_service.trading.mode_manager import emergency_stop
 
     result = emergency_stop()
     return result
@@ -914,7 +914,7 @@ async def emergency_stop_endpoint() -> Dict:
 @router.get("/paper/account")
 async def get_paper_account_endpoint() -> Dict:
     """Return the paper trading account snapshot (balance, equity, PnL)."""
-    from trading.paper_broker import get_account
+    from ml_service.trading.paper_broker import get_account
 
     account = get_account()
     return {
@@ -927,7 +927,7 @@ async def get_paper_account_endpoint() -> Dict:
 @router.get("/paper/positions/open")
 async def get_paper_open_positions_endpoint() -> Dict:
     """Return all currently-open paper positions."""
-    from trading.paper_broker import get_open_positions
+    from ml_service.trading.paper_broker import get_open_positions
 
     positions = get_open_positions()
     return {
@@ -943,7 +943,7 @@ async def get_paper_closed_positions_endpoint(
     limit: int = Query(100, description="Max number of closed positions")
 ) -> Dict:
     """Return recently closed paper positions, newest first."""
-    from trading.paper_broker import get_closed_positions
+    from ml_service.trading.paper_broker import get_closed_positions
 
     positions = get_closed_positions(limit=limit)
     return {
@@ -957,7 +957,7 @@ async def get_paper_closed_positions_endpoint(
 @router.get("/paper/summary")
 async def get_paper_summary_endpoint() -> Dict:
     """Return the full paper portfolio summary (account + positions + stats)."""
-    from trading.paper_broker import get_portfolio_summary
+    from ml_service.trading.paper_broker import get_portfolio_summary
 
     summary = get_portfolio_summary()
     summary["status"] = "success"
@@ -970,7 +970,7 @@ async def get_paper_trades_endpoint(
     limit: int = Query(100, description="Max number of closed trades")
 ) -> Dict:
     """Return closed paper trades as a flat trade list."""
-    from trading.paper_broker import get_paper_trades
+    from ml_service.trading.paper_broker import get_paper_trades
 
     trades = get_paper_trades(limit=limit)
     return {
@@ -990,7 +990,7 @@ async def get_paper_equity_history_endpoint(
     Query params:
         range: '1d' | '7d' | '30d' | 'all' (default: 'all')
     """
-    from trading.paper_broker import get_equity_history
+    from ml_service.trading.paper_broker import get_equity_history
 
     range_map = {"1d": 24, "7d": 168, "30d": 720}
     range_hours = range_map.get(range) if range else None
@@ -1000,7 +1000,7 @@ async def get_paper_equity_history_endpoint(
 @router.get("/paper/analytics")
 async def get_paper_analytics_endpoint() -> Dict:
     """Return trading analytics computed from closed paper positions."""
-    from trading.paper_broker import compute_paper_analytics
+    from ml_service.trading.paper_broker import compute_paper_analytics
 
     analytics = compute_paper_analytics()
     analytics["status"] = "success"
@@ -1011,7 +1011,7 @@ async def get_paper_analytics_endpoint() -> Dict:
 @router.get("/paper/analytics/confidence")
 async def get_paper_confidence_analytics_endpoint() -> Dict:
     """Return confidence bucket breakdown analytics for research."""
-    from services.paper_analytics_service import compute_confidence_analytics
+    from ml_service.services.paper_analytics_service import compute_confidence_analytics
 
     buckets = compute_confidence_analytics()
     return {
@@ -1024,7 +1024,7 @@ async def get_paper_confidence_analytics_endpoint() -> Dict:
 @router.get("/paper/analytics/regime")
 async def get_paper_regime_analytics_endpoint() -> Dict:
     """Return market regime breakdown analytics for research."""
-    from services.paper_analytics_service import compute_regime_analytics
+    from ml_service.services.paper_analytics_service import compute_regime_analytics
 
     regimes = compute_regime_analytics()
     return {
@@ -1041,7 +1041,7 @@ async def get_paper_execution_analytics_endpoint() -> Dict:
     Milestone 5: Execution Intelligence & Trade Quality Engine
     Returns: EQS, MAE, MFE, profit capture, trailing stop usage, exit reasons.
     """
-    from services.paper_analytics_service import compute_execution_analytics
+    from ml_service.services.paper_analytics_service import compute_execution_analytics
 
     execution = compute_execution_analytics()
     return {
@@ -1054,7 +1054,7 @@ async def get_paper_execution_analytics_endpoint() -> Dict:
 @router.get("/paper/analytics/summary")
 async def get_paper_research_summary_endpoint() -> Dict:
     """Return research summary card with key health indicators."""
-    from services.paper_analytics_service import get_research_summary
+    from ml_service.services.paper_analytics_service import get_research_summary
 
     summary = get_research_summary()
     summary["status"] = "success"
@@ -1064,7 +1064,7 @@ async def get_paper_research_summary_endpoint() -> Dict:
 @router.get("/paper/positions/live")
 async def get_paper_live_positions_endpoint() -> Dict:
     """Return open positions with live mark prices and floating PnL."""
-    from services.market_state_service import get_live_open_positions
+    from ml_service.services.market_state_service import get_live_open_positions
 
     positions = get_live_open_positions()
     return {
@@ -1078,7 +1078,7 @@ async def get_paper_live_positions_endpoint() -> Dict:
 @router.get("/paper/account/live")
 async def get_paper_live_account_endpoint() -> Dict:
     """Return paper account with live unrealized PnL from mark prices."""
-    from services.market_state_service import get_live_account_equity
+    from ml_service.services.market_state_service import get_live_account_equity
 
     account = get_live_account_equity()
     account["status"] = "success"

@@ -93,8 +93,8 @@ def db_info():
 @click.option("--retrain", is_flag=True, help="Force retrain even if model exists")
 def train(symbol: str, timeframe: str, retrain: bool):
     """Train ML model for a symbol/timeframe."""
-    from models.trainer import train_model as train_ml_model
-    from data.database import get_database
+    from ml_service.models.trainer import train_model as train_ml_model
+    from ml_service.data.database import get_database
     import pandas as pd
 
     click.echo(f"\nTraining model for {symbol} {timeframe}...")
@@ -181,7 +181,7 @@ def train(symbol: str, timeframe: str, retrain: bool):
 @click.option("--explain", is_flag=True, help="Show feature importance")
 def signal(symbol: str, timeframe: str, explain: bool):
     """Generate trading signal for a symbol/timeframe."""
-    from models.predictor import generate_signal as gen_signal
+    from ml_service.models.predictor import generate_signal as gen_signal
     import json
 
     click.echo(f"\nGenerating signal for {symbol} {timeframe}...")
@@ -221,14 +221,14 @@ def signal(symbol: str, timeframe: str, explain: bool):
 @click.option("--all", "tune_all", is_flag=True, help="Tune all configured symbols")
 def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all: bool):
     """Tune hyperparameters for XGBoost and LightGBM models."""
-    from models.tuner import (
+    from ml_service.models.tuner import (
         tune_hyperparameters,
         save_tuned_params,
         get_baseline_f1,
     )
-    from models.trainer import prepare_features, create_target_variable, get_feature_columns
-    from data.database import get_database
-    from utils.config import get_config
+    from ml_service.models.trainer import prepare_features, create_target_variable, get_feature_columns
+    from ml_service.data.database import get_database
+    from ml_service.utils.config import get_config
     import pandas as pd
 
     if tune_all:
@@ -275,7 +275,7 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
                     labeling_method = config.model.labeling_method
 
                     if labeling_method == 'triple_barrier':
-                        from models.trainer import create_target_variable_triple_barrier
+                        from ml_service.models.trainer import create_target_variable_triple_barrier
                         tp_atr_mult = config.model.tp_atr_mult
                         sl_atr_mult = config.model.sl_atr_mult
                         forward_periods = config.model.forward_periods
@@ -392,7 +392,7 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
         labeling_method = config.model.labeling_method
 
         if labeling_method == 'triple_barrier':
-            from models.trainer import create_target_variable_triple_barrier
+            from ml_service.models.trainer import create_target_variable_triple_barrier
             tp_atr_mult = config.model.tp_atr_mult
             sl_atr_mult = config.model.sl_atr_mult
             forward_periods = config.model.forward_periods
@@ -465,8 +465,8 @@ def tune(symbol: Optional[str], timeframe: Optional[str], trials: int, tune_all:
 @click.option("--all", "optimize_all", is_flag=True, help="Optimize all symbols with backtest data")
 def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all: bool):
     """Optimize TP/SL multipliers based on backtest history."""
-    from models.tp_sl_optimizer import optimize_tp_sl, save_optimized_params
-    from utils.config import get_config
+    from ml_service.models.tp_sl_optimizer import optimize_tp_sl, save_optimized_params
+    from ml_service.utils.config import get_config
     from pathlib import Path
 
     if optimize_all:
@@ -604,14 +604,14 @@ def optimize_tp_sl(symbol: Optional[str], timeframe: Optional[str], optimize_all
 @click.option("--backfill-regimes", is_flag=True, help="Re-run regime enrichment for all matched trades")
 def sync_trades(continuous: bool, symbol: Optional[str], backfill_regimes: bool):
     """Sync trade history from Binance Futures exchange."""
-    from data.exchange_sync import (
+    from ml_service.data.exchange_sync import (
         fetch_user_trades,
         sync_all_trades,
         save_trades_to_db,
         enrich_trades_with_signals,
         backfill_regimes,
     )
-    from utils.config import get_config
+    from ml_service.utils.config import get_config
     import yaml
     from pathlib import Path
 
@@ -689,7 +689,7 @@ def sync_trades(continuous: bool, symbol: Optional[str], backfill_regimes: bool)
 @cli.command("open-positions")
 def open_positions():
     """Show currently open positions from Binance Futures."""
-    from data.exchange_sync import fetch_open_positions, get_position_signal_comparison
+    from ml_service.data.exchange_sync import fetch_open_positions, get_position_signal_comparison
     import yaml
     from pathlib import Path
 
@@ -748,7 +748,7 @@ def open_positions():
 @cli.command("my-performance")
 def my_performance():
     """Analyze performance of exchange trades vs ML signals."""
-    from data.exchange_sync import analyze_signal_performance
+    from ml_service.data.exchange_sync import analyze_signal_performance
 
     stats = analyze_signal_performance()
 
@@ -798,7 +798,7 @@ def my_performance():
 @cli.command("attribution-report")
 def attribution_report():
     """Generate detailed signal attribution quality report."""
-    from data.exchange_sync import generate_attribution_report
+    from ml_service.data.exchange_sync import generate_attribution_report
 
     report = generate_attribution_report()
 
@@ -889,7 +889,7 @@ def attribution_report():
 @click.option("--no-live", is_flag=True, help="Skip live Binance fetch (synced DB only)")
 def reconcile(no_live: bool):
     """Compare dashboard analytics vs Binance source data."""
-    from analytics.reconciliation import compare_dashboard_vs_binance
+    from ml_service.analytics.reconciliation import compare_dashboard_vs_binance
 
     report = compare_dashboard_vs_binance(use_live=not no_live)
 
@@ -1032,7 +1032,7 @@ def scheduler(action: str):
 def backtest(symbol: Optional[str], timeframe: Optional[str], backtest_all: bool):
     """Run backtests on historical data with walk-forward validation."""
     from backtester import run_backtest, print_backtest_summary
-    from utils.config import get_config
+    from ml_service.utils.config import get_config
 
     if backtest_all:
         config = get_config()
@@ -1137,11 +1137,11 @@ def retrain_full_universe():
     or initial onboarding.
     """
     import traceback
-    from models.trainer import train_model as train_ml_model
-    from models.governance import compare_and_promote
-    from data.database import get_database
-    from data.ingestion import fetch_all
-    from data.coingecko import get_coingecko_fetcher
+    from ml_service.models.trainer import train_model as train_ml_model
+    from ml_service.models.governance import compare_and_promote
+    from ml_service.data.database import get_database
+    from ml_service.data.ingestion import fetch_all
+    from ml_service.data.coingecko import get_coingecko_fetcher
 
     click.echo("\n" + "=" * 80)
     click.echo("FULL UNIVERSE RETRAIN")

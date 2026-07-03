@@ -118,7 +118,7 @@ def get_model_age_hours(symbol: str, timeframe: str) -> Optional[float]:
     Returns None only when there is no production model at all.
     """
     try:
-        from models.governance import (
+        from ml_service.models.governance import (
             get_production_model_path,
             load_model_metadata,
         )
@@ -156,7 +156,7 @@ def _get_drift_snapshot(
 ) -> Optional[Dict]:
     """Fetch the latest drift snapshot, swallowing errors → None."""
     try:
-        from analytics.drift_monitor import get_latest_drift_snapshot
+        from ml_service.analytics.drift_monitor import get_latest_drift_snapshot
         return get_latest_drift_snapshot(symbol, timeframe)
     except Exception as e:
         logger.warning(

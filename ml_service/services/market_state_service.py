@@ -27,7 +27,7 @@ def _get_connection():
 def _fetch_price(symbol: str) -> Optional[float]:
     """Fetch live market price for a symbol."""
     try:
-        from services.crypto_price_service import get_crypto_service
+        from ml_service.services.crypto_price_service import get_crypto_service
         svc = get_crypto_service()
         data = svc.get_price(symbol)
         if data and data.get("price") is not None:
@@ -36,7 +36,7 @@ def _fetch_price(symbol: str) -> Optional[float]:
         logger.debug(f"crypto price fetch failed for {symbol}: {e}")
 
     try:
-        from services.proxy_price_service import get_proxy_service
+        from ml_service.services.proxy_price_service import get_proxy_service
         svc = get_proxy_service()
         data = svc.get_price(symbol)
         if data and data.get("price") is not None:

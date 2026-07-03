@@ -969,7 +969,7 @@ def get_position_signal_comparison(positions: List[Dict]) -> List[Dict]:
     Returns:
         List of positions with signal comparison data
     """
-    from models.predictor import generate_signal
+    from ml_service.models.predictor import generate_signal
 
     enriched_positions = []
 

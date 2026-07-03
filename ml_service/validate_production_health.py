@@ -178,8 +178,8 @@ def validate_production_health() -> Dict[str, Any]:
 
     # Lazy imports to prevent initialization issues
     import pandas as pd
-    from models.trainer import prepare_features, get_feature_columns
-    from models.governance import validate_model_compatibility
+    from ml_service.models.trainer import prepare_features, get_feature_columns
+    from ml_service.models.governance import validate_model_compatibility
 
     healthy_count = 0
 

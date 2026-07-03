@@ -133,7 +133,7 @@ def load_latest_model(symbol: str, timeframe: str) -> Optional[Dict]:
     Returns:
         Model package dict or None if no model found
     """
-    from models.governance import get_production_model_path, validate_model_compatibility
+    from ml_service.models.governance import get_production_model_path, validate_model_compatibility
 
     cache_key = f"{symbol}_{timeframe}"
     if cache_key in _model_cache:

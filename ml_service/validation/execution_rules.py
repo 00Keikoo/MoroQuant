@@ -240,7 +240,7 @@ def rule_execution_classification_valid(
     position: Dict[str, Any]
 ) -> Optional[ValidationFailure]:
     """Rule 10: Execution classification must be one of known values."""
-    from services.execution_intelligence import classify_trade_execution
+    from ml_service.services.execution_intelligence import classify_trade_execution
 
     classification = classify_trade_execution(
         mfe=position.get("mfe"),

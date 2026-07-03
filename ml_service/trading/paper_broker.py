@@ -97,7 +97,7 @@ def _fetch_price(symbol: str) -> Optional[float]:
     """
     # Crypto symbols
     try:
-        from services.crypto_price_service import get_crypto_service
+        from ml_service.services.crypto_price_service import get_crypto_service
         svc = get_crypto_service()
         data = svc.get_price(symbol)
         if data and data.get("price") is not None:
@@ -107,7 +107,7 @@ def _fetch_price(symbol: str) -> Optional[float]:
 
     # Proxy / traditional-market symbols (e.g. ES_proxy)
     try:
-        from services.proxy_price_service import get_proxy_service
+        from ml_service.services.proxy_price_service import get_proxy_service
         svc = get_proxy_service()
         data = svc.get_price(symbol)
         if data and data.get("price") is not None:
@@ -191,7 +191,7 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
     Returns the opened position dict, or None if skipped.
     """
     # ── Mode gate ──────────────────────────────────────────────────────
-    from trading.mode_manager import get_trading_mode
+    from ml_service.trading.mode_manager import get_trading_mode
     if get_trading_mode() != "PAPER":
         logger.info("Paper broker: mode != PAPER, skipping open")
         return None
@@ -811,7 +811,7 @@ def compute_paper_analytics() -> Dict:
     Returns a dict with the same shape as the live analytics endpoint so
     the dashboard can reuse the same widgets.
     """
-    from services.paper_analytics_service import compute_sharpe_ratio
+    from ml_service.services.paper_analytics_service import compute_sharpe_ratio
 
     conn = _get_connection()
     try:

@@ -116,7 +116,7 @@ def _fetch_binance_live(api_key: str, api_secret: str) -> Optional[Dict]:
     error, etc.) so reconciliation can fall back to the raw-fills view.
     """
     try:
-        from data.exchange_sync import _signed_request, _discover_traded_symbols
+        from ml_service.data.exchange_sync import _signed_request, _discover_traded_symbols
     except Exception as e:
         logger.debug(f"exchange_sync unavailable for live reconciliation: {e}")
         return None

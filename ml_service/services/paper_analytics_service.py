@@ -262,7 +262,7 @@ def compute_execution_analytics() -> Dict:
     - Trailing Analytics
     - Execution Classifications (model vs execution quality breakdown)
     """
-    from services.execution_intelligence import (
+    from ml_service.services.execution_intelligence import (
         compute_execution_classifications,
         compute_execution_quality_score,
     )
