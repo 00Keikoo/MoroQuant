@@ -10,8 +10,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from models.trainer import get_feature_columns, prepare_features
-from models.governance import get_model_directories, load_model_metadata
+from ml_service.models.trainer import get_feature_columns, prepare_features
+from ml_service.models.governance import get_model_directories, load_model_metadata
 
 
 def load_model_package(model_path: str) -> Optional[Dict]:

@@ -13,8 +13,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import trading.mode_manager as mm
 import trading.paper_broker as pb
-from trading.mode_manager import set_trading_mode
-from trading.paper_broker import (
+from ml_service.trading.mode_manager import set_trading_mode
+from ml_service.trading.paper_broker import (
     open_paper_position,
     close_paper_position,
     capture_equity_snapshot,

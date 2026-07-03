@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from models.governance import get_production_model_path, load_model_metadata
+from ml_service.models.governance import get_production_model_path, load_model_metadata
 
 # Target pairs to check
 TARGET_PAIRS = [

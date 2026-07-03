@@ -26,7 +26,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 logger = get_logger()
 

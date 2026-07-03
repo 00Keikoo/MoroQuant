@@ -32,8 +32,8 @@ except ImportError:
     })
     sys.modules['analytics.calibration'] = mock_cal
 
-from analytics.outcome_engine import OutcomeEngine, SignalOutcome
-from analytics.confidence_analytics import (
+from ml_service.analytics.outcome_engine import OutcomeEngine, SignalOutcome
+from ml_service.analytics.confidence_analytics import (
     get_confidence_stats,
     get_confidence_bucket_performance,
 )

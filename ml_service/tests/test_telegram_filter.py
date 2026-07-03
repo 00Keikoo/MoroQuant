@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import unittest  # noqa: E402
 from unittest.mock import patch  # noqa: E402
 
-from notifications.telegram_notifier import should_send_telegram_alert  # noqa: E402
+from ml_service.notifications.telegram_notifier import should_send_telegram_alert  # noqa: E402
 
 
 # Documented default configuration (matches config.yaml defaults and the

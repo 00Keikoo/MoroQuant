@@ -7,8 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import sqlite3
-from data.database import get_database
-from utils.logger import get_logger
+from ml_service.data.database import get_database
+from ml_service.utils.logger import get_logger
 
 logger = get_logger()
 

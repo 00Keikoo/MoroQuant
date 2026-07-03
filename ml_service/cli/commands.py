@@ -3,10 +3,10 @@
 import click
 from typing import Optional
 
-from utils.logger import setup_logger, get_logger
-from utils.config import get_config
-from data.database import get_database
-from data.ingestion import (
+from ml_service.utils.logger import setup_logger, get_logger
+from ml_service.utils.config import get_config
+from ml_service.data.database import get_database
+from ml_service.data.ingestion import (
     ingest_binance_symbol,
     ingest_yfinance_symbol,
     fetch_all,

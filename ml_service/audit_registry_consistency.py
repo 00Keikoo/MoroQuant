@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from models.governance import load_active_models_registry, get_model_directories, load_model_metadata
+from ml_service.models.governance import load_active_models_registry, get_model_directories, load_model_metadata
 
 print("=" * 80)
 print("REGISTRY CONSISTENCY AUDIT")

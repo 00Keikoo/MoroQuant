@@ -32,7 +32,7 @@ except ImportError:
     })
     sys.modules['analytics.calibration'] = mock_cal
 
-from analytics.outcome_engine import (
+from ml_service.analytics.outcome_engine import (
     OutcomeEngine,
     SignalOutcome,
     FINAL_TIMEOUT_DAYS,

@@ -5,8 +5,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from models.predictor import generate_signal
-from utils.logger import get_logger
+from ml_service.models.predictor import generate_signal
+from ml_service.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

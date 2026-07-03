@@ -1,4 +1,4 @@
-from models.governance import compare_and_promote
+from ml_service.models.governance import compare_and_promote
 
 models = [
     ("ADAUSDT", "1h", "storage/models/candidates/ADAUSDT_1h_lightgbm_20260623_081343.pkl"),

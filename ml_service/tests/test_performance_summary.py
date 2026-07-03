@@ -32,8 +32,8 @@ except ImportError:
     })
     sys.modules['analytics.calibration'] = mock_cal
 
-from analytics.outcome_engine import OutcomeEngine, SignalOutcome
-from analytics.performance_summary import (
+from ml_service.analytics.outcome_engine import OutcomeEngine, SignalOutcome
+from ml_service.analytics.performance_summary import (
     get_model_performance,
     get_symbol_performance,
     get_global_performance,

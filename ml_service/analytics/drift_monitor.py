@@ -8,9 +8,9 @@ from typing import Dict, List, Optional, Set, Tuple
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from utils.logger import get_logger
-from data.database import get_database
-from models.predictor import load_latest_model
+from ml_service.utils.logger import get_logger
+from ml_service.data.database import get_database
+from ml_service.models.predictor import load_latest_model
 
 logger = get_logger(__name__)
 

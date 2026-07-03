@@ -78,6 +78,11 @@ def format_report_text(report: ExecutionAuditReport) -> str:
     lines.append(report.summary)
     lines.append("")
 
+    if report.total_trades == 0:
+        lines.append("No trade data available for detailed metrics.")
+        lines.append("=" * 80)
+        return "\n".join(lines)
+
     lines.append("METRICS")
     lines.append("-" * 80)
     m = report.metrics

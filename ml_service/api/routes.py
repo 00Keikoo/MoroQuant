@@ -7,11 +7,11 @@ from datetime import datetime
 import sys
 from pathlib import Path
 
-from models.predictor import calculate_tp_sl, get_latest_signal_from_db
-from signal_lifecycle import evaluate_signal_status, bulk_update_signal_statuses
-from data.database import get_database
-from services.crypto_price_service import get_crypto_service
-from services.proxy_price_service import get_proxy_service
+from ml_service.models.predictor import calculate_tp_sl, get_latest_signal_from_db
+from ml_service.signal_lifecycle import evaluate_signal_status, bulk_update_signal_statuses
+from ml_service.data.database import get_database
+from ml_service.services.crypto_price_service import get_crypto_service
+from ml_service.services.proxy_price_service import get_proxy_service
 
 router = APIRouter()
 

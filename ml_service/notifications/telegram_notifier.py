@@ -34,7 +34,7 @@ except Exception:
     # dotenv not installed or .env missing -> rely on the real environment.
     pass
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

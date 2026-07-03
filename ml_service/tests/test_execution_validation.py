@@ -7,7 +7,7 @@ import math
 import unittest
 from datetime import datetime
 
-from validation.execution_rules import (
+from ml_service.validation.execution_rules import (
     rule_mae_non_positive,
     rule_mfe_non_negative,
     rule_mae_timestamp_exists,
@@ -21,7 +21,7 @@ from validation.execution_rules import (
     rule_exit_reason_valid,
     rule_no_impossible_values,
 )
-from validation.execution_validator import validate_position
+from ml_service.validation.execution_validator import validate_position
 
 
 class TestMAERule(unittest.TestCase):

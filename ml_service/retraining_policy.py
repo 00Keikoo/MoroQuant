@@ -27,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

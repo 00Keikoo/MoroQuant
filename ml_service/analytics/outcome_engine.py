@@ -31,8 +31,8 @@ from typing import Optional, Dict, Tuple, List
 from dataclasses import dataclass
 from datetime import datetime
 
-from utils.logger import get_logger
-from analytics.calibration import CalibrationTracker
+from ml_service.utils.logger import get_logger
+from ml_service.analytics.calibration import CalibrationTracker
 
 logger = get_logger()
 

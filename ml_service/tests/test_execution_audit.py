@@ -6,7 +6,7 @@ Tests verify implementation matches research specification exactly.
 import pytest
 from datetime import datetime
 
-from audit.execution_metrics import (
+from ml_service.audit.execution_metrics import (
     TradeData,
     compute_profit_capture_ratio,
     compute_profit_leakage,
@@ -15,7 +15,7 @@ from audit.execution_metrics import (
     classify_trade,
     compute_all_metrics,
 )
-from audit.execution_patterns import (
+from ml_service.audit.execution_patterns import (
     detect_trailing_too_early,
     detect_trailing_too_late,
     detect_sl_too_tight,
@@ -24,7 +24,7 @@ from audit.execution_patterns import (
     detect_tp_too_far,
     detect_severe_profit_leakage,
 )
-from audit.execution_recommendations import (
+from ml_service.audit.execution_recommendations import (
     rule_optimize_trailing_stop,
     rule_adjust_take_profit,
     rule_calibrate_stop_loss,

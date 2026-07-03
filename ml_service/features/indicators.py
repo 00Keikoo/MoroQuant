@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import pandas_ta as ta
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -27,7 +27,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 logger = get_logger()
 

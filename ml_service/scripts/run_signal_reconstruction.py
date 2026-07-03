@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from analytics.signal_reconstruction import SignalReconstructor
-from utils.logger import get_logger
+from ml_service.analytics.signal_reconstruction import SignalReconstructor
+from ml_service.utils.logger import get_logger
 
 logger = get_logger()
 

@@ -7,10 +7,10 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional, Tuple
 
-from utils.logger import get_logger
-from utils.config import get_forward_periods
-from data.database import get_database
-from models.trainer import prepare_features
+from ml_service.utils.logger import get_logger
+from ml_service.utils.config import get_forward_periods
+from ml_service.data.database import get_database
+from ml_service.models.trainer import prepare_features
 
 logger = get_logger()
 

@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from models.predictor import generate_signal
-from data.database import get_database
+from ml_service.models.predictor import generate_signal
+from ml_service.data.database import get_database
 
 def main():
     pairs = [

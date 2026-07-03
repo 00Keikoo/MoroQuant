@@ -7,7 +7,7 @@ from pathlib import Path
 # Ensure ml_service root is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from signal_lifecycle import evaluate_signal_status, ACTIVE, TP_HIT, SL_HIT, EXPIRED
+from ml_service.signal_lifecycle import evaluate_signal_status, ACTIVE, TP_HIT, SL_HIT, EXPIRED
 
 
 def make_signal(direction="long", tp=110.0, sl=90.0, valid_until=None, status=ACTIVE):

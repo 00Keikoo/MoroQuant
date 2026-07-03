@@ -11,12 +11,12 @@ import xgboost as xgb
 import lightgbm as lgb
 from sklearn.metrics import f1_score, classification_report
 
-from utils.logger import get_logger
-from utils.config import get_config, get_forward_periods
-from features.price_action import add_price_action_features
-from features.indicators import add_all_indicators
-from features.regime import add_regime_features
-from features.funding_rate import add_funding_rate_features
+from ml_service.utils.logger import get_logger
+from ml_service.utils.config import get_config, get_forward_periods
+from ml_service.features.price_action import add_price_action_features
+from ml_service.features.indicators import add_all_indicators
+from ml_service.features.regime import add_regime_features
+from ml_service.features.funding_rate import add_funding_rate_features
 
 logger = get_logger()
 

@@ -14,7 +14,7 @@ from typing import Optional, Dict, List, Tuple
 import numpy as np
 from dataclasses import dataclass
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 logger = get_logger()
 

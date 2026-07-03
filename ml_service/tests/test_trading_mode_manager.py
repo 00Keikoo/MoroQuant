@@ -12,7 +12,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import trading.mode_manager as mm
-from trading.mode_manager import (
+from ml_service.trading.mode_manager import (
     VALID_MODES,
     get_trading_mode,
     set_trading_mode,

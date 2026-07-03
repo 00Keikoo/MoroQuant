@@ -4,8 +4,8 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime
 
-from utils.logger import get_logger
-from data.database import get_database
+from ml_service.utils.logger import get_logger
+from ml_service.data.database import get_database
 
 logger = get_logger(__name__)
 

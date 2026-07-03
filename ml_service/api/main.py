@@ -10,10 +10,10 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from api.routes import router
-from services.crypto_price_service import get_crypto_service
-from services.proxy_price_service import get_proxy_service
-from scheduler import start_scheduler
+from ml_service.api.routes import router
+from ml_service.services.crypto_price_service import get_crypto_service
+from ml_service.services.proxy_price_service import get_proxy_service
+from ml_service.scheduler import start_scheduler
 
 app = FastAPI(
     title="ML Trading Intelligence API",
