@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 from .execution_metrics import compute_all_metrics, load_trade_data
 from .execution_patterns import detect_all_patterns

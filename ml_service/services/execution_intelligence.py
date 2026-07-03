@@ -8,7 +8,7 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, Literal, Optional
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 logger = get_logger()
 

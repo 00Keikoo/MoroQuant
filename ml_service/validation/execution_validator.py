@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from utils.logger import get_logger
+from ml_service.utils.logger import get_logger
 
 from .execution_report import ValidationReport
 from .execution_rules import ALL_RULES

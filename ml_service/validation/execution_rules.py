@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from services.execution_intelligence import ExecutionClassification
+from ml_service.services.execution_intelligence import ExecutionClassification
 
 
 @dataclass
