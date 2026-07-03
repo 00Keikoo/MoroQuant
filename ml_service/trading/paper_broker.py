@@ -39,10 +39,6 @@ RISK_PER_TRADE_PCT = 0.01  # 1%
 POSITION_EXPIRY_HOURS = 24 * 7  # 7 days
 
 MIN_EXECUTION_CONFIDENCE = 55
-BLOCKED_REGIMES = [
-    "choppy_low_vol",
-    "choppy_normal_vol",
-]
 MIN_PROBABILITY_EDGE = 0.20
 COOLDOWN_AFTER_SL_HOURS = 6
 
@@ -223,13 +219,27 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
         except (ValueError, TypeError):
             pass
 
-    # ── 2. Regime Filter ───────────────────────────────────────────────
+    # ── 2. Regime Execution Policy ─────────────────────────────────────
+    from ml_service.trading.regime_execution_policy import evaluate_regime_execution_policy
+
+    regime_sizing_multiplier = 1.0
     regime = signal.get("regime")
-    if regime in BLOCKED_REGIMES:
-        logger.info(
-            f"Paper broker skipped {symbol}: regime {regime} is blocked"
-        )
-        return None
+    if regime:
+        decision = evaluate_regime_execution_policy(regime, signal_id=None, confidence=confidence)
+
+        if not decision.execution_permitted:
+            logger.info(
+                f"Paper broker skipped {symbol}: regime {regime} execution blocked "
+                f"(reason: {decision.block_reason})"
+            )
+            return None
+
+        regime_sizing_multiplier = decision.sizing_multiplier
+        if decision.sizing_multiplier < 1.0:
+            logger.info(
+                f"Paper broker {symbol}: regime {regime} sizing reduced to "
+                f"{decision.sizing_multiplier:.2f}x (LCI < 0)"
+            )
 
     # ── 3. Edge Filter ─────────────────────────────────────────────────
     prob_short = signal.get("prob_short")
@@ -302,7 +312,8 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
         # ── Position sizing ────────────────────────────────────────────
         account = _get_account(conn)
         equity = account["equity"]
-        size_usdt = round(equity * RISK_PER_TRADE_PCT, 2)
+        base_size_usdt = equity * RISK_PER_TRADE_PCT
+        size_usdt = round(base_size_usdt * regime_sizing_multiplier, 2)
         qty = round(size_usdt / entry_price, 8) if entry_price > 0 else 0.0
 
         if qty <= 0:

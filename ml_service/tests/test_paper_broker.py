@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import trading.mode_manager as mm
 import trading.paper_broker as pb
+import trading.regime_execution_policy as rep
 from ml_service.trading.mode_manager import set_trading_mode, get_trading_mode, VALID_MODES
 from ml_service.trading.paper_broker import (
     STARTING_BALANCE,
@@ -37,11 +38,14 @@ def db_path(monkeypatch):
     test_db = Path(tmp.name)
     saved_mm = mm._DB_PATH
     saved_pb = pb._DB_PATH
+    saved_rep = rep._DB_PATH
     monkeypatch.setattr(mm, "_DB_PATH", test_db)
     monkeypatch.setattr(pb, "_DB_PATH", test_db)
+    monkeypatch.setattr(rep, "_DB_PATH", test_db)
     yield test_db
     mm._DB_PATH = saved_mm
     pb._DB_PATH = saved_pb
+    rep._DB_PATH = saved_rep
     if test_db.exists():
         test_db.unlink()
 
@@ -92,6 +96,14 @@ def _reset_db(db_path: Path):
             prob_long REAL,
             execution_edge REAL,
             skip_reason TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS regime_blocks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            regime TEXT UNIQUE,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            reason TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS signals (
