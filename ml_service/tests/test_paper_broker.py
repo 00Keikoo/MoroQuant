@@ -11,9 +11,9 @@ import pytest
 # Ensure ml_service root is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import trading.mode_manager as mm
-import trading.paper_broker as pb
-import trading.regime_execution_policy as rep
+import ml_service.trading.mode_manager as mm
+import ml_service.trading.paper_broker as pb
+import ml_service.trading.regime_execution_policy as rep
 from ml_service.trading.mode_manager import set_trading_mode, get_trading_mode, VALID_MODES
 from ml_service.trading.paper_broker import (
     STARTING_BALANCE,
@@ -95,7 +95,17 @@ def _reset_db(db_path: Path):
             prob_neutral REAL,
             prob_long REAL,
             execution_edge REAL,
-            skip_reason TEXT
+            skip_reason TEXT,
+            mae REAL DEFAULT 0.0,
+            mfe REAL DEFAULT 0.0,
+            mae_timestamp TIMESTAMP,
+            mfe_timestamp TIMESTAMP,
+            profit_capture_ratio REAL,
+            final_exit_reason TEXT,
+            trailing_stop_activated INTEGER DEFAULT 0,
+            sl_move_count INTEGER DEFAULT 0,
+            break_even_triggered INTEGER DEFAULT 0,
+            execution_policy TEXT DEFAULT 'FIXED_SL'
         );
 
         CREATE TABLE IF NOT EXISTS regime_blocks (
@@ -543,9 +553,9 @@ def test_confidence_filter(db_path):
     _reset_db(db_path)
     set_trading_mode("PAPER")
     
-    # 60 confidence -> skipped
+    # 50 confidence (below threshold 55) -> skipped
     sig_low = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)
-    sig_low["confidence"] = 60
+    sig_low["confidence"] = 50
     r_low = open_paper_position(sig_low)
     assert r_low is None
     
@@ -554,12 +564,18 @@ def test_confidence_filter(db_path):
     sig_high["confidence"] = 75
     r_high = open_paper_position(sig_high)
     assert r_high is not None
-    print("✓ Confidence filter verified (60 skipped, 75 accepted)")
+    print("✓ Confidence filter verified (50 skipped, 75 accepted)")
 
 
 def test_regime_filter(db_path):
     _reset_db(db_path)
     set_trading_mode("PAPER")
+    
+    # Insert structural block for choppy_low_vol
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("INSERT INTO regime_blocks (regime, is_active, reason) VALUES ('choppy_low_vol', 1, 'Manual Test Block')")
+    conn.commit()
+    conn.close()
     
     # choppy_low_vol -> skipped
     sig_choppy = _make_signal(symbol="BTCUSDT", direction="long", price=100.0)

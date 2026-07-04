@@ -548,7 +548,9 @@ def update_open_positions() -> Dict:
         # ── Execution Policy Logic ────────────────────────────────────
         tp = row["take_profit"]
         sl = row["stop_loss"]
-        execution_policy = row.get("execution_policy", "FIXED_SL")
+        
+        row_keys = row.keys()
+        execution_policy = row["execution_policy"] if "execution_policy" in row_keys else "FIXED_SL"
 
         # Apply dynamic SL logic based on policy
         if execution_policy in ("BREAK_EVEN", "TRAILING") and sl and entry > 0 and price > 0:
@@ -561,8 +563,8 @@ def update_open_positions() -> Dict:
                     current_profit_r = (entry - price) / initial_risk
 
                 sl_updates = {}
-                sl_move_count = row.get("sl_move_count", 0)
-                break_even_triggered = row.get("break_even_triggered", 0)
+                sl_move_count = row["sl_move_count"] if "sl_move_count" in row_keys else 0
+                break_even_triggered = row["break_even_triggered"] if "break_even_triggered" in row_keys else 0
 
                 # Break-even logic (for BREAK_EVEN and TRAILING policies)
                 if not break_even_triggered and current_profit_r >= BREAK_EVEN_AT_R:

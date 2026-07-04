@@ -2501,3 +2501,8 @@
 2026-06-17 20:19:32 | ml_trading | INFO | Database initialized at /root/app/ml-project/ml-trading-dashboard/ml_service/storage/database.db
 2026-06-17 20:19:32 | ml_trading | INFO | Inserted 7 new trades into database
 2026-06-17 20:19:32 | ml_trading | INFO | Enriched 6 trades with signal data
+2026-07-03 23:24:51 | ml_trading | INFO | Database schema initialized
+2026-07-03 23:24:51 | ml_trading | INFO | Database initialized at /home/zafka/trade-dashboard/ml_service/storage/database.db
+2026-07-03 23:24:51 | ml_trading | INFO | Found 23 migration(s)
+2026-07-03 23:24:51 | ml_trading | INFO | Already applied: 23 migration(s)
+2026-07-03 23:24:51 | ml_trading | INFO | ✓ No pending migrations

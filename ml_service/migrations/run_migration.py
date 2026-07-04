@@ -34,22 +34,20 @@ def get_applied_migrations() -> set:
         return set()
 
 
-def record_migration(migration_name: str) -> None:
-    """
-    Record a successfully applied migration in schema_migrations table.
+def column_exists(cursor, table_name: str, column_name: str) -> bool:
+    """Check if a column exists in a table."""
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    columns = {row[1] for row in cursor.fetchall()}
+    return column_name in columns
 
-    Args:
-        migration_name: Name of the migration file
-    """
-    db = get_database()
 
-    with db.get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO schema_migrations (migration_name, applied_at) VALUES (?, CURRENT_TIMESTAMP)",
-            (migration_name,)
-        )
-        conn.commit()
+def table_exists(cursor, table_name: str) -> bool:
+    """Check if a table exists."""
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+        (table_name,)
+    )
+    return cursor.fetchone() is not None
 
 
 def apply_migration(migration_file: Path) -> bool:
@@ -73,23 +71,33 @@ def apply_migration(migration_file: Path) -> bool:
         with db.get_connection() as conn:
             cursor = conn.cursor()
 
-            # Check if migration uses temp tables (requires single execution context)
-            uses_temp_tables = 'TEMP TABLE' in sql_statements.upper()
+            # Begin explicit transaction for atomicity
+            cursor.execute("BEGIN")
 
-            if uses_temp_tables:
-                # Execute as a single script to preserve temp table context
-                cursor.executescript(sql_statements)
-            else:
-                # Split and execute statements individually
-                for statement in sql_statements.split(';'):
-                    statement = statement.strip()
-                    if statement and not statement.startswith('--'):
-                        cursor.execute(statement)
+            try:
+                # Check if migration uses temp tables (requires single execution context)
+                uses_temp_tables = 'TEMP TABLE' in sql_statements.upper()
 
-            conn.commit()
+                if uses_temp_tables:
+                    # Execute as a single script to preserve temp table context
+                    cursor.executescript(sql_statements)
+                else:
+                    # Split and execute statements individually within the transaction
+                    for statement in sql_statements.split(';'):
+                        statement = statement.strip()
+                        if statement and not statement.startswith('--'):
+                            cursor.execute(statement)
 
-        # Record successful migration
-        record_migration(migration_file.name)
+                # Record migration in the SAME transaction
+                cursor.execute(
+                    "INSERT INTO schema_migrations (migration_name, applied_at) VALUES (?, CURRENT_TIMESTAMP)",
+                    (migration_file.name,)
+                )
+
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
 
         logger.info(f"✓ Migration applied: {migration_file.name}")
         return True

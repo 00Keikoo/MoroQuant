@@ -11,8 +11,8 @@ import pytest
 # Ensure ml_service root is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import trading.mode_manager as mm
-import trading.paper_broker as pb
+import ml_service.trading.mode_manager as mm
+import ml_service.trading.paper_broker as pb
 from ml_service.trading.mode_manager import set_trading_mode
 from ml_service.trading.paper_broker import (
     open_paper_position,
@@ -86,7 +86,17 @@ def _reset_db(db_path: Path):
             prob_neutral REAL,
             prob_long REAL,
             execution_edge REAL,
-            skip_reason TEXT
+            skip_reason TEXT,
+            mae REAL DEFAULT 0.0,
+            mfe REAL DEFAULT 0.0,
+            mae_timestamp TIMESTAMP,
+            mfe_timestamp TIMESTAMP,
+            profit_capture_ratio REAL,
+            final_exit_reason TEXT,
+            trailing_stop_activated INTEGER DEFAULT 0,
+            sl_move_count INTEGER DEFAULT 0,
+            break_even_triggered INTEGER DEFAULT 0,
+            execution_policy TEXT DEFAULT 'FIXED_SL'
         );
 
         CREATE TABLE IF NOT EXISTS paper_equity_history (
@@ -322,7 +332,7 @@ def test_paper_trades_limit(db_path):
 def test_migration_019_idempotent(db_path):
     """The paper_equity_history CREATE TABLE is idempotent (IF NOT EXISTS)."""
     _reset_db(db_path)
-    migration_sql = Path("migrations/019_paper_equity_history.sql").read_text()
+    migration_sql = (Path(__file__).parent.parent / "migrations" / "019_paper_equity_history.sql").read_text()
 
     # Apply twice to the test DB — both must succeed
     conn = sqlite3.connect(str(db_path))
