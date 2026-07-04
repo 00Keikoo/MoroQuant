@@ -380,3 +380,199 @@ ALTER TABLE mixed_test ADD COLUMN status TEXT DEFAULT 'active';
         cursor.execute("SELECT COUNT(*) FROM mixed_test")
         count = cursor.fetchone()[0]
         assert count == 2
+
+
+def test_schema_drift_repair_missing_column(test_db, temp_migration_dir):
+    """
+    Regression test for migration 025: schema drift repair.
+
+    Scenario: Migration 022 was recorded as applied but schema changes never executed.
+    Schema has obsolete columns and is missing required column.
+    """
+    # Setup: Create paper_positions table with schema drift
+    # (has obsolete columns, missing execution_policy)
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE paper_positions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                symbol TEXT NOT NULL,
+                direction TEXT NOT NULL,
+                entry_price REAL NOT NULL,
+                current_price REAL,
+                size_usdt REAL NOT NULL,
+                qty REAL NOT NULL,
+                stop_loss REAL,
+                take_profit REAL,
+                signal_id INTEGER,
+                status TEXT NOT NULL DEFAULT 'OPEN',
+                realized_pnl REAL NOT NULL DEFAULT 0.0,
+                opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                closed_at TIMESTAMP,
+                eqs REAL,
+                trailing_stop_enabled INTEGER,
+                execution_reason TEXT
+            )
+        """)
+
+        # Insert test data
+        cursor.execute("""
+            INSERT INTO paper_positions (symbol, direction, entry_price, size_usdt, qty, status)
+            VALUES ('BTCUSDT', 'LONG', 50000.0, 1000.0, 0.02, 'OPEN')
+        """)
+        conn.commit()
+
+    # Verify pre-repair state
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+        assert column_exists(cursor, 'paper_positions', 'eqs') is True
+        assert column_exists(cursor, 'paper_positions', 'trailing_stop_enabled') is True
+        assert column_exists(cursor, 'paper_positions', 'execution_reason') is True
+        assert column_exists(cursor, 'paper_positions', 'execution_policy') is False
+
+    # Apply repair migration
+    migration_file = temp_migration_dir / "025_repair_schema_drift.sql"
+    migration_file.write_text("""
+CREATE TABLE paper_positions_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    direction TEXT NOT NULL CHECK(direction IN ('LONG', 'SHORT')),
+    entry_price REAL NOT NULL,
+    current_price REAL,
+    size_usdt REAL NOT NULL,
+    qty REAL NOT NULL,
+    stop_loss REAL,
+    take_profit REAL,
+    signal_id INTEGER,
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN', 'TP_HIT', 'SL_HIT', 'EXPIRED', 'MANUAL_CLOSE')),
+    realized_pnl REAL NOT NULL DEFAULT 0.0,
+    opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP,
+    execution_policy TEXT DEFAULT 'FIXED_SL' CHECK(execution_policy IN ('OFF', 'FIXED_SL', 'BREAK_EVEN', 'TRAILING'))
+);
+
+INSERT INTO paper_positions_new (
+    id, symbol, direction, entry_price, current_price, size_usdt, qty,
+    stop_loss, take_profit, signal_id, status, realized_pnl, opened_at, closed_at
+)
+SELECT
+    id, symbol, direction, entry_price, current_price, size_usdt, qty,
+    stop_loss, take_profit, signal_id, status, realized_pnl, opened_at, closed_at
+FROM paper_positions;
+
+DROP TABLE paper_positions;
+ALTER TABLE paper_positions_new RENAME TO paper_positions;
+
+CREATE INDEX idx_paper_positions_status ON paper_positions(status);
+CREATE INDEX idx_paper_positions_symbol ON paper_positions(symbol);
+""")
+
+    with patch('ml_service.migrations.run_migration.get_database', return_value=test_db):
+        success = apply_migration(migration_file)
+
+    assert success is True
+
+    # Verify post-repair state
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+
+        # Required column exists
+        assert column_exists(cursor, 'paper_positions', 'execution_policy') is True
+
+        # Obsolete columns removed
+        assert column_exists(cursor, 'paper_positions', 'eqs') is False
+        assert column_exists(cursor, 'paper_positions', 'trailing_stop_enabled') is False
+        assert column_exists(cursor, 'paper_positions', 'execution_reason') is False
+
+        # Data preserved
+        cursor.execute("SELECT symbol, entry_price, size_usdt, execution_policy FROM paper_positions")
+        row = cursor.fetchone()
+        assert row[0] == 'BTCUSDT'
+        assert row[1] == 50000.0
+        assert row[2] == 1000.0
+        assert row[3] == 'FIXED_SL'
+
+
+def test_schema_repair_idempotent(test_db, temp_migration_dir):
+    """Test that schema repair migration handles already-correct schema safely."""
+    # Setup: Create paper_positions with correct schema (as if migration 022 actually worked)
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE paper_positions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                symbol TEXT NOT NULL,
+                direction TEXT NOT NULL CHECK(direction IN ('LONG', 'SHORT')),
+                entry_price REAL NOT NULL,
+                current_price REAL,
+                size_usdt REAL NOT NULL,
+                qty REAL NOT NULL,
+                stop_loss REAL,
+                take_profit REAL,
+                signal_id INTEGER,
+                status TEXT NOT NULL DEFAULT 'OPEN',
+                realized_pnl REAL NOT NULL DEFAULT 0.0,
+                opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                closed_at TIMESTAMP,
+                execution_policy TEXT DEFAULT 'FIXED_SL'
+            )
+        """)
+        cursor.execute("""
+            INSERT INTO paper_positions (symbol, direction, entry_price, size_usdt, qty, status, execution_policy)
+            VALUES ('ETHUSDT', 'SHORT', 3000.0, 500.0, 0.167, 'OPEN', 'FIXED_SL')
+        """)
+        conn.commit()
+
+    # Create repair migration
+    migration_file = temp_migration_dir / "025_repair_schema_drift.sql"
+    migration_file.write_text("""
+CREATE TABLE paper_positions_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    direction TEXT NOT NULL CHECK(direction IN ('LONG', 'SHORT')),
+    entry_price REAL NOT NULL,
+    current_price REAL,
+    size_usdt REAL NOT NULL,
+    qty REAL NOT NULL,
+    stop_loss REAL,
+    take_profit REAL,
+    signal_id INTEGER,
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN', 'TP_HIT', 'SL_HIT', 'EXPIRED', 'MANUAL_CLOSE')),
+    realized_pnl REAL NOT NULL DEFAULT 0.0,
+    opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP,
+    execution_policy TEXT DEFAULT 'FIXED_SL' CHECK(execution_policy IN ('OFF', 'FIXED_SL', 'BREAK_EVEN', 'TRAILING'))
+);
+
+INSERT INTO paper_positions_new (
+    id, symbol, direction, entry_price, current_price, size_usdt, qty,
+    stop_loss, take_profit, signal_id, status, realized_pnl, opened_at, closed_at
+)
+SELECT
+    id, symbol, direction, entry_price, current_price, size_usdt, qty,
+    stop_loss, take_profit, signal_id, status, realized_pnl, opened_at, closed_at
+FROM paper_positions;
+
+DROP TABLE paper_positions;
+ALTER TABLE paper_positions_new RENAME TO paper_positions;
+
+CREATE INDEX idx_paper_positions_status ON paper_positions(status);
+CREATE INDEX idx_paper_positions_symbol ON paper_positions(symbol);
+""")
+
+    # Apply migration on already-correct schema
+    with patch('ml_service.migrations.run_migration.get_database', return_value=test_db):
+        success = apply_migration(migration_file)
+
+    assert success is True
+
+    # Verify final state - schema correct, base data preserved
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+        assert column_exists(cursor, 'paper_positions', 'execution_policy') is True
+
+        cursor.execute("SELECT symbol, entry_price, size_usdt FROM paper_positions")
+        row = cursor.fetchone()
+        assert row[0] == 'ETHUSDT'
+        assert row[1] == 3000.0
+        assert row[2] == 500.0
