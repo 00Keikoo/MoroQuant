@@ -99,14 +99,20 @@ FROM paper_positions;
 
 -- Backup old table instead of dropping (allows recovery if needed)
 -- If migration 026 is run multiple times, this will fail with "table already exists"
--- which is a safe failure mode that prevents accidental data loss
-DROP TABLE IF EXISTS paper_positions_backup_025;
+-- because paper_positions_backup_025 is not dropped. This is a safe failure mode 
+-- that acts as a run-once guard and prevents accidental data loss.
 ALTER TABLE paper_positions RENAME TO paper_positions_backup_025;
+
+-- Drop the old indexes that were renamed and attached to the backup table
+-- to free up the index names for the new table. The backup table's data is
+-- still fully preserved for recovery capability.
+DROP INDEX IF EXISTS idx_paper_positions_status;
+DROP INDEX IF EXISTS idx_paper_positions_symbol;
 
 -- Activate the new complete schema
 ALTER TABLE paper_positions_complete RENAME TO paper_positions;
 
--- Recreate indexes
+-- Recreate indexes on the active table
 CREATE INDEX idx_paper_positions_status ON paper_positions(status);
 CREATE INDEX idx_paper_positions_symbol ON paper_positions(symbol);
 
