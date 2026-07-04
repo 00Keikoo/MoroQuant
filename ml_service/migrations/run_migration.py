@@ -50,6 +50,44 @@ def table_exists(cursor, table_name: str) -> bool:
     return cursor.fetchone() is not None
 
 
+def strip_sql_comments(sql: str) -> str:
+    """
+    Remove SQL comments from a statement while preserving the code.
+
+    Handles:
+    - Single-line comments: -- comment
+    - Multi-line comments: /* comment */
+    """
+    result = []
+    i = 0
+    while i < len(sql):
+        # Check for multi-line comment
+        if i < len(sql) - 1 and sql[i:i+2] == '/*':
+            # Skip until we find */
+            i += 2
+            while i < len(sql) - 1:
+                if sql[i:i+2] == '*/':
+                    i += 2
+                    break
+                i += 1
+            continue
+
+        # Check for single-line comment
+        if i < len(sql) - 1 and sql[i:i+2] == '--':
+            # Skip until end of line
+            while i < len(sql) and sql[i] != '\n':
+                i += 1
+            if i < len(sql):
+                result.append('\n')  # Preserve the newline
+                i += 1
+            continue
+
+        result.append(sql[i])
+        i += 1
+
+    return ''.join(result)
+
+
 def apply_migration(migration_file: Path) -> bool:
     """
     Apply a SQL migration file to the database.
@@ -71,7 +109,6 @@ def apply_migration(migration_file: Path) -> bool:
         with db.get_connection() as conn:
             cursor = conn.cursor()
 
-            # Begin explicit transaction for atomicity
             cursor.execute("BEGIN")
 
             try:
@@ -79,13 +116,13 @@ def apply_migration(migration_file: Path) -> bool:
                 uses_temp_tables = 'TEMP TABLE' in sql_statements.upper()
 
                 if uses_temp_tables:
-                    # Execute as a single script to preserve temp table context
                     cursor.executescript(sql_statements)
                 else:
-                    # Split and execute statements individually within the transaction
-                    for statement in sql_statements.split(';'):
+                    # Strip comments and split by semicolon
+                    cleaned_sql = strip_sql_comments(sql_statements)
+                    for statement in cleaned_sql.split(';'):
                         statement = statement.strip()
-                        if statement and not statement.startswith('--'):
+                        if statement:
                             cursor.execute(statement)
 
                 # Record migration in the SAME transaction

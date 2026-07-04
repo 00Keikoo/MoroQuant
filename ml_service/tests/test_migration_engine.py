@@ -269,3 +269,114 @@ def test_temp_table_migration_preserves_context(test_db, temp_migration_dir):
         count = cursor.fetchone()[0]
 
     assert count == 3
+
+
+def test_migration_024_regression_single_line_comments_before_create_table(test_db, temp_migration_dir):
+    """
+    Regression test for migration 024 bug.
+
+    Bug: Parser split by ';' and skipped blocks starting with '--'.
+    Result: Comments before CREATE TABLE caused entire block to be skipped.
+    """
+    migration_file = temp_migration_dir / "024_regime_blocks.sql"
+    migration_file.write_text("""-- Migration 024: Regime Execution Policy - Structural Blocking Support
+--
+-- Creates table to support manual structural blocking of regimes as defined in
+-- docs/research/regime_execution_policy.md Section 6 (Decision Rules).
+--
+-- Structural blocks are static overrides for regimes that cannot be traded due to
+-- system design limits (e.g., API constraints, execution infrastructure gaps).
+
+CREATE TABLE IF NOT EXISTS regime_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    regime TEXT NOT NULL UNIQUE,
+    is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
+    reason TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_regime_blocks_regime ON regime_blocks(regime);
+CREATE INDEX IF NOT EXISTS idx_regime_blocks_active ON regime_blocks(is_active);
+""")
+
+    with patch('ml_service.migrations.run_migration.get_database', return_value=test_db):
+        success = apply_migration(migration_file)
+
+    assert success is True
+
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+
+        assert table_exists(cursor, 'regime_blocks') is True
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_regime_blocks_regime'")
+        assert cursor.fetchone() is not None
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_regime_blocks_active'")
+        assert cursor.fetchone() is not None
+
+
+def test_multiline_comments_before_statements(test_db, temp_migration_dir):
+    """Test that multi-line comments before statements are handled correctly."""
+    migration_file = temp_migration_dir / "008_multiline_comments.sql"
+    migration_file.write_text("""/* This is a multi-line comment
+ * that spans several lines
+ * and precedes a CREATE TABLE statement
+ */
+CREATE TABLE IF NOT EXISTS multiline_test (
+    id INTEGER PRIMARY KEY,
+    value TEXT
+);
+
+/* Another multi-line comment */
+CREATE INDEX IF NOT EXISTS idx_multiline_value ON multiline_test(value);
+""")
+
+    with patch('ml_service.migrations.run_migration.get_database', return_value=test_db):
+        success = apply_migration(migration_file)
+
+    assert success is True
+
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+        assert table_exists(cursor, 'multiline_test') is True
+
+
+def test_mixed_comments_and_statements(test_db, temp_migration_dir):
+    """Test handling of mixed single-line and multi-line comments with statements."""
+    migration_file = temp_migration_dir / "009_mixed_comments.sql"
+    migration_file.write_text("""-- Single line comment at top
+
+/* Multi-line comment
+   spanning multiple lines */
+
+-- Another single line comment
+CREATE TABLE IF NOT EXISTS mixed_test (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+-- Comment between statements
+/* Another multi-line comment */
+
+INSERT INTO mixed_test (name) VALUES ('test1');
+INSERT INTO mixed_test (name) VALUES ('test2'); -- inline comment
+
+-- Final comment
+ALTER TABLE mixed_test ADD COLUMN status TEXT DEFAULT 'active';
+""")
+
+    with patch('ml_service.migrations.run_migration.get_database', return_value=test_db):
+        success = apply_migration(migration_file)
+
+    assert success is True
+
+    with test_db.get_connection() as conn:
+        cursor = conn.cursor()
+        assert table_exists(cursor, 'mixed_test') is True
+        assert column_exists(cursor, 'mixed_test', 'status') is True
+
+        cursor.execute("SELECT COUNT(*) FROM mixed_test")
+        count = cursor.fetchone()[0]
+        assert count == 2
