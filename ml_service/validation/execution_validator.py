@@ -64,10 +64,11 @@ def validate_all_positions(
             SELECT id, symbol, direction, entry_price, current_price, size_usdt, qty,
                    stop_loss, take_profit, signal_id, status, realized_pnl,
                    opened_at, closed_at, mae, mfe, mae_timestamp, mfe_timestamp,
-                   eqs, profit_capture_ratio, final_exit_reason,
-                   trailing_stop_enabled, trailing_stop_activated, sl_move_count,
+                   profit_capture_ratio, final_exit_reason,
+                   trailing_stop_activated, sl_move_count,
                    break_even_triggered, confidence, regime, timeframe,
-                   prob_short, prob_neutral, prob_long, execution_edge, skip_reason
+                   prob_short, prob_neutral, prob_long, execution_edge, skip_reason,
+                   execution_policy
             FROM paper_positions
             WHERE status != 'OPEN'
             """
@@ -136,10 +137,11 @@ def main():
                 SELECT id, symbol, direction, entry_price, current_price, size_usdt, qty,
                        stop_loss, take_profit, signal_id, status, realized_pnl,
                        opened_at, closed_at, mae, mfe, mae_timestamp, mfe_timestamp,
-                       eqs, profit_capture_ratio, final_exit_reason,
-                       trailing_stop_enabled, trailing_stop_activated, sl_move_count,
+                       profit_capture_ratio, final_exit_reason,
+                       trailing_stop_activated, sl_move_count,
                        break_even_triggered, confidence, regime, timeframe,
-                       prob_short, prob_neutral, prob_long, execution_edge, skip_reason
+                       prob_short, prob_neutral, prob_long, execution_edge, skip_reason,
+                       execution_policy
                 FROM paper_positions
                 WHERE id = ? AND status != 'OPEN'
                 """,
