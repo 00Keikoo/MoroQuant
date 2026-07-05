@@ -50,6 +50,17 @@ def db_path(monkeypatch):
         test_db.unlink()
 
 
+@pytest.fixture
+def mock_no_network_prices(monkeypatch):
+    """Mock both _fetch_mark_price and _fetch_price to return None.
+
+    Forces runtime to use fallback: mark_price → last_price → current_price → entry_price.
+    Ensures lifecycle tests are deterministic with no HTTP requests.
+    """
+    monkeypatch.setattr(pb, "_fetch_mark_price", lambda symbol: None)
+    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
+
+
 def _reset_db(db_path: Path):
     """Wipe and recreate all tables so each test starts clean."""
     if db_path.exists():
@@ -297,12 +308,10 @@ def test_one_position_per_symbol(db_path):
 
 # ─── 8. Missing price handling ────────────────────────────────────────────
 
-def test_open_without_price_returns_none(db_path, monkeypatch):
+def test_open_without_price_returns_none(db_path, mock_no_network_prices):
     _reset_db(db_path)
     set_trading_mode("PAPER")
     sig = _make_signal(direction="long", price=None)
-    # Force _fetch_price to return None (no network access in tests)
-    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     result = open_paper_position(sig)
     assert result is None
     print("✓ Missing entry price handled gracefully")
@@ -432,11 +441,10 @@ def test_equity_reflects_unrealized_short_profit(db_path):
 
 # ─── 12. Lifecycle / update_open_positions ────────────────────────────────
 
-def test_lifecycle_closes_tp_hit_long(db_path, monkeypatch):
+def test_lifecycle_closes_tp_hit_long(db_path, mock_no_network_prices):
     _reset_db(db_path)
     set_trading_mode("PAPER")
-    # LONG entry=100, tp=110; force _fetch_price to return None so current_price is used
-    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
+    # LONG entry=100, tp=110; current_price=115 triggers TP
     _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
                          current_price=115.0, tp=110.0, sl=90.0)
     summary = update_open_positions()
@@ -445,10 +453,9 @@ def test_lifecycle_closes_tp_hit_long(db_path, monkeypatch):
     print("✓ Lifecycle closed LONG on TP hit")
 
 
-def test_lifecycle_closes_sl_hit_long(db_path, monkeypatch):
+def test_lifecycle_closes_sl_hit_long(db_path, mock_no_network_prices):
     _reset_db(db_path)
     set_trading_mode("PAPER")
-    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
                          current_price=85.0, tp=110.0, sl=90.0)
     summary = update_open_positions()
@@ -456,10 +463,9 @@ def test_lifecycle_closes_sl_hit_long(db_path, monkeypatch):
     print("✓ Lifecycle closed LONG on SL hit")
 
 
-def test_lifecycle_closes_tp_hit_short(db_path, monkeypatch):
+def test_lifecycle_closes_tp_hit_short(db_path, mock_no_network_prices):
     _reset_db(db_path)
     set_trading_mode("PAPER")
-    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     # SHORT: tp below entry. price 85 <= tp 90 → TP hit
     _insert_open_position(db_path, "ETHUSDT", "SHORT", 100.0, qty=1.0,
                          current_price=85.0, tp=90.0, sl=110.0)
@@ -468,10 +474,9 @@ def test_lifecycle_closes_tp_hit_short(db_path, monkeypatch):
     print("✓ Lifecycle closed SHORT on TP hit")
 
 
-def test_lifecycle_closes_sl_hit_short(db_path, monkeypatch):
+def test_lifecycle_closes_sl_hit_short(db_path, mock_no_network_prices):
     _reset_db(db_path)
     set_trading_mode("PAPER")
-    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     # SHORT: sl above entry. price 115 >= sl 110 → SL hit
     _insert_open_position(db_path, "ETHUSDT", "SHORT", 100.0, qty=1.0,
                          current_price=115.0, tp=90.0, sl=110.0)
@@ -480,10 +485,9 @@ def test_lifecycle_closes_sl_hit_short(db_path, monkeypatch):
     print("✓ Lifecycle closed SHORT on SL hit")
 
 
-def test_lifecycle_no_close_when_price_in_range(db_path, monkeypatch):
+def test_lifecycle_no_close_when_price_in_range(db_path, mock_no_network_prices):
     _reset_db(db_path)
     set_trading_mode("PAPER")
-    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
                          current_price=105.0, tp=110.0, sl=90.0)
     summary = update_open_positions()
@@ -492,10 +496,9 @@ def test_lifecycle_no_close_when_price_in_range(db_path, monkeypatch):
     print("✓ Lifecycle keeps position open when in range")
 
 
-def test_lifecycle_closes_expired(db_path, monkeypatch):
+def test_lifecycle_closes_expired(db_path, mock_no_network_prices):
     _reset_db(db_path)
     set_trading_mode("PAPER")
-    monkeypatch.setattr(pb, "_fetch_price", lambda symbol: None)
     # opened 8 days ago → expired
     old_ts = (datetime.now(timezone.utc) - timedelta(days=8)).strftime("%Y-%m-%d %H:%M:%S")
     _insert_open_position(db_path, "BTCUSDT", "LONG", 100.0, qty=1.0,
