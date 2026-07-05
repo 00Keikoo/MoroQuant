@@ -2506,3 +2506,13 @@
 2026-07-03 23:24:51 | ml_trading | INFO | Found 23 migration(s)
 2026-07-03 23:24:51 | ml_trading | INFO | Already applied: 23 migration(s)
 2026-07-03 23:24:51 | ml_trading | INFO | ✓ No pending migrations
+2026-07-05 15:16:55 | ml_trading | INFO | Scheduler started - trade sync every 6h, adaptive retrain every 24h, dominance/signals/outcomes every 1h, account equity snapshot every 5m, drift snapshot every 1h, paper lifecycle every 1m, paper equity snapshot every 5m
+2026-07-05 15:16:55 | ml_trading | INFO | Scheduler stopped
+2026-07-05 15:16:55 | ml_trading | INFO | Checking Position #1 | Symbol: BTCUSDT | Mark Price: 111.0000 | SL: 90.0 | TP: 110.0
+2026-07-05 15:16:55 | ml_trading | INFO | Decision: TP_HIT (mark_price 111.0000 >= tp 110.0)
+2026-07-05 15:16:55 | ml_trading | INFO | Paper position CLOSED: id=1 BTCUSDT LONG status=TP_HIT pnl=$10.00
+2026-07-05 15:16:55 | ml_trading | INFO | Checking Position #2 | Symbol: ETHUSDT | Mark Price: 211.0000 | SL: 210.0 | TP: 180.0
+2026-07-05 15:16:55 | ml_trading | INFO | Decision: SL_HIT (mark_price 211.0000 >= sl 210.0)
+2026-07-05 15:16:55 | ml_trading | INFO | Paper position CLOSED: id=2 ETHUSDT SHORT status=SL_HIT pnl=$-10.00
+2026-07-05 15:16:55 | ml_trading | INFO | Checking Position #3 | Symbol: BNBUSDT | Mark Price: 305.0000 | SL: 270.0 | TP: 330.0
+2026-07-05 15:16:55 | ml_trading | INFO | Decision: HOLD

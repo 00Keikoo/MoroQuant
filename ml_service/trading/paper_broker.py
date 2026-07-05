@@ -119,7 +119,7 @@ def _fetch_mark_price(symbol: str) -> Optional[float]:
     """Fetch Binance Futures Mark Price for TP/SL evaluation.
 
     Uses /fapi/v1/premiumIndex endpoint which returns markPrice.
-    Falls back to last price if mark price unavailable.
+    Returns None on any failure.
     """
     import requests
 
@@ -133,7 +133,7 @@ def _fetch_mark_price(symbol: str) -> Optional[float]:
     except Exception as e:
         logger.debug(f"mark price fetch failed for {symbol}: {e}")
 
-    return _fetch_price(symbol)
+    return None
 
 
 # ── Account ──────────────────────────────────────────────────────────────
@@ -522,25 +522,35 @@ def update_open_positions() -> Dict:
             direction = row["direction"]
             entry = row["entry_price"]
 
-            # ── Refresh price ──────────────────────────────────────────────
-            price = _fetch_price(symbol)
-            if price and price > 0:
-                conn = _get_connection()
-                try:
-                    conn.execute(
-                        "UPDATE paper_positions SET current_price = ? WHERE id = ?",
-                        (price, pid),
-                    )
-                    conn.commit()
-                finally:
-                    conn.close()
-            else:
-                price = row["current_price"] or entry
-
-            # ── Fetch Mark Price for TP/SL evaluation ──────────────────────
+            # ── Price Fallback Cascade (Single Source of Truth) ────────────
             mark_price = _fetch_mark_price(symbol)
+
             if not mark_price or mark_price <= 0:
-                mark_price = price
+                last_price = _fetch_price(symbol)
+
+                if last_price and last_price > 0:
+                    mark_price = last_price
+                elif row["current_price"] and row["current_price"] > 0:
+                    mark_price = row["current_price"]
+                elif entry and entry > 0:
+                    mark_price = entry
+                else:
+                    logger.warning(
+                        f"Position {pid} ({symbol}): no price available "
+                        "(mark_price, last_price, current_price, entry_price all unavailable). Skipping."
+                    )
+                    continue
+
+            # Update current_price in DB with mark_price for MAE/MFE tracking
+            conn = _get_connection()
+            try:
+                conn.execute(
+                    "UPDATE paper_positions SET current_price = ? WHERE id = ?",
+                    (mark_price, pid),
+                )
+                conn.commit()
+            finally:
+                conn.close()
 
             # ── MAE / MFE Tracking ─────────────────────────────────────────
             if mark_price and mark_price > 0 and entry > 0:
@@ -672,7 +682,7 @@ def update_open_positions() -> Dict:
                 opened_at = None
 
             if opened_at and (now - opened_at) > timedelta(hours=POSITION_EXPIRY_HOURS):
-                close_paper_position(pid, status="EXPIRED", close_price=price)
+                close_paper_position(pid, status="EXPIRED", close_price=mark_price)
                 closed_summary["expired"] += 1
 
         except Exception as e:
