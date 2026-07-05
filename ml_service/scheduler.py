@@ -711,7 +711,7 @@ def drift_snapshot_job():
 
 
 def paper_lifecycle_job():
-    """Paper broker lifecycle pass - runs every hour.
+    """Paper broker lifecycle pass - runs every minute.
 
     Only executes when the trading mode is PAPER. Refreshes prices,
     evaluates TP / SL / expiration on open paper positions, and closes
@@ -837,9 +837,9 @@ def start_scheduler():
 
     _scheduler.add_job(
         paper_lifecycle_job,
-        trigger=IntervalTrigger(hours=1),
+        trigger=IntervalTrigger(minutes=1),
         id='paper_lifecycle_job',
-        name='Paper broker lifecycle (TP/SL/expiry) every 1h',
+        name='Paper broker lifecycle (TP/SL/expiry) every 1m',
         replace_existing=True,
     )
 
@@ -856,7 +856,7 @@ def start_scheduler():
         f"Scheduler started - trade sync every {sync_interval_hours}h, "
         "adaptive retrain every 24h, dominance/signals/outcomes every 1h, "
         "account equity snapshot every 5m, drift snapshot every 1h, "
-        "paper lifecycle every 1h, paper equity snapshot every 5m"
+        "paper lifecycle every 1m, paper equity snapshot every 5m"
     )
 
 

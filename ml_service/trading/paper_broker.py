@@ -23,6 +23,7 @@ This module is infrastructure only.  No live Binance execution happens here.
 """
 
 import sqlite3
+import traceback
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -112,6 +113,27 @@ def _fetch_price(symbol: str) -> Optional[float]:
         logger.debug(f"proxy price fetch failed for {symbol}: {e}")
 
     return None
+
+
+def _fetch_mark_price(symbol: str) -> Optional[float]:
+    """Fetch Binance Futures Mark Price for TP/SL evaluation.
+
+    Uses /fapi/v1/premiumIndex endpoint which returns markPrice.
+    Falls back to last price if mark price unavailable.
+    """
+    import requests
+
+    try:
+        url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if "markPrice" in data:
+                return float(data["markPrice"])
+    except Exception as e:
+        logger.debug(f"mark price fetch failed for {symbol}: {e}")
+
+    return _fetch_price(symbol)
 
 
 # ── Account ──────────────────────────────────────────────────────────────
@@ -482,120 +504,67 @@ def update_open_positions() -> Dict:
     now = datetime.now(tz=None)  # naive UTC, matches SQLite timestamps
 
     for pid in position_ids:
-        # Need to re-open a connection per close to avoid overlap with close logic
-        conn = _get_connection()
         try:
-            row = conn.execute(
-                "SELECT * FROM paper_positions WHERE id = ?", (pid,)
-            ).fetchone()
-        finally:
-            conn.close()
-
-        if not row or row["status"] != "OPEN":
-            continue
-
-        closed_summary["checked"] += 1
-        symbol = row["symbol"]
-        direction = row["direction"]
-        entry = row["entry_price"]
-
-        # ── Refresh price ──────────────────────────────────────────────
-        price = _fetch_price(symbol)
-        if price and price > 0:
+            # Need to re-open a connection per close to avoid overlap with close logic
             conn = _get_connection()
             try:
-                conn.execute(
-                    "UPDATE paper_positions SET current_price = ? WHERE id = ?",
-                    (price, pid),
-                )
-                conn.commit()
+                row = conn.execute(
+                    "SELECT * FROM paper_positions WHERE id = ?", (pid,)
+                ).fetchone()
             finally:
                 conn.close()
-        else:
-            price = row["current_price"] or entry
 
-        # ── MAE / MFE Tracking ─────────────────────────────────────────
-        if price and price > 0 and entry > 0:
-            move_pct = (price - entry) / entry
-            if direction == "SHORT":
-                move_pct = -move_pct
+            if not row or row["status"] != "OPEN":
+                continue
 
-            current_mae = row["mae"] or 0.0
-            current_mfe = row["mfe"] or 0.0
+            closed_summary["checked"] += 1
+            symbol = row["symbol"]
+            direction = row["direction"]
+            entry = row["entry_price"]
 
-            updates = {}
-            if move_pct < current_mae:
-                updates["mae"] = move_pct
-                updates["mae_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            if move_pct > current_mfe:
-                updates["mfe"] = move_pct
-                updates["mfe_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            if updates:
+            # ── Refresh price ──────────────────────────────────────────────
+            price = _fetch_price(symbol)
+            if price and price > 0:
                 conn = _get_connection()
                 try:
-                    set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
-                    values = list(updates.values()) + [pid]
                     conn.execute(
-                        f"UPDATE paper_positions SET {set_clause} WHERE id = ?",
-                        values,
+                        "UPDATE paper_positions SET current_price = ? WHERE id = ?",
+                        (price, pid),
                     )
                     conn.commit()
                 finally:
                     conn.close()
+            else:
+                price = row["current_price"] or entry
 
-        # ── Execution Policy Logic ────────────────────────────────────
-        tp = row["take_profit"]
-        sl = row["stop_loss"]
-        
-        row_keys = row.keys()
-        execution_policy = row["execution_policy"] if "execution_policy" in row_keys else "FIXED_SL"
+            # ── Fetch Mark Price for TP/SL evaluation ──────────────────────
+            mark_price = _fetch_mark_price(symbol)
+            if not mark_price or mark_price <= 0:
+                mark_price = price
 
-        # Apply dynamic SL logic based on policy
-        if execution_policy in ("BREAK_EVEN", "TRAILING") and sl and entry > 0 and price > 0:
-            initial_risk = abs(entry - sl)
-            if initial_risk > 0:
-                current_profit_r = 0.0
-                if direction == "LONG":
-                    current_profit_r = (price - entry) / initial_risk
-                else:  # SHORT
-                    current_profit_r = (entry - price) / initial_risk
+            # ── MAE / MFE Tracking ─────────────────────────────────────────
+            if mark_price and mark_price > 0 and entry > 0:
+                move_pct = (mark_price - entry) / entry
+                if direction == "SHORT":
+                    move_pct = -move_pct
 
-                sl_updates = {}
-                sl_move_count = row["sl_move_count"] if "sl_move_count" in row_keys else 0
-                break_even_triggered = row["break_even_triggered"] if "break_even_triggered" in row_keys else 0
+                current_mae = row["mae"] or 0.0
+                current_mfe = row["mfe"] or 0.0
 
-                # Break-even logic (for BREAK_EVEN and TRAILING policies)
-                if not break_even_triggered and current_profit_r >= BREAK_EVEN_AT_R:
-                    sl = entry
-                    sl_updates["stop_loss"] = sl
-                    sl_updates["break_even_triggered"] = 1
-                    sl_updates["sl_move_count"] = sl_move_count + 1
-                    logger.info(f"Position {pid} [{execution_policy}] moved to break-even at +{current_profit_r:.1f}R")
+                updates = {}
+                if move_pct < current_mae:
+                    updates["mae"] = move_pct
+                    updates["mae_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # Trailing logic (only for TRAILING policy)
-                elif execution_policy == "TRAILING" and current_profit_r >= TRAIL_AT_R:
-                    if direction == "LONG":
-                        new_sl = price - (initial_risk * TRAIL_DISTANCE_R)
-                        if new_sl > sl:
-                            sl = new_sl
-                            sl_updates["stop_loss"] = sl
-                            sl_updates["trailing_stop_activated"] = 1
-                            sl_updates["sl_move_count"] = sl_move_count + 1
-                    else:  # SHORT
-                        new_sl = price + (initial_risk * TRAIL_DISTANCE_R)
-                        if new_sl < sl:
-                            sl = new_sl
-                            sl_updates["stop_loss"] = sl
-                            sl_updates["trailing_stop_activated"] = 1
-                            sl_updates["sl_move_count"] = sl_move_count + 1
+                if move_pct > current_mfe:
+                    updates["mfe"] = move_pct
+                    updates["mfe_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                if sl_updates:
+                if updates:
                     conn = _get_connection()
                     try:
-                        set_clause = ", ".join(f"{k} = ?" for k in sl_updates.keys())
-                        values = list(sl_updates.values()) + [pid]
+                        set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+                        values = list(updates.values()) + [pid]
                         conn.execute(
                             f"UPDATE paper_positions SET {set_clause} WHERE id = ?",
                             values,
@@ -604,35 +573,115 @@ def update_open_positions() -> Dict:
                     finally:
                         conn.close()
 
-        # ── TP / SL evaluation ─────────────────────────────────────────
-        hit = None
-        if direction == "LONG":
-            if tp and price >= tp:
-                hit = ("TP_HIT", tp)
-            elif sl and price <= sl:
-                hit = ("SL_HIT", sl)
-        else:  # SHORT
-            if tp and price <= tp:
-                hit = ("TP_HIT", tp)
-            elif sl and price >= sl:
-                hit = ("SL_HIT", sl)
+            # ── Execution Policy Logic ────────────────────────────────────
+            tp = row["take_profit"]
+            sl = row["stop_loss"]
 
-        if hit:
-            status, close_price = hit
-            close_paper_position(pid, status=status, close_price=close_price)
-            closed_summary["tp" if status == "TP_HIT" else "sl"] += 1
+            row_keys = row.keys()
+            execution_policy = row["execution_policy"] if "execution_policy" in row_keys else "FIXED_SL"
+
+            # Apply dynamic SL logic based on policy
+            if execution_policy in ("BREAK_EVEN", "TRAILING") and sl and entry > 0 and mark_price > 0:
+                initial_risk = abs(entry - sl)
+                if initial_risk > 0:
+                    current_profit_r = 0.0
+                    if direction == "LONG":
+                        current_profit_r = (mark_price - entry) / initial_risk
+                    else:  # SHORT
+                        current_profit_r = (entry - mark_price) / initial_risk
+
+                    sl_updates = {}
+                    sl_move_count = row["sl_move_count"] if "sl_move_count" in row_keys else 0
+                    break_even_triggered = row["break_even_triggered"] if "break_even_triggered" in row_keys else 0
+
+                    # Break-even logic (for BREAK_EVEN and TRAILING policies)
+                    if not break_even_triggered and current_profit_r >= BREAK_EVEN_AT_R:
+                        sl = entry
+                        sl_updates["stop_loss"] = sl
+                        sl_updates["break_even_triggered"] = 1
+                        sl_updates["sl_move_count"] = sl_move_count + 1
+                        logger.info(f"Position {pid} [{execution_policy}] moved to break-even at +{current_profit_r:.1f}R")
+
+                    # Trailing logic (only for TRAILING policy)
+                    elif execution_policy == "TRAILING" and current_profit_r >= TRAIL_AT_R:
+                        if direction == "LONG":
+                            new_sl = mark_price - (initial_risk * TRAIL_DISTANCE_R)
+                            if new_sl > sl:
+                                sl = new_sl
+                                sl_updates["stop_loss"] = sl
+                                sl_updates["trailing_stop_activated"] = 1
+                                sl_updates["sl_move_count"] = sl_move_count + 1
+                        else:  # SHORT
+                            new_sl = mark_price + (initial_risk * TRAIL_DISTANCE_R)
+                            if new_sl < sl:
+                                sl = new_sl
+                                sl_updates["stop_loss"] = sl
+                                sl_updates["trailing_stop_activated"] = 1
+                                sl_updates["sl_move_count"] = sl_move_count + 1
+
+                    if sl_updates:
+                        conn = _get_connection()
+                        try:
+                            set_clause = ", ".join(f"{k} = ?" for k in sl_updates.keys())
+                            values = list(sl_updates.values()) + [pid]
+                            conn.execute(
+                                f"UPDATE paper_positions SET {set_clause} WHERE id = ?",
+                                values,
+                            )
+                            conn.commit()
+                        finally:
+                            conn.close()
+
+            # ── TP / SL evaluation using Mark Price ────────────────────────
+            logger.info(
+                f"Checking Position #{pid} | Symbol: {symbol} | "
+                f"Mark Price: {mark_price:.4f} | SL: {sl} | TP: {tp}"
+            )
+
+            hit = None
+            if direction == "LONG":
+                if tp and mark_price >= tp:
+                    hit = ("TP_HIT", tp)
+                    logger.info(f"Decision: TP_HIT (mark_price {mark_price:.4f} >= tp {tp})")
+                elif sl and mark_price <= sl:
+                    hit = ("SL_HIT", sl)
+                    logger.info(f"Decision: SL_HIT (mark_price {mark_price:.4f} <= sl {sl})")
+                else:
+                    logger.info("Decision: HOLD")
+            else:  # SHORT
+                if tp and mark_price <= tp:
+                    hit = ("TP_HIT", tp)
+                    logger.info(f"Decision: TP_HIT (mark_price {mark_price:.4f} <= tp {tp})")
+                elif sl and mark_price >= sl:
+                    hit = ("SL_HIT", sl)
+                    logger.info(f"Decision: SL_HIT (mark_price {mark_price:.4f} >= sl {sl})")
+                else:
+                    logger.info("Decision: HOLD")
+
+            if hit:
+                status, close_price = hit
+                close_paper_position(pid, status=status, close_price=close_price)
+                closed_summary["tp" if status == "TP_HIT" else "sl"] += 1
+                continue
+
+            # ── Expiration ─────────────────────────────────────────────────
+            opened_at_str = row["opened_at"]
+            try:
+                opened_at = datetime.strptime(opened_at_str.replace("Z", ""), "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                opened_at = None
+
+            if opened_at and (now - opened_at) > timedelta(hours=POSITION_EXPIRY_HOURS):
+                close_paper_position(pid, status="EXPIRED", close_price=price)
+                closed_summary["expired"] += 1
+
+        except Exception as e:
+            symbol_name = symbol if 'symbol' in locals() else 'UNKNOWN'
+            logger.error(
+                f"Position evaluation failed for position_id={pid} symbol={symbol_name}: {e}\n"
+                f"{traceback.format_exc()}"
+            )
             continue
-
-        # ── Expiration ─────────────────────────────────────────────────
-        opened_at_str = row["opened_at"]
-        try:
-            opened_at = datetime.strptime(opened_at_str.replace("Z", ""), "%Y-%m-%d %H:%M:%S")
-        except Exception:
-            opened_at = None
-
-        if opened_at and (now - opened_at) > timedelta(hours=POSITION_EXPIRY_HOURS):
-            close_paper_position(pid, status="EXPIRED", close_price=price)
-            closed_summary["expired"] += 1
 
     # Recompute equity after the pass
     calculate_equity()
