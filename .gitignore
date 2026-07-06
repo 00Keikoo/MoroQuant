@@ -57,6 +57,7 @@ ml_service/training_log.txt
 *_AUDIT.md
 *_REPORT.md
 *_VERIFICATION.md
+!docs/**/*.md
 
 # runtime artifacts
 storage/logs/

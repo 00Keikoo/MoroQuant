@@ -10,7 +10,7 @@
 
 This document describes the `model_performance_summary` aggregation layer: a pre-computed table of per-`(symbol, timeframe)` performance metrics derived from final outcomes in `signal_outcomes`. The summary is updated incrementally whenever a final outcome is saved, so query-time cost is O(rows in summary) rather than O(rows in signal_outcomes).
 
-This builds directly on the corrected outcome state machine from `OUTCOME_ENGINE_REPAIR.md`. Only final outcomes (WIN / LOSS / TIMEOUT) flow into the summary — checkpoint monitoring events never touch it.
+This builds directly on the corrected outcome state machine from [outcome_engine_repair.md](../reports/outcome_engine_repair.md). Only final outcomes (WIN / LOSS / TIMEOUT) flow into the summary — checkpoint monitoring events never touch it.
 
 ---
 
@@ -125,7 +125,7 @@ cd ml_service && python3 tests/test_performance_summary.py
 - **No UI / dashboard** — the summary is accessible only via the Python utility functions and the table directly.
 - **No retraining** — prediction and training code untouched.
 - **No new API endpoints** — utilities are Python-level for now. API routes can be added later as a thin wrapper if needed.
-- **Outcome evaluation logic** — unchanged beyond the auto-update hook. The state machine from `OUTCOME_ENGINE_REPAIR.md` is preserved exactly.
+- **Outcome evaluation logic** — unchanged beyond the auto-update hook. The state machine from [outcome_engine_repair.md](../reports/outcome_engine_repair.md) is preserved exactly.
 
 ---
 

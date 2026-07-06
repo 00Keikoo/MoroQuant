@@ -103,7 +103,7 @@ ALTER TABLE signals ADD COLUMN regime TEXT;
 
 ### ✅ Task 1: Database Schema Audit
 **Status:** Complete  
-**Deliverable:** `docs/database_schema_audit.md`
+**Deliverable:** `docs/audits/production/database_schema_audit.md`
 
 **Findings:**
 - Existing schema has solid foundation
@@ -384,8 +384,11 @@ app/
         └── Sidebar.tsx          # Updated with dashboard link
 
 docs/
-├── database_schema_audit.md    # Schema analysis
-└── live_trading_analytics_plan.md  # This document
+├── audits/
+│   └── production/
+│       └── database_schema_audit.md    # Schema analysis
+└── architecture/
+    └── live_trading_analytics_plan.md  # This document
 ```
 
 ---

@@ -1,7 +1,7 @@
 # Outcome Engine Repair Report
 
 **Date:** 2026-06-22
-**Scope:** Fix P0 bugs identified in OUTCOME_LOGIC_AUDIT.md
+**Scope:** Fix P0 bugs identified in [outcome_logic_audit.md](../audits/execution/outcome_logic_audit.md)
 **Status:** Complete — all 6 validation tests pass
 
 ---

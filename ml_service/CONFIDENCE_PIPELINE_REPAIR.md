@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-22
 **Scope**: Production inference pipeline only (no retraining, no model training changes)
-**Trigger**: CONFIDENCE_PIPELINE_AUDIT.md identified two P0 production defects
+**Trigger**: [confidence_pipeline_audit.md](../docs/audits/ml/confidence_pipeline_audit.md) identified two P0 production defects
 
 ---
 

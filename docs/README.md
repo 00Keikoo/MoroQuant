@@ -1,217 +1,54 @@
-# MoroQuant Documentation
+# MoroQuant Documentation Index
 
-Documentation for the MoroQuant algorithmic trading system.
-
----
-
-## Folder Structure
-
-### `research/`
-
-Mathematical specifications, statistical frameworks, and quantitative research.
-
-**Content:**
-- Metric definitions and formulas
-- Statistical validation methodologies
-- Algorithm specifications
-- Research-backed execution frameworks
-
-**Ownership:** MoroQuant
-
-**When to add here:**
-- Mathematical derivations
-- Statistical justifications
-- Research specifications with formal definitions
-- Algorithm design documents with proofs
-
-### `audits/`
-
-Production verification reports and system health checks.
-
-**Content:**
-- Production pipeline audits
-- Schema verification reports
-- Model loading audits
-- Calibration investigations
-- Performance analysis reports
-
-**Ownership:** MoroQuant
-
-**When to add here:**
-- System verification reports
-- Production health checks
-- Investigation results
-- Root cause analyses
-- Performance diagnostics
-
-### `architecture/`
-
-System design, implementation plans, and strategic roadmaps.
-
-**Content:**
-- Implementation plans
-- Readiness assessments
-- Architecture decisions
-- Feature specifications
-- Strategic roadmaps
-
-**Ownership:** MoroQuant
-
-**When to add here:**
-- System design documents
-- Feature implementation plans
-- Architecture decision records (ADRs)
-- Readiness assessments
-- Roadmap documents
-
-### `migrations/`
-
-Historical database changes and migration summaries.
-
-**Content:**
-- Migration summaries
-- Schema change logs
-- Production deployment records
-- Configuration updates
-
-**Ownership:** MoroQuant
-
-**When to add here:**
-- Database migration summaries
-- Production deployment logs
-- Major configuration changes
-- System migration records
-
-### `images/`
-
-Diagrams, charts, and visual assets referenced in documentation.
-
-**Content:**
-- Architecture diagrams
-- Flow charts
-- Performance graphs
-- Screenshots
-
-**When to add here:**
-- Any visual assets referenced in markdown documents
-- Diagrams exported from tools
-- Charts and graphs
+Welcome to the MoroQuant algorithmic trading system documentation repository. This directory is organized using a domain-oriented structure.
 
 ---
 
-## Research Knowledge Base
+## Directory Hierarchy
 
-**[→ View Research Index](research/README.md)**
+### [architecture/](file:///home/zafka/trade-dashboard/docs/architecture/)
+System design, implementation plans, and strategic technical blueprints.
+- **Example:** [performance_measurement_foundation.md](file:///home/zafka/trade-dashboard/docs/architecture/performance_measurement_foundation.md)
 
-Research specifications are the **ONLY** source of truth for all implementation work in MoroQuant.
+### [audits/](file:///home/zafka/trade-dashboard/docs/audits/)
+System verification reports, reliability audits, and quality metrics divided by domain.
+- **[ml/](file:///home/zafka/trade-dashboard/docs/audits/ml/)**: Machine learning models, prediction behavior, calibration, and signal quality (e.g., [confidence_pipeline_audit.md](file:///home/zafka/trade-dashboard/docs/audits/ml/confidence_pipeline_audit.md)).
+- **[execution/](file:///home/zafka/trade-dashboard/docs/audits/execution/)**: Trading order placement, checkpoint evaluations, and edge measurement (e.g., [outcome_logic_audit.md](file:///home/zafka/trade-dashboard/docs/audits/execution/outcome_logic_audit.md)).
+- **[runtime/](file:///home/zafka/trade-dashboard/docs/audits/runtime/)**: Active daemon processes, event loops, and scheduler execution logs.
+- **[production/](file:///home/zafka/trade-dashboard/docs/audits/production/)**: Live environments, data pipeline integrity, and synchronization audits (e.g., [live_analytics_audit.md](file:///home/zafka/trade-dashboard/docs/audits/production/live_analytics_audit.md)).
+- **[telegram/](file:///home/zafka/trade-dashboard/docs/audits/telegram/)**: Audits of the alert notifications system.
 
-### Research-Driven Engineering Workflow
+### [adr/](file:///home/zafka/trade-dashboard/docs/adr/)
+Architecture Decision Records (ADRs) capturing key design decisions.
+- **ADR-001:** [ADR-001-Documentation-Structure.md](file:///home/zafka/trade-dashboard/docs/adr/ADR-001-Documentation-Structure.md)
 
-```
-Research
-    ↓
-Research Specification (.md)
-    ↓
-Version Control (Git)
-    ↓
-Implementation
-    ↓
-Architecture Review
-    ↓
-Production
-```
+### [database/](file:///home/zafka/trade-dashboard/docs/database/)
+Database schemas and configurations.
+- **[migrations/](file:///home/zafka/trade-dashboard/docs/database/migrations/)**: Summaries of historical database migrations and validation reports (e.g., [triple_barrier_migration_report.md](file:///home/zafka/trade-dashboard/docs/database/migrations/triple_barrier_migration_report.md)).
 
-**Critical Principles:**
+### [reports/](file:///home/zafka/trade-dashboard/docs/reports/)
+System health reports, performance reviews, and verification of repairs.
+- **Example:** [live_performance_report.md](file:///home/zafka/trade-dashboard/docs/reports/live_performance_report.md), [outcome_engine_repair.md](file:///home/zafka/trade-dashboard/docs/reports/outcome_engine_repair.md).
 
-1. **Research documents are authoritative**  
-   Implementation must follow research specifications exactly. No simplification, no improvisation, no assumptions.
+### [guides/](file:///home/zafka/trade-dashboard/docs/guides/)
+Step-by-step setup instructions and configuration procedures.
+- **Example:** [telegram_setup.md](file:///home/zafka/trade-dashboard/docs/guides/telegram_setup.md)
 
-2. **Implementation follows research**  
-   Code implements specifications. Research does not document existing code. The direction is always: research → implementation.
+### [references/](file:///home/zafka/trade-dashboard/docs/references/)
+Policy documents, specifications, and signal criteria rules.
+- **Example:** [telegram_filters.md](file:///home/zafka/trade-dashboard/docs/references/telegram_filters.md)
 
-3. **Architecture reviews verify compliance**  
-   Reviews confirm that implementation matches the research specification exactly.
-
-4. **Chat conversations are not authoritative**  
-   Conversations are temporary context. Implementation must depend only on versioned research documents in git.
-
-5. **Stop if specifications are incomplete**  
-   If a research document is missing required sections (formulas, thresholds, deterministic rules), implementation must stop and request clarification rather than guessing.
-
-See [research/README.md](research/README.md) for the complete research index, implementation protocol, and document requirements.
+### Empty Structure for Future Documentation:
+- **[roadmap/](file:///home/zafka/trade-dashboard/docs/roadmap/)**: Future milestones and feature roadmaps.
+- **[sprints/](file:///home/zafka/trade-dashboard/docs/sprints/)**: Sprint goals and task tracking.
+- **[testing/](file:///home/zafka/trade-dashboard/docs/testing/)**: Quality assurance test suites and coverage reports.
+- **[runbooks/](file:///home/zafka/trade-dashboard/docs/runbooks/)**: Operational incident recovery runbooks.
+- **[book/](file:///home/zafka/trade-dashboard/docs/book/)**: Consolidated user manuals and knowledge base.
 
 ---
 
 ## Documentation Philosophy
 
 1. **Single Source of Truth**: Each document has one canonical location. No duplicates.
-
-2. **Immutable Research**: Documents in `research/` define specifications. Implementation follows research, not the reverse.
-
-3. **Audits Record Reality**: Audit documents capture system state at a point in time. They are historical records, not living documents.
-
-4. **Architecture Evolves**: Implementation plans and roadmaps in `architecture/` are living documents that reflect current direction.
-
-5. **Migrations Are Append-Only**: Migration records are never modified after deployment. New migrations reference previous ones.
-
----
-
-## Naming Conventions
-
-### Research Documents
-- Format: `{topic}_specification.md` or `{topic}_framework.md`
-- Example: `execution_audit_framework.md`
-- Use descriptive, permanent names
-
-### Audit Reports
-- Format: `{system_component}_audit.md` or `{investigation_topic}_analysis.md`
-- Example: `production_pipeline_audit.md`, `sharpe-pipeline-analysis.md`
-- Include scope in filename
-
-### Architecture Documents
-- Format: `{feature_name}_plan.md` or `{assessment_type}_readiness.md`
-- Example: `live_trading_analytics_plan.md`, `paper_trading_readiness.md`
-- Use action-oriented names
-
-### Migration Summaries
-- Format: `{change_description}_migration_summary.md`
-- Example: `production_migration_summary.md`
-- Keep names brief but descriptive
-
----
-
-## Cross-References
-
-When referencing other documents, use relative paths:
-
-```markdown
-See [Execution Audit Framework](../research/execution_audit_framework.md) for metric definitions.
-```
-
----
-
-## Maintenance
-
-- **Quarterly Review**: Archive obsolete audits, update roadmaps, verify cross-references
-- **On Major Changes**: Update architecture documents to reflect new patterns
-- **Before Deployment**: Create migration summary if schema/config changes
-- **After Research**: Add specification to `research/` before implementation begins
-
----
-
-## Quick Navigation
-
-**Recent Research:**
-- [Execution Audit Framework](research/execution_audit_framework.md)
-
-**Latest Audits:**
-- [Sharpe Pipeline Analysis](audits/sharpe-pipeline-analysis.md)
-- [Production Pipeline Audit](audits/production_pipeline_audit.md)
-- [Calibration Audit](audits/calibration_audit.md)
-
-**Current Roadmap:**
-- [Next Steps](architecture/next_steps.md)
-- [Paper Trading Readiness](architecture/paper_trading_readiness.md)
-
-**Recent Migrations:**
-- [Production Migration Summary](migrations/production_migration_summary.md)
+2. **Immutable Research**: Documents in `research/` define specifications. Code implements specification, not the reverse.
+3. **Audits Record Reality**: Audits capture system state at a point in time. They are historical records.

@@ -181,7 +181,7 @@ if cal_artifact:
     prediction_proba = cal_mod.apply_calibrator(cal, raw_proba.reshape(1, -1))[0]
 ```
 
-**Issue:** Based on calibration audit (docs/calibration_audit.md), applying calibration can cause distribution mismatch.
+**Issue:** Based on calibration audit (docs/audits/ml/calibration_audit.md), applying calibration can cause distribution mismatch.
 
 **Research Used:** Raw probabilities (no calibration).
 

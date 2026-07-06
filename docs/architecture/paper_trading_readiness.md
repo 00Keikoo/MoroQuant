@@ -140,7 +140,7 @@ probas_raw = model.predict_proba(X_test[valid_rows])
 - No distribution mismatch risk
 - Confidence filtering works with raw probabilities
 
-**Documentation:** See `docs/calibration_audit.md`
+**Documentation:** See `docs/audits/ml/calibration_audit.md`
 
 **Gap:** No per-model calibration in production (acceptable trade-off)
 

@@ -288,6 +288,6 @@ pm2 restart ml-service
 **Issues?** Check logs: `pm2 logs ml-service`
 
 **Questions?** Refer to:
-- `docs/production_pipeline_audit.md` - Full audit report
-- `docs/calibration_audit.md` - Calibration analysis
-- `docs/paper_trading_readiness.md` - Production readiness assessment
+- `docs/audits/production/production_pipeline_audit.md` - Full audit report
+- `docs/audits/ml/calibration_audit.md` - Calibration analysis
+- `docs/architecture/paper_trading_readiness.md` - Production readiness assessment
