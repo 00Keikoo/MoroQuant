@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ml_service.api.routes import router
+from ml_service.api.explorer_routes import router as explorer_router
 from ml_service.services.crypto_price_service import get_crypto_service
 from ml_service.services.proxy_price_service import get_proxy_service
 from ml_service.scheduler import start_scheduler
@@ -30,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api")
+app.include_router(explorer_router)
 
 dashboard_path = Path(__file__).parent.parent / "dashboard.html"
 

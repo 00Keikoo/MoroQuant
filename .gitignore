@@ -61,7 +61,6 @@ ml_service/training_log.txt
 
 # runtime artifacts
 storage/logs/
-*.json
 
 # validation outputs
 validation_results.json
@@ -69,3 +68,20 @@ registry_validation_results.json
 production_model_audit_results.json
 storage/logs/*.log
 ml_service/scratch/
+
+
+# Python tooling
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.ide/
+
+ml_service/active_compatibility_check.json
+ml_service/registry_consistency_results.json
