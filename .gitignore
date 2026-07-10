@@ -85,3 +85,4 @@ htmlcov/
 
 ml_service/active_compatibility_check.json
 ml_service/registry_consistency_results.json
+backups/
