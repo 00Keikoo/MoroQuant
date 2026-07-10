@@ -1,0 +1,193 @@
+# Research Experiment Dashboard Data Contract Specification
+
+This document details the data contracts, API schemas, and JSON representation formats for the Research Experiment Dashboard.
+
+---
+
+## 1. REST API Endpoint Specifications
+
+### 1.1 List Experiments
+* **Endpoint**: `GET /research/experiments`
+* **Description**: Retrieve a summary list of all registered quantitative experiments.
+* **Query Parameters**:
+  * `strategy` (optional string): Filter by strategy class (e.g. `mean_reversion`).
+  * `status` (optional string): Filter by experiment state (e.g. `COMPLETED`).
+* **Response payload**:
+```json
+[
+  {
+    "experiment_id": "exp_trend_following_001",
+    "name": "Trend Following Base Test",
+    "strategy_name": "trend_following",
+    "created_at": "2026-07-09T00:00:00Z",
+    "status": "COMPLETED",
+    "metrics": {
+      "sharpe_ratio": 1.85,
+      "max_drawdown": -0.124,
+      "total_return": 0.321
+    }
+  }
+]
+```
+
+### 1.2 Get Experiment Detail
+* **Endpoint**: `GET /research/experiments/{id}`
+* **Description**: Retrieve configuration parameters and execution details for a specific experiment run.
+* **Response payload**:
+```json
+{
+  "experiment_id": "exp_trend_following_001",
+  "name": "Trend Following Base Test",
+  "description": "Base test using standard SMA feature parameter sets.",
+  "strategy_name": "trend_following",
+  "parameters": {
+    "fast_period": 10,
+    "slow_period": 30,
+    "threshold": 0.015
+  },
+  "created_at": "2026-07-09T00:00:00Z",
+  "status": "COMPLETED",
+  "duration_seconds": 182.4,
+  "git_commit": "a1b2c3d4e5f6g7h8i9j0"
+}
+```
+
+### 1.3 Get Experiment Lineage
+* **Endpoint**: `GET /research/experiments/{id}/lineage`
+* **Description**: Retrieve data and feature dependency lineage mapping for the experiment.
+* **Response payload**:
+```json
+{
+  "experiment_id": "exp_trend_following_001",
+  "source_dataset_id": "ds_all_v1.0.0",
+  "source_dataset_fingerprint": "a9f8b7c6d5e4f3a2...",
+  "feature_datasets": [
+    {
+      "feature_dataset_id": "fds_rsi_14_v1.0.0_ds_ds_all_v1.0.0",
+      "feature_version_id": "rsi_14_v1.0.0",
+      "fingerprint": "bf84c819d43c65d5..."
+    }
+  ]
+}
+```
+
+### 1.4 Compare Experiments
+* **Endpoint**: `POST /research/experiments/compare`
+* **Description**: Generate a side-by-side comparison matrix of metrics and parameter differentials for two or more experiments.
+* **Request body**:
+```json
+{
+  "experiment_ids": [
+    "exp_trend_following_001",
+    "exp_trend_following_002"
+  ]
+}
+```
+* **Response payload**:
+```json
+{
+  "compared_ids": [
+    "exp_trend_following_001",
+    "exp_trend_following_002"
+  ],
+  "metrics_comparison": {
+    "sharpe_ratio": {
+      "exp_trend_following_001": 1.85,
+      "exp_trend_following_002": 2.10
+    },
+    "max_drawdown": {
+      "exp_trend_following_001": -0.124,
+      "exp_trend_following_002": -0.098
+    }
+  },
+  "parameter_differentials": {
+    "fast_period": {
+      "exp_trend_following_001": 10,
+      "exp_trend_following_002": 15
+    }
+  }
+}
+```
+
+### 1.5 Get Experiment Evaluation Summary
+* **Endpoint**: `GET /research/experiments/{id}/evaluation`
+* **Description**: Retrieve performance evaluation summaries, trade distributions, and key statistical indicators.
+* **Response payload**:
+```json
+{
+  "experiment_id": "exp_trend_following_001",
+  "total_trades": 142,
+  "win_rate": 0.542,
+  "profit_factor": 1.68,
+  "average_trade_return": 0.0024,
+  "daily_return_volatility": 0.0156,
+  "information_coefficient": 0.082
+}
+```
+
+---
+
+## 2. Python Data Schema Contracts
+
+These definitions represent the code contracts for serialization inside `types.py`:
+
+```python
+from dataclasses import dataclass, field
+from typing import Dict, Any, List
+
+@dataclass(frozen=True)
+class ResearchExperimentSummary:
+    """Summary record of an experiment for listing views."""
+    experiment_id: str
+    name: str
+    strategy_name: str
+    created_at: str
+    status: str
+    metrics: Dict[str, float]
+
+@dataclass(frozen=True)
+class ExperimentDetail:
+    """Full parameter configuration of an experiment."""
+    experiment_id: str
+    name: str
+    description: str
+    strategy_name: str
+    parameters: Dict[str, Any]
+    created_at: str
+    status: str
+    duration_seconds: float
+    git_commit: str
+
+@dataclass(frozen=True)
+class FeatureLineageEntry:
+    """Lineage entry for an associated feature dataset."""
+    feature_dataset_id: str
+    feature_version_id: str
+    fingerprint: str
+
+@dataclass(frozen=True)
+class ExperimentLineage:
+    """Lineage trace mapping an experiment to its source data roots."""
+    experiment_id: str
+    source_dataset_id: str
+    source_dataset_fingerprint: str
+    feature_datasets: List[FeatureLineageEntry]
+
+@dataclass(frozen=True)
+class ComparisonResult:
+    """Comparison matrix across multiple experiments."""
+    compared_ids: List[str]
+    metrics_comparison: Dict[str, Dict[str, float]]
+    parameter_differentials: Dict[str, Dict[str, Any]]
+
+@dataclass(frozen=True)
+class EvaluationSummary:
+    """Evaluation summary metrics generated by backtest evaluation run."""
+    experiment_id: str
+    total_trades: int
+    win_rate: float
+    profit_factor: float
+    average_trade_return: float
+    daily_return_volatility: float
+    information_coefficient: float
+```

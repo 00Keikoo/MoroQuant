@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 
-DB_PATH = Path(__file__).parent.parent.parent / "storage" / "database.db"
+DB_PATH = Path(__file__).parent.parent.parent.parent / "storage" / "database.db"
 
 
 def get_connection() -> sqlite3.Connection:

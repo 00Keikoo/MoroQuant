@@ -18,6 +18,9 @@ pydantic
 # Database
 sqlalchemy
 
+# Data Serialization
+pyarrow
+
 # Utilities
 pyyaml
 python-dotenv
