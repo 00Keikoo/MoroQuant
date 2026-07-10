@@ -56,6 +56,10 @@ def log_execution_decision(
     execution_price: Optional[float] = None,
     slippage_pct: Optional[float] = None,
     execution_latency_ms: Optional[int] = None,
+    source: str = "PAPER",
+    signal_timestamp: Optional[int] = None,
+    execution_policy: Optional[str] = None,
+    reason_detail: Optional[str] = None,
 ) -> Optional[int]:
     """Log an execution decision (ACCEPTED or REJECTED).
 
@@ -73,8 +77,9 @@ def log_execution_decision(
             INSERT INTO execution_decisions
                 (symbol, direction, decision, reason, signal_id, position_id,
                  confidence, regime, timeframe, prob_short, prob_neutral, prob_long,
-                 execution_edge, signal_price, execution_price, slippage_pct, execution_latency_ms)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 execution_edge, signal_price, execution_price, slippage_pct, execution_latency_ms,
+                 source, signal_timestamp, execution_policy, reason_detail)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 symbol,
@@ -94,6 +99,10 @@ def log_execution_decision(
                 execution_price,
                 slippage_pct,
                 execution_latency_ms,
+                source,
+                signal_timestamp,
+                execution_policy,
+                reason_detail,
             ),
         )
         conn.commit()

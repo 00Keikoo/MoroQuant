@@ -31,6 +31,12 @@ CREATE TABLE IF NOT EXISTS execution_decisions (
     slippage_pct REAL,
     execution_latency_ms INTEGER,
 
+    -- Source and metadata
+    source TEXT NOT NULL DEFAULT 'PAPER' CHECK(source IN ('PAPER', 'LIVE', 'BACKTEST', 'RESEARCH')),
+    signal_timestamp INTEGER,
+    execution_policy TEXT,
+    reason_detail TEXT,
+
     -- Audit timestamp
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

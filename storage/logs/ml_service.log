@@ -2873,3 +2873,25 @@ Exception: Network timeout
 2026-07-10 19:47:55 | ml_trading | INFO | Trading mode changed to PAPER
 2026-07-10 19:47:55 | ml_trading | INFO | Trading mode changed to LIVE
 2026-07-10 19:47:55 | ml_trading | INFO | Trading mode changed to MAINTENANCE
+2026-07-10 22:42:33 | ml_trading | INFO | Database schema initialized
+2026-07-10 22:42:33 | ml_trading | INFO | Database initialized at /home/zafka/trade-dashboard/ml_service/storage/database.db
+2026-07-10 22:42:33 | ml_trading | ERROR | Database error: table signals has no column named valid_until
+2026-07-10 22:42:33 | ml_trading | ERROR | Verification script failed: table signals has no column named valid_until
+2026-07-10 22:45:07 | ml_trading | INFO | Database schema initialized
+2026-07-10 22:45:07 | ml_trading | INFO | Database initialized at /home/zafka/trade-dashboard/ml_service/storage/database.db
+2026-07-10 22:45:07 | ml_trading | INFO | Created test signals: expired=22832, future=22833, legacy=22834
+2026-07-10 22:45:07 | ml_trading | INFO | ================================================================================
+2026-07-10 22:45:07 | ml_trading | INFO | Signal Lifecycle Verification
+2026-07-10 22:45:07 | ml_trading | INFO | ================================================================================
+2026-07-10 22:45:07 | ml_trading | INFO | Found 2 ACTIVE test signals with non-NULL valid_until
+2026-07-10 22:45:07 | ml_trading | INFO | Lifecycle evaluation: 1 status transitions
+2026-07-10 22:45:07 | ml_trading | INFO | 
+Verification Results:
+2026-07-10 22:45:07 | ml_trading | INFO | --------------------------------------------------------------------------------
+2026-07-10 22:45:07 | ml_trading | INFO | ✓ 1d: ACTIVE (valid_until=NULL) - PASS
+2026-07-10 22:45:07 | ml_trading | INFO | ✓ 1h: EXPIRED (valid_until=2026-07-10T20:45:07.135858) - PASS
+2026-07-10 22:45:07 | ml_trading | INFO | ✓ 4h: ACTIVE (valid_until=2026-07-11T00:45:07.135858) - PASS
+2026-07-10 22:45:07 | ml_trading | INFO | --------------------------------------------------------------------------------
+2026-07-10 22:45:07 | ml_trading | INFO | Test signals cleaned up
+2026-07-10 22:45:07 | ml_trading | INFO | ================================================================================
+2026-07-10 22:45:07 | ml_trading | INFO | VERIFICATION PASSED: All test cases behaved correctly

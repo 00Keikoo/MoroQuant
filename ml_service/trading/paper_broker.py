@@ -213,23 +213,54 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
     from ml_service.trading.mode_manager import get_trading_mode
     if get_trading_mode() != "PAPER":
         logger.info("Paper broker: mode != PAPER, skipping open")
-        log_execution_decision("REJECTED", signal.get("symbol") or "UNKNOWN", reason=RejectReason.MODE_NOT_PAPER)
+        log_execution_decision(
+            "REJECTED",
+            signal.get("symbol") or "UNKNOWN",
+            reason=RejectReason.MODE_NOT_PAPER,
+            source="PAPER",
+            signal_timestamp=signal.get("timestamp"),
+            execution_policy=EXECUTION_POLICY,
+        )
         return None
 
     direction_raw = (signal.get("direction") or "").upper()
     if direction_raw == "NEUTRAL":
         logger.info("Paper broker: skipping neutral signal")
-        log_execution_decision("REJECTED", signal.get("symbol") or "UNKNOWN", direction_raw, RejectReason.NEUTRAL_SIGNAL)
+        log_execution_decision(
+            "REJECTED",
+            signal.get("symbol") or "UNKNOWN",
+            direction_raw,
+            RejectReason.NEUTRAL_SIGNAL,
+            source="PAPER",
+            signal_timestamp=signal.get("timestamp"),
+            execution_policy=EXECUTION_POLICY,
+        )
         return None
     if direction_raw not in ("LONG", "SHORT"):
         logger.info(f"Paper broker: unknown direction {direction_raw!r}, skipping")
-        log_execution_decision("REJECTED", signal.get("symbol") or "UNKNOWN", direction_raw, RejectReason.INVALID_DIRECTION)
+        log_execution_decision(
+            "REJECTED",
+            signal.get("symbol") or "UNKNOWN",
+            direction_raw,
+            RejectReason.INVALID_DIRECTION,
+            source="PAPER",
+            signal_timestamp=signal.get("timestamp"),
+            execution_policy=EXECUTION_POLICY,
+        )
         return None
 
     symbol = signal.get("symbol")
     if not symbol:
         logger.warning("Paper broker: signal has no symbol")
-        log_execution_decision("REJECTED", "UNKNOWN", direction_raw, RejectReason.MISSING_SYMBOL)
+        log_execution_decision(
+            "REJECTED",
+            "UNKNOWN",
+            direction_raw,
+            RejectReason.MISSING_SYMBOL,
+            source="PAPER",
+            signal_timestamp=signal.get("timestamp"),
+            execution_policy=EXECUTION_POLICY,
+        )
         return None
 
     # ── 1. Confidence Filter ───────────────────────────────────────────
@@ -242,7 +273,17 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
                     f"Paper broker skipped {symbol}: "
                     f"confidence {conf_val} < required {MIN_EXECUTION_CONFIDENCE}"
                 )
-                log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.LOW_CONFIDENCE, confidence=conf_val)
+                log_execution_decision(
+                    "REJECTED",
+                    symbol,
+                    direction_raw,
+                    RejectReason.LOW_CONFIDENCE,
+                    confidence=conf_val,
+                    source="PAPER",
+                    signal_timestamp=signal.get("timestamp"),
+                    execution_policy=EXECUTION_POLICY,
+                    reason_detail=f"confidence={conf_val},required={MIN_EXECUTION_CONFIDENCE}",
+                )
                 return None
         except (ValueError, TypeError):
             pass
@@ -260,7 +301,18 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
                 f"Paper broker skipped {symbol}: regime {regime} execution blocked "
                 f"(reason: {decision.block_reason})"
             )
-            log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.REGIME_BLOCK, confidence=confidence, regime=regime)
+            log_execution_decision(
+                "REJECTED",
+                symbol,
+                direction_raw,
+                RejectReason.REGIME_BLOCK,
+                confidence=confidence,
+                regime=regime,
+                source="PAPER",
+                signal_timestamp=signal.get("timestamp"),
+                execution_policy=EXECUTION_POLICY,
+                reason_detail=decision.block_reason,
+            )
             return None
 
         regime_sizing_multiplier = decision.sizing_multiplier
@@ -284,10 +336,22 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
                 logger.info(
                     f"Paper broker skipped {symbol}: probability edge {edge:.2f} < required {MIN_PROBABILITY_EDGE:.2f}"
                 )
-                log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.LOW_EDGE,
-                                     confidence=confidence, regime=signal.get("regime"),
-                                     prob_short=signal.get("prob_short"), prob_neutral=signal.get("prob_neutral"),
-                                     prob_long=signal.get("prob_long"), execution_edge=edge)
+                log_execution_decision(
+                    "REJECTED",
+                    symbol,
+                    direction_raw,
+                    RejectReason.LOW_EDGE,
+                    confidence=confidence,
+                    regime=signal.get("regime"),
+                    prob_short=signal.get("prob_short"),
+                    prob_neutral=signal.get("prob_neutral"),
+                    prob_long=signal.get("prob_long"),
+                    execution_edge=edge,
+                    source="PAPER",
+                    signal_timestamp=signal.get("timestamp"),
+                    execution_policy=EXECUTION_POLICY,
+                    reason_detail=f"edge={edge:.4f},required={MIN_PROBABILITY_EDGE:.4f}",
+                )
                 return None
         except (ValueError, TypeError):
             pass
@@ -299,8 +363,18 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
     execution_price = _fetch_price(symbol)
     if execution_price is None or execution_price <= 0:
         logger.warning(f"Paper broker: no live execution price for {symbol}")
-        log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.NO_PRICE,
-                             signal_price=signal_price, confidence=confidence, regime=signal.get("regime"))
+        log_execution_decision(
+            "REJECTED",
+            symbol,
+            direction_raw,
+            RejectReason.NO_PRICE,
+            signal_price=signal_price,
+            confidence=confidence,
+            regime=signal.get("regime"),
+            source="PAPER",
+            signal_timestamp=signal.get("timestamp"),
+            execution_policy=EXECUTION_POLICY,
+        )
         return None
 
     execution_timestamp = datetime.now(timezone.utc)
@@ -333,8 +407,18 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
                     f"{symbol} {direction_raw} skipped: "
                     f"cooldown active (last SL {hours_ago:.1f}h ago)"
                 )
-                log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.COOLDOWN,
-                                     confidence=confidence, regime=signal.get("regime"))
+                log_execution_decision(
+                    "REJECTED",
+                    symbol,
+                    direction_raw,
+                    RejectReason.COOLDOWN,
+                    confidence=confidence,
+                    regime=signal.get("regime"),
+                    source="PAPER",
+                    signal_timestamp=signal.get("timestamp"),
+                    execution_policy=EXECUTION_POLICY,
+                    reason_detail=f"last_sl={hours_ago:.1f}h_ago,cooldown={COOLDOWN_AFTER_SL_HOURS}h",
+                )
                 return None
 
         # ── 5. Max open positions ─────────────────────────────────────────
@@ -346,8 +430,18 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
                 logger.info(
                     f"Paper broker: max open positions ({MAX_OPEN_POSITIONS}) reached"
                 )
-                log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.MAX_POSITIONS,
-                                     confidence=confidence, regime=signal.get("regime"))
+                log_execution_decision(
+                    "REJECTED",
+                    symbol,
+                    direction_raw,
+                    RejectReason.MAX_POSITIONS,
+                    confidence=confidence,
+                    regime=signal.get("regime"),
+                    source="PAPER",
+                    signal_timestamp=signal.get("timestamp"),
+                    execution_policy=EXECUTION_POLICY,
+                    reason_detail=f"open_count={open_count},max={MAX_OPEN_POSITIONS}",
+                )
                 return None
 
         # ── One open position per symbol ───────────────────────────────
@@ -357,8 +451,18 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
         ).fetchone()
         if existing:
             logger.info(f"Paper broker: open position already exists for {symbol}")
-            log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.DUPLICATE_POSITION,
-                                 confidence=confidence, regime=signal.get("regime"))
+            log_execution_decision(
+                "REJECTED",
+                symbol,
+                direction_raw,
+                RejectReason.DUPLICATE_POSITION,
+                confidence=confidence,
+                regime=signal.get("regime"),
+                source="PAPER",
+                signal_timestamp=signal.get("timestamp"),
+                execution_policy=EXECUTION_POLICY,
+                reason_detail=f"existing_position_id={existing['id']}",
+            )
             return None
 
         # ── Position sizing ────────────────────────────────────────────
@@ -370,8 +474,18 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
 
         if qty <= 0:
             logger.warning("Paper broker: computed qty <= 0, skipping")
-            log_execution_decision("REJECTED", symbol, direction_raw, RejectReason.INVALID_QUANTITY,
-                                 confidence=confidence, regime=signal.get("regime"))
+            log_execution_decision(
+                "REJECTED",
+                symbol,
+                direction_raw,
+                RejectReason.INVALID_QUANTITY,
+                confidence=confidence,
+                regime=signal.get("regime"),
+                source="PAPER",
+                signal_timestamp=signal.get("timestamp"),
+                execution_policy=EXECUTION_POLICY,
+                reason_detail=f"qty={qty},size_usdt={size_usdt},entry_price={entry_price}",
+            )
             return None
 
         # ── Resolve signal_id (look up most recent persisted signal) ──
@@ -441,6 +555,9 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
             execution_price=execution_price,
             slippage_pct=slippage_pct,
             execution_latency_ms=execution_latency_ms,
+            source="PAPER",
+            signal_timestamp=signal.get("timestamp"),
+            execution_policy=EXECUTION_POLICY,
         )
 
         logger.info(

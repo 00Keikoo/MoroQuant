@@ -756,6 +756,60 @@ def paper_equity_snapshot_job():
         logger.error(f"Paper equity snapshot failed: {e}")
 
 
+def signal_lifecycle_job():
+    """Evaluate ACTIVE signals for expiration - runs every 5 minutes.
+
+    Queries ACTIVE signals with non-NULL valid_until and transitions
+    expired signals to EXPIRED status. Signals with NULL valid_until
+    (legacy signals) are ignored. TP/SL evaluation is handled separately
+    by the outcome_evaluation_job.
+    """
+    from ml_service.signal_lifecycle import bulk_update_signal_statuses
+
+    logger.info("Signal lifecycle evaluation started")
+
+    db = get_database()
+    try:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, symbol, timeframe, direction, signal_status,
+                       take_profit, stop_loss, valid_until
+                FROM signals
+                WHERE signal_status = 'ACTIVE'
+                  AND valid_until IS NOT NULL
+                """
+            )
+            rows = cursor.fetchall()
+
+        if not rows:
+            logger.info("Signal lifecycle: no ACTIVE signals with valid_until")
+            return
+
+        items = []
+        for row in rows:
+            signal = {
+                'signal_id': row[0],
+                'symbol': row[1],
+                'timeframe': row[2],
+                'direction': row[3],
+                'signal_status': row[4],
+                'take_profit': row[5],
+                'stop_loss': row[6],
+                'valid_until': row[7],
+            }
+            items.append({'signal': signal, 'current_price': None})
+
+        updated = bulk_update_signal_statuses(items)
+        logger.info(
+            f"Signal lifecycle complete: {len(rows)} evaluated, {updated} expired"
+        )
+
+    except Exception as e:
+        logger.error(f"Signal lifecycle job failed: {e}")
+
+
 def start_scheduler():
     """Start the background scheduler."""
     global _scheduler
@@ -851,12 +905,21 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    _scheduler.add_job(
+        signal_lifecycle_job,
+        trigger=IntervalTrigger(minutes=5),
+        id='signal_lifecycle_job',
+        name='Evaluate signal lifecycle (expiration) every 5m',
+        replace_existing=True,
+    )
+
     _scheduler.start()
     logger.info(
         f"Scheduler started - trade sync every {sync_interval_hours}h, "
         "adaptive retrain every 24h, dominance/signals/outcomes every 1h, "
         "account equity snapshot every 5m, drift snapshot every 1h, "
-        "paper lifecycle every 1m, paper equity snapshot every 5m"
+        "paper lifecycle every 1m, paper equity snapshot every 5m, "
+        "signal lifecycle every 5m"
     )
 
 
