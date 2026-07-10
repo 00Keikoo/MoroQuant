@@ -281,12 +281,23 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
         except (ValueError, TypeError):
             pass
 
-    entry_price = signal.get("price")
-    if entry_price is None or entry_price <= 0:
-        entry_price = _fetch_price(symbol)
-    if entry_price is None or entry_price <= 0:
-        logger.warning(f"Paper broker: no entry price for {symbol}")
+    # ── Execution Price Logic ────────────────────────────────────────
+    signal_price = signal.get("price")
+    execution_start = datetime.now(timezone.utc)
+
+    execution_price = _fetch_price(symbol)
+    if execution_price is None or execution_price <= 0:
+        logger.warning(f"Paper broker: no live execution price for {symbol}")
         return None
+
+    execution_timestamp = datetime.now(timezone.utc)
+    execution_latency_ms = int((execution_timestamp - execution_start).total_seconds() * 1000)
+
+    slippage_pct = None
+    if signal_price and signal_price > 0:
+        slippage_pct = ((execution_price - signal_price) / signal_price) * 100.0
+
+    entry_price = execution_price
 
     conn = _get_connection()
     try:
@@ -374,28 +385,34 @@ def open_paper_position(signal: Dict) -> Optional[Dict]:
                 (symbol, direction, entry_price, current_price, size_usdt, qty,
                  stop_loss, take_profit, signal_id, status, realized_pnl, opened_at,
                  confidence, regime, timeframe, prob_short, prob_neutral, prob_long,
-                 execution_edge, skip_reason, execution_policy)
+                 execution_edge, skip_reason, execution_policy,
+                 signal_price, execution_price, execution_timestamp, slippage_pct, execution_latency_ms)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', 0.0, CURRENT_TIMESTAMP,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?)
             """,
             (symbol, direction_raw, float(entry_price), float(entry_price),
              size_usdt, qty, stop_loss, take_profit, signal_id,
              confidence, regime, timeframe,
              prob_short, prob_neutral, prob_long,
-             execution_edge, None, EXECUTION_POLICY),
+             execution_edge, None, EXECUTION_POLICY,
+             signal_price, execution_price, execution_timestamp.isoformat(), slippage_pct, execution_latency_ms),
         )
         conn.commit()
         position_id = cursor.lastrowid
 
         logger.info(
             f"Paper position OPENED: id={position_id} {symbol} {direction_raw} "
-            f"qty={qty} entry={entry_price} size=${size_usdt}"
+            f"qty={qty} entry={entry_price} (signal={signal_price}, slippage={slippage_pct:.3f}%) size=${size_usdt}"
         )
         return {
             "position_id": position_id,
             "symbol": symbol,
             "direction": direction_raw,
             "entry_price": float(entry_price),
+            "signal_price": signal_price,
+            "execution_price": execution_price,
+            "slippage_pct": slippage_pct,
             "size_usdt": size_usdt,
             "qty": qty,
             "signal_id": signal_id,

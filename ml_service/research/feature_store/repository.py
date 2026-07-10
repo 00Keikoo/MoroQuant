@@ -21,72 +21,13 @@ class FeatureRepository:
             db_path = Path(__file__).parent.parent.parent.parent / "storage" / "database.db"
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._init_schema()
 
     def _get_connection(self):
         """Get database connection with row factory."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
         return conn
-
-    def _init_schema(self):
-        """Create feature store tables if they don't exist."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS feature_definitions (
-                    feature_name TEXT PRIMARY KEY,
-                    description TEXT NOT NULL,
-                    formula_ref TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                )
-            """)
-
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS feature_versions (
-                    feature_version_id TEXT PRIMARY KEY,
-                    feature_name TEXT NOT NULL,
-                    version TEXT NOT NULL,
-                    parameters_json TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    FOREIGN KEY (feature_name) REFERENCES feature_definitions(feature_name)
-                )
-            """)
-
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS feature_datasets (
-                    feature_dataset_id TEXT PRIMARY KEY,
-                    source_dataset_id TEXT NOT NULL,
-                    feature_version_id TEXT NOT NULL,
-                    fingerprint TEXT NOT NULL UNIQUE,
-                    storage_path TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    lifecycle_state TEXT NOT NULL,
-                    is_frozen INTEGER DEFAULT 0,
-                    FOREIGN KEY (feature_version_id) REFERENCES feature_versions(feature_version_id)
-                )
-            """)
-
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_feature_dataset_source
-                ON feature_datasets(source_dataset_id)
-            """)
-
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_feature_dataset_version
-                ON feature_datasets(feature_version_id)
-            """)
-
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_feature_dataset_fingerprint
-                ON feature_datasets(fingerprint)
-            """)
-
-            conn.commit()
-        finally:
-            conn.close()
 
     def save_definition(self, definition: FeatureDefinition) -> None:
         """Save feature definition."""

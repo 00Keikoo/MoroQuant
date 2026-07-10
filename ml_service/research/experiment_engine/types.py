@@ -40,3 +40,4 @@ class ExperimentResult:
     experiment_id: str
     snapshot_id: str
     results: List[StrategyResult]
+    artifact_path: Optional[str] = None

@@ -132,16 +132,12 @@ class ResearchDashboardService:
         best_result = max(results, key=lambda r: r['sharpe'])
         profit_factor = 1.0 + best_result['pnl']
 
-        # TODO: Replace with retrieval from Evaluation Engine when available
-        # These metrics require Evaluation Engine integration:
-        # - daily_return_volatility: compute from evaluation timeseries
-        # - information_coefficient: compute from prediction/outcome correlation
         return EvaluationSummary(
             experiment_id=experiment_id,
             total_trades=total_trades,
             win_rate=win_rate,
             profit_factor=profit_factor,
             average_trade_return=average_trade_return,
-            daily_return_volatility=0.0,  # TODO: retrieve from Evaluation Engine
-            information_coefficient=0.0   # TODO: retrieve from Evaluation Engine
+            daily_return_volatility=None,
+            information_coefficient=None
         )

@@ -296,6 +296,26 @@ def generate_signal(
 
     df = df.sort_values('timestamp').reset_index(drop=True)
 
+    # ── Market data freshness validation ──────────────────────────────
+    latest_timestamp = df.iloc[-1]['timestamp']
+    now_ms = int(datetime.now().timestamp() * 1000) if not override_timestamp else override_timestamp
+    age_seconds = (now_ms - latest_timestamp) / 1000.0
+
+    timeframe_seconds = {'1m': 60, '5m': 300, '15m': 900, '30m': 1800, '1h': 3600, '4h': 14400, '1d': 86400}
+    tf_seconds = timeframe_seconds.get(timeframe, 3600)
+    max_staleness_seconds = tf_seconds * 2
+
+    if age_seconds > max_staleness_seconds:
+        logger.error(
+            f"Market data rejected: stale by {age_seconds:.0f}s "
+            f"(max: {max_staleness_seconds:.0f}s for {timeframe}). "
+            f"Latest candle: {datetime.fromtimestamp(latest_timestamp/1000).isoformat()}, "
+            f"Current time: {datetime.fromtimestamp(now_ms/1000).isoformat()}"
+        )
+        return None
+
+    logger.info(f"Market data freshness OK: {age_seconds:.0f}s old (max: {max_staleness_seconds:.0f}s)")
+
     df = prepare_features(df, symbol=symbol)
 
     df_clean = df[feature_cols].dropna()

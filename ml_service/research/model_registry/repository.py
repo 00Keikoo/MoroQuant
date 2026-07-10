@@ -26,6 +26,7 @@ class ModelRegistryRepository:
         """Get database connection with row factory."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
     def save_model(self, model_id: str, name: str, description: str, created_at: str) -> None:

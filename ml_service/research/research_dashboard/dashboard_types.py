@@ -1,7 +1,7 @@
 """Data contracts for Research Dashboard."""
 
 from dataclasses import dataclass
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 @dataclass(frozen=True)
@@ -62,5 +62,5 @@ class EvaluationSummary:
     win_rate: float
     profit_factor: float
     average_trade_return: float
-    daily_return_volatility: float
-    information_coefficient: float
+    daily_return_volatility: Optional[float]
+    information_coefficient: Optional[float]

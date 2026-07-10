@@ -236,10 +236,90 @@ def bootstrap_research_tables(db_path: Optional[str] = None) -> None:
             ON model_lineage(experiment_id)
         """)
 
+        # Research Orchestrator tables (Sprint 4.5)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS research_jobs (
+                job_id TEXT PRIMARY KEY,
+                state TEXT NOT NULL,
+                config_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                started_at TEXT,
+                completed_at TEXT,
+                created_by TEXT NOT NULL DEFAULT 'system',
+                error_message TEXT,
+                error_stage TEXT,
+                CONSTRAINT check_state CHECK (state IN ('CREATED', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED'))
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_jobs_state ON research_jobs(state)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_jobs_created_at ON research_jobs(created_at DESC)
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS research_job_steps (
+                step_id TEXT PRIMARY KEY,
+                job_id TEXT NOT NULL,
+                stage_type TEXT NOT NULL,
+                status TEXT NOT NULL,
+                started_at TEXT NOT NULL,
+                completed_at TEXT,
+                output_metadata_json TEXT,
+                error_message TEXT,
+                FOREIGN KEY (job_id) REFERENCES research_jobs(job_id),
+                CONSTRAINT check_stage_type CHECK (stage_type IN (
+                    'SNAPSHOT', 'DATASET', 'FEATURE', 'EXPERIMENT',
+                    'EVALUATION', 'REGISTRY', 'DASHBOARD'
+                )),
+                CONSTRAINT check_status CHECK (status IN ('RUNNING', 'COMPLETED', 'FAILED'))
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_job_steps_job_id ON research_job_steps(job_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_job_steps_stage_type ON research_job_steps(stage_type)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_job_steps_status ON research_job_steps(status)
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS research_job_logs (
+                log_id TEXT PRIMARY KEY,
+                job_id TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                level TEXT NOT NULL,
+                message TEXT NOT NULL,
+                stage_type TEXT,
+                FOREIGN KEY (job_id) REFERENCES research_jobs(job_id),
+                CONSTRAINT check_level CHECK (level IN ('DEBUG', 'INFO', 'WARNING', 'ERROR'))
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_job_logs_job_id ON research_job_logs(job_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_job_logs_level ON research_job_logs(level)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_job_logs_timestamp ON research_job_logs(timestamp DESC)
+        """)
+
         conn.commit()
         print("✓ Research database bootstrap complete")
-        print("  Tables created: 11")
-        print("  Indexes created: 11")
+        print("  Tables created: 14")
+        print("  Indexes created: 20")
 
     finally:
         conn.close()

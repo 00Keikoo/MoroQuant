@@ -12,51 +12,8 @@ def get_connection() -> sqlite3.Connection:
     """Get database connection."""
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
-
-
-def init_schema():
-    """Create tables if they don't exist."""
-    conn = get_connection()
-    try:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS experiments (
-                experiment_id TEXT PRIMARY KEY,
-                snapshot_id TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-        """)
-
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS experiment_configs (
-                experiment_id TEXT NOT NULL,
-                config_id TEXT NOT NULL,
-                threshold_long REAL NOT NULL,
-                threshold_short REAL NOT NULL,
-                regime_filter TEXT,
-                PRIMARY KEY (experiment_id, config_id),
-                FOREIGN KEY (experiment_id) REFERENCES experiments(experiment_id)
-            )
-        """)
-
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS experiment_results (
-                experiment_id TEXT NOT NULL,
-                config_id TEXT NOT NULL,
-                pnl REAL NOT NULL,
-                winrate REAL NOT NULL,
-                sharpe REAL NOT NULL,
-                max_drawdown REAL NOT NULL,
-                consistency_score REAL NOT NULL,
-                trade_count INTEGER NOT NULL,
-                PRIMARY KEY (experiment_id, config_id),
-                FOREIGN KEY (experiment_id) REFERENCES experiments(experiment_id)
-            )
-        """)
-
-        conn.commit()
-    finally:
-        conn.close()
 
 
 def insert_experiment(experiment_id: str, snapshot_id: str, created_at: str):

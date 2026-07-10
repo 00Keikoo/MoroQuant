@@ -21,46 +21,13 @@ class DatasetRepository:
             db_path = Path(__file__).parent.parent.parent.parent / "storage" / "database.db"
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._init_schema()
 
     def _get_connection(self):
         """Get database connection with row factory."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
         return conn
-
-    def _init_schema(self):
-        """Create dataset_metadata table if it doesn't exist."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS dataset_metadata (
-                    dataset_id TEXT PRIMARY KEY,
-                    version TEXT NOT NULL,
-                    fingerprint TEXT NOT NULL UNIQUE,
-                    snapshot_id TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    start_time TEXT NOT NULL,
-                    end_time TEXT NOT NULL,
-                    lifecycle_state TEXT NOT NULL,
-                    storage_path TEXT NOT NULL,
-                    is_frozen INTEGER DEFAULT 0,
-                    schema_json TEXT NOT NULL,
-                    preprocessing_json TEXT
-                )
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_dataset_snapshot
-                ON dataset_metadata(snapshot_id)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_dataset_fingerprint
-                ON dataset_metadata(fingerprint)
-            """)
-            conn.commit()
-        finally:
-            conn.close()
 
     def save(self, metadata: DatasetMetadata) -> None:
         """Save dataset metadata to database."""

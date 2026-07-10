@@ -1,5 +1,7 @@
 """Service layer for experiment engine."""
 
+import pickle
+from pathlib import Path
 from typing import Optional
 
 from ml_service.research.snapshot_engine import SnapshotService
@@ -24,11 +26,12 @@ class ExperimentService:
         self.snapshot_service = SnapshotService(db_path=db_path)
         self.replay_service = ReplayService(db_path=db_path)
 
-    def run_experiment(self, experiment_config: ExperimentConfig) -> Optional[ExperimentResult]:
+    def run_experiment(self, experiment_config: ExperimentConfig, artifact_dir: Optional[str] = None) -> Optional[ExperimentResult]:
         """Run experiment with multiple strategy configurations using Decision Truth Layer.
 
         Args:
             experiment_config: Experiment configuration
+            artifact_dir: Optional directory to store experiment artifact
 
         Returns:
             ExperimentResult if snapshot exists, None otherwise
@@ -49,8 +52,38 @@ class ExperimentService:
             strategy_result = apply_strategy_config(replay_result, snapshot, config)
             results.append(strategy_result)
 
+        artifact_path = None
+        if artifact_dir:
+            artifact_path = self._serialize_artifact(experiment_config, results, replay_result, artifact_dir)
+
         return ExperimentResult(
             experiment_id=experiment_config.experiment_id,
             snapshot_id=experiment_config.snapshot_id,
-            results=results
+            results=results,
+            artifact_path=artifact_path
         )
+
+    def _serialize_artifact(self, config: ExperimentConfig, results: list, replay_result, artifact_dir: str) -> str:
+        """Serialize experiment artifact to model.bin."""
+        artifact_path = Path(artifact_dir)
+        artifact_path.mkdir(parents=True, exist_ok=True)
+
+        model_file = artifact_path / "model.bin"
+
+        artifact_data = {
+            'experiment_id': config.experiment_id,
+            'snapshot_id': config.snapshot_id,
+            'configs': config.configs,
+            'results': results,
+            'replay_metadata': {
+                'consistency_score': replay_result.consistency_score,
+                'divergence_score': replay_result.divergence_score,
+                'signal_reproduction_rate': replay_result.signal_reproduction_rate,
+                'execution_alignment_rate': replay_result.execution_alignment_rate
+            }
+        }
+
+        with open(model_file, 'wb') as f:
+            pickle.dump(artifact_data, f)
+
+        return str(model_file)
