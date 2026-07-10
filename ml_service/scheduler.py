@@ -757,14 +757,13 @@ def paper_equity_snapshot_job():
 
 
 def signal_lifecycle_job():
-    """Evaluate ACTIVE signals for expiration - runs every 5 minutes.
+    """Evaluate ACTIVE signals for TP/SL/expiration - runs every 5 minutes.
 
-    Queries ACTIVE signals with non-NULL valid_until and transitions
-    expired signals to EXPIRED status. Signals with NULL valid_until
-    (legacy signals) are ignored. TP/SL evaluation is handled separately
-    by the outcome_evaluation_job.
+    Queries ACTIVE signals with non-NULL valid_until, fetches current
+    market prices, and transitions signals to TP_HIT, SL_HIT, or EXPIRED.
     """
     from ml_service.signal_lifecycle import bulk_update_signal_statuses
+    from ml_service.trading.paper_broker import _fetch_mark_price
 
     logger.info("Signal lifecycle evaluation started")
 
@@ -789,9 +788,12 @@ def signal_lifecycle_job():
 
         items = []
         for row in rows:
+            symbol = row[1]
+            current_price = _fetch_mark_price(symbol)
+
             signal = {
                 'signal_id': row[0],
-                'symbol': row[1],
+                'symbol': symbol,
                 'timeframe': row[2],
                 'direction': row[3],
                 'signal_status': row[4],
@@ -799,11 +801,11 @@ def signal_lifecycle_job():
                 'stop_loss': row[6],
                 'valid_until': row[7],
             }
-            items.append({'signal': signal, 'current_price': None})
+            items.append({'signal': signal, 'current_price': current_price})
 
         updated = bulk_update_signal_statuses(items)
         logger.info(
-            f"Signal lifecycle complete: {len(rows)} evaluated, {updated} expired"
+            f"Signal lifecycle complete: {len(rows)} evaluated, {updated} transitioned"
         )
 
     except Exception as e:

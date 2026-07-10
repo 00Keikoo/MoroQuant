@@ -644,6 +644,28 @@ def close_paper_position(position_id: int, status: str = "MANUAL_CLOSE",
         )
         conn.commit()
 
+        # Log exit event to execution_decisions audit
+        log_execution_decision(
+            "ACCEPTED",
+            symbol=row["symbol"],
+            direction=direction,
+            reason=status,
+            signal_id=row["signal_id"],
+            position_id=position_id,
+            confidence=row["confidence"],
+            regime=row["regime"],
+            timeframe=row["timeframe"],
+            prob_short=row["prob_short"],
+            prob_neutral=row["prob_neutral"],
+            prob_long=row["prob_long"],
+            execution_edge=row["execution_edge"],
+            signal_price=row["signal_price"],
+            execution_price=price,
+            source="PAPER",
+            execution_policy=row["execution_policy"],
+            reason_detail=f"exit_reason={status},realized_pnl={realized_pnl:.2f}",
+        )
+
         logger.info(
             f"Paper position CLOSED: id={position_id} {row['symbol']} "
             f"{direction} status={status} pnl=${realized_pnl:.2f}"
