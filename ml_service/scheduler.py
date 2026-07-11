@@ -14,7 +14,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from ml_service.data.database import get_database
-from ml_service.data.ingestion import fetch_all
+from ml_service.data.ingestion import fetch_all, get_last_timestamp
 from ml_service.data.coingecko import get_coingecko_fetcher
 from ml_service.models.trainer import train_model
 from ml_service.models.governance import compare_and_promote
@@ -207,17 +207,8 @@ def adaptive_retrain_job():
     _last_retrain_time = datetime.now()
     _last_retrain_results = []
 
-    # ── Step 1: Fetch latest data (same as legacy retrain_job) ─────────
-    logger.info("Step 1: Fetching latest data (last 7 days)...")
-    try:
-        fetch_all(days_back=7)
-        logger.info("Data fetch complete")
-    except Exception as e:
-        logger.error(f"Data fetch failed: {e}")
-        return
-
-    # ── Step 2: Load reference data for cross-pair features ─────────────
-    logger.info("Step 2: Loading reference data...")
+    # ── Step 1: Load reference data for cross-pair features ─────────────
+    logger.info("Step 1: Loading reference data...")
     btc_1h = load_data('BTCUSDT', '1h')
     btc_4h = load_data('BTCUSDT', '4h')
     eth_1h = load_data('ETHUSDT', '1h')
@@ -225,7 +216,7 @@ def adaptive_retrain_job():
     spy_1h = load_data('ES_proxy', '1h')
     spy_4h = load_data('ES_proxy', '4h')
 
-    logger.info("Step 3: Loading market dominance data...")
+    logger.info("Step 2: Loading market dominance data...")
     try:
         fetcher = get_coingecko_fetcher()
         dominance_df = fetcher.get_dominance_dataframe()
@@ -234,8 +225,8 @@ def adaptive_retrain_job():
         logger.warning(f"Market dominance fetch failed, proceeding without: {e}")
         dominance_df = None
 
-    # ── Step 4: Per-model adaptive decision loop ────────────────────────
-    logger.info("Step 4: Evaluating adaptive retrain decisions...")
+    # ── Step 3: Per-model adaptive decision loop ────────────────────────
+    logger.info("Step 3: Evaluating adaptive retrain decisions...")
 
     retrained = 0
     skipped = 0
@@ -356,8 +347,8 @@ def adaptive_retrain_job():
                     'new_f1': 0.0,
                 })
 
-    # ── Step 5: Summary ─────────────────────────────────────────────────
-    logger.info("Step 5: Logging results...")
+    # ── Step 4: Summary ─────────────────────────────────────────────────
+    logger.info("Step 4: Logging results...")
     log_retrain_results(_last_retrain_results)
 
     logger.info(
@@ -577,6 +568,73 @@ def weekly_retrain_job():
 
     log_retrain_results(_last_retrain_results)
     logger.info("Weekly tier-2 retrain complete")
+
+
+def market_data_sync_job():
+    """Dedicated OHLCV synchronization job - runs every hour.
+
+    Fetches latest market data for all configured symbols and timeframes.
+    Emits structured logs and stale-data warnings for production monitoring.
+    """
+    from datetime import datetime, timedelta
+
+    sync_start = datetime.now()
+    logger.info("=" * 80)
+    logger.info("Market data sync started")
+    logger.info("=" * 80)
+
+    try:
+        stats = fetch_all(days_back=7)
+
+        total_inserted = 0
+        total_skipped = 0
+        failed_symbols = []
+
+        for source, symbols in stats.items():
+            for symbol, timeframes in symbols.items():
+                for timeframe, result in timeframes.items():
+                    if "error" in result:
+                        failed_symbols.append(f"{symbol} {timeframe}")
+                    else:
+                        total_inserted += result.get("inserted", 0)
+                        total_skipped += result.get("skipped", 0)
+
+        sync_duration = (datetime.now() - sync_start).total_seconds()
+
+        logger.info(
+            f"Market data sync complete: "
+            f"inserted={total_inserted} skipped={total_skipped} "
+            f"failures={len(failed_symbols)} duration={sync_duration:.2f}s"
+        )
+
+        if failed_symbols:
+            logger.warning(f"Market data sync failures: {', '.join(failed_symbols)}")
+
+        # Stale-data warning for BTCUSDT 1h (primary reference pair)
+        last_ts = get_last_timestamp('BTCUSDT', '1h')
+        if last_ts:
+            age_seconds = (datetime.now().timestamp() * 1000 - last_ts) / 1000
+            freshness_threshold = 3600 * 2
+
+            if age_seconds > freshness_threshold:
+                logger.warning(
+                    f"STALE DATA WARNING: BTCUSDT 1h candle is {age_seconds:.0f}s old "
+                    f"(threshold: {freshness_threshold:.0f}s). Market data may be stale."
+                )
+            else:
+                logger.info(
+                    f"Market data freshness OK: BTCUSDT 1h age={age_seconds:.0f}s "
+                    f"(threshold: {freshness_threshold:.0f}s)"
+                )
+
+    except Exception as e:
+        sync_duration = (datetime.now() - sync_start).total_seconds()
+        logger.error(
+            f"Market data sync failed after {sync_duration:.2f}s: {e}\n"
+            f"{traceback.format_exc()}"
+        )
+
+    logger.info("=" * 80)
 
 
 def trade_sync_job():
@@ -842,6 +900,15 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    # ── Market data sync: dedicated OHLCV ingestion ───────────────────
+    _scheduler.add_job(
+        market_data_sync_job,
+        trigger=IntervalTrigger(hours=1),
+        id='market_data_sync_job',
+        name='Sync OHLCV data for all symbols',
+        replace_existing=True,
+    )
+
     # ── Adaptive retrain (replaces static daily + weekly) ─────────────
     _scheduler.add_job(
         adaptive_retrain_job,
@@ -917,7 +984,8 @@ def start_scheduler():
 
     _scheduler.start()
     logger.info(
-        f"Scheduler started - trade sync every {sync_interval_hours}h, "
+        f"Scheduler started - market data sync every 1h, "
+        f"trade sync every {sync_interval_hours}h, "
         "adaptive retrain every 24h, dominance/signals/outcomes every 1h, "
         "account equity snapshot every 5m, drift snapshot every 1h, "
         "paper lifecycle every 1m, paper equity snapshot every 5m, "
