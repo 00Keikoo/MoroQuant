@@ -17,6 +17,7 @@ System verification reports, reliability audits, and quality metrics divided by 
 - **[runtime/](file:///home/zafka/trade-dashboard/docs/audits/runtime/)**: Active daemon processes, event loops, and scheduler execution logs.
 - **[production/](file:///home/zafka/trade-dashboard/docs/audits/production/)**: Live environments, data pipeline integrity, and synchronization audits (e.g., [live_analytics_audit.md](file:///home/zafka/trade-dashboard/docs/audits/production/live_analytics_audit.md)).
 - **[telegram/](file:///home/zafka/trade-dashboard/docs/audits/telegram/)**: Audits of the alert notifications system.
+- **[lab/](file:///home/zafka/trade-dashboard/docs/audits/lab/)**: MoroQuant Lab reviews, including experiment registry and execution analytics assessments.
 
 ### [adr/](file:///home/zafka/trade-dashboard/docs/adr/)
 Architecture Decision Records (ADRs) capturing key design decisions.
@@ -28,7 +29,7 @@ Database schemas and configurations.
 
 ### [reports/](file:///home/zafka/trade-dashboard/docs/reports/)
 System health reports, performance reviews, and verification of repairs.
-- **Example:** [live_performance_report.md](file:///home/zafka/trade-dashboard/docs/reports/live_performance_report.md), [outcome_engine_repair.md](file:///home/zafka/trade-dashboard/docs/reports/outcome_engine_repair.md).
+- **Example:** [live_performance_report.md](file:///home/zafka/trade-dashboard/docs/reports/live_performance_report.md), [outcome_engine_repair.md](file:///home/zafka/trade-dashboard/docs/reports/outcome_engine_repair.md), [market_data_sync_verification.md](file:///home/zafka/trade-dashboard/docs/reports/market_data_sync_verification.md).
 
 ### [guides/](file:///home/zafka/trade-dashboard/docs/guides/)
 Step-by-step setup instructions and configuration procedures.

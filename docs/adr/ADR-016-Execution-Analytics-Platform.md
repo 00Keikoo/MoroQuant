@@ -37,4 +37,4 @@ Specifically, we establish the following decisions:
 ## Related Documents
 - [ADR-002: Repository Pattern for Data Access](file:///home/zafka/trade-dashboard/docs/adr/ADR-002-Repository-Pattern.md)
 - [ADR-004: Analytics Layer Separation](file:///home/zafka/trade-dashboard/docs/adr/ADR-004-Analytics-Layer-Separation.md)
-- [EXECUTION_ANALYTICS_DATA_AUDIT.md](file:///home/zafka/trade-dashboard/EXECUTION_ANALYTICS_DATA_AUDIT.md)
+- [EXECUTION_ANALYTICS_DATA_AUDIT.md](file:///home/zafka/trade-dashboard/docs/audits/lab/execution_analytics_data_audit.md)
