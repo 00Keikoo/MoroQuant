@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ml_service.api.routes import router
 from ml_service.api.explorer_routes import router as explorer_router
+from ml_service.lab.experiments.api import router as experiment_router
 from ml_service.research.model_registry.api import router as model_registry_router
 from ml_service.research.research_dashboard.api import router as research_router
 from ml_service.research.research_orchestrator.api import router as orchestrator_router
@@ -35,6 +36,7 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 app.include_router(explorer_router)
+app.include_router(experiment_router, prefix="/api/lab")
 app.include_router(model_registry_router, prefix="/api")
 app.include_router(research_router, prefix="/api")
 app.include_router(orchestrator_router)
