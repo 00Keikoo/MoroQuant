@@ -15,3 +15,5 @@ export { MQEmptyState } from './MQEmptyState';
 export { MQLoading } from './MQLoading';
 export { MQSearch } from './MQSearch';
 export { MQChartContainer } from './MQChartContainer';
+export { MQSparkline } from './MQSparkline';
+export { MQProgressBar } from './MQProgressBar';
