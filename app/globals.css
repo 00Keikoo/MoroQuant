@@ -1,18 +1,53 @@
 @import "tailwindcss";
 
 @theme {
-  --color-mq-bg: #030303;
-  --color-mq-panel: #09090b;
-  --color-mq-panel-border: rgba(255, 255, 255, 0.05);
-  --color-mq-accent: #00f0ff;
-  --color-mq-accent-dim: rgba(0, 240, 255, 0.1);
-  --color-mq-long: #00ff87;
-  --color-mq-long-dim: rgba(0, 255, 135, 0.1);
-  --color-mq-short: #ff0055;
-  --color-mq-short-dim: rgba(255, 0, 85, 0.1);
-  --color-mq-warning: #ffaa00;
-  --color-mq-warning-dim: rgba(255, 170, 0, 0.1);
-  --color-mq-muted: #8e8e93;
+  /* MQDS Color Palette */
+  --color-mq-bg-primary: #0B0F19;
+  --color-mq-bg-secondary: #111827;
+  --color-mq-border: #1F2937;
+  --color-mq-accent: #FF6B00;
+  --color-mq-accent-dim: rgba(255, 107, 0, 0.1);
+
+  /* MQDS Semantic Colors */
+  --color-mq-success: #10B981;
+  --color-mq-success-dim: rgba(16, 185, 129, 0.1);
+  --color-mq-failure: #EF4444;
+  --color-mq-failure-dim: rgba(239, 68, 68, 0.1);
+  --color-mq-warning: #F59E0B;
+  --color-mq-warning-dim: rgba(245, 158, 11, 0.1);
+  --color-mq-running: #6366F1;
+  --color-mq-running-dim: rgba(99, 102, 241, 0.1);
+
+  /* MQDS Text Colors */
+  --color-mq-text-primary: #FFFFFF;
+  --color-mq-text-secondary: #9CA3AF;
+  --color-mq-text-muted: #6B7280;
+
+  /* MQDS Typography Scale */
+  --font-size-micro: 10px;
+  --font-size-caption: 11px;
+  --font-size-small: 12px;
+  --font-size-body: 13px;
+  --font-size-header: 16px;
+
+  /* MQDS Spacing Scale (4px base) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+
+  /* MQDS Border Radius */
+  --radius-sharp: 0px;
+  --radius-minimal: 2px;
+
+  /* MQDS Layout */
+  --rail-width: 48px;
+  --panel-padding: 8px;
+  --row-height: 24px;
+  --header-height: 32px;
 }
 
 @layer utilities {
@@ -80,13 +115,18 @@ body {
 }
 
 body {
-  background: #000000;
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  background: var(--color-mq-bg-primary);
+  color: var(--color-mq-text-primary);
+  font-family: 'SF Pro Display', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+  font-size: var(--font-size-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono {
+  font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 }
 
 ::-webkit-scrollbar {
@@ -95,14 +135,20 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--color-mq-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #404040;
-  border-radius: 4px;
+  background: var(--color-mq-border);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #505050;
+  background: var(--color-mq-accent);
+}
+
+/* MQDS Focus States */
+*:focus-visible {
+  outline: 1px solid var(--color-mq-accent);
+  outline-offset: 2px;
 }
