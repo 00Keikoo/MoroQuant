@@ -29,7 +29,7 @@ export type TimelineEvent = {
 export const mockResearchJourneys: ResearchJourney[] = [
   {
     journeyId: 'journey_001',
-    title: 'LSTM Market Predictor Development',
+    title: 'BTCUSDT 1h Model Development',
     researcher: 'research.team',
     startDate: '2026-07-10T08:00:00Z',
     endDate: '2026-07-12T16:00:00Z',
@@ -40,15 +40,15 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_001',
         timestamp: '2026-07-10T08:00:00Z',
         eventType: 'DATASET',
-        entity: 'Q4_2025_Full',
-        entityId: 'ds_101',
-        action: 'Dataset Created',
+        entity: 'dataset_btc_1h_v31',
+        entityId: 'dataset_btc_1h_v31',
+        action: 'Dataset Imported',
         user: 'research.team',
-        metadata: 'Size: 4.2M rows',
+        metadata: 'Symbol: BTCUSDT, Timeframe: 1h',
         status: 'SUCCESS',
         details: {
-          metrics: { rows: 4200000, features: 87, timespan: '90d' },
-          artifacts: ['ds_101.parquet', 'ds_101_stats.json']
+          metrics: { rows: 8760, features: 124, timespan: '365d' },
+          artifacts: ['dataset_btc_1h_v31.parquet', 'dataset_btc_1h_v31_stats.json']
         }
       },
       {
@@ -56,14 +56,14 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_001',
         timestamp: '2026-07-10T11:30:00Z',
         eventType: 'FEATURE',
-        entity: 'Price_Momentum_v3',
-        entityId: 'feat_201',
-        action: 'Feature Engineered',
+        entity: 'feature_store_v18',
+        entityId: 'feature_store_v18',
+        action: 'Feature Store Generated',
         user: 'research.team',
-        metadata: 'Importance: 92%',
+        metadata: 'Features: 124',
         status: 'SUCCESS',
         details: {
-          metrics: { importance: 0.92, correlation: 0.78 }
+          metrics: { features: 124, samples: 8760 }
         }
       },
       {
@@ -71,52 +71,184 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_001',
         timestamp: '2026-07-11T09:15:00Z',
         eventType: 'EXPERIMENT',
-        entity: 'LSTM_Market_Predictor_v1',
-        entityId: 'exp_2847',
-        action: 'Training Started',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Experiment Created',
         user: 'research.team',
-        metadata: 'Epochs: 50',
-        status: 'INFO',
+        metadata: 'Strategy: BTCUSDT 1h',
+        status: 'SUCCESS',
         details: {
-          metrics: { epochs: 50, batchSize: 256 }
+          metrics: { folds: 5 }
         }
       },
       {
         id: 'evt_004',
         journeyId: 'journey_001',
-        timestamp: '2026-07-12T14:30:00Z',
-        eventType: 'EXPERIMENT',
-        entity: 'LSTM_Market_Predictor_v1',
-        entityId: 'exp_2847',
-        action: 'Training Complete',
+        timestamp: '2026-07-11T10:00:00Z',
+        eventType: 'TRAINING',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Training Started',
         user: 'research.team',
-        metadata: 'Val Accuracy: 87.3%',
-        status: 'SUCCESS',
+        metadata: 'Method: Purged Walk Forward',
+        status: 'INFO',
         details: {
-          metrics: { valAccuracy: 0.873, valLoss: 0.234, trainTime: '4.2h' }
+          metrics: { folds: 5 }
         }
       },
       {
         id: 'evt_005',
         journeyId: 'journey_001',
-        timestamp: '2026-07-12T15:45:00Z',
-        eventType: 'MODEL',
-        entity: 'LSTM_Market_Predictor',
-        entityId: 'mdl_001',
-        action: 'Model Registered',
+        timestamp: '2026-07-11T11:20:00Z',
+        eventType: 'VALIDATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Fold 1',
         user: 'research.team',
-        metadata: 'Version: v1.0',
+        metadata: 'Weighted F1: 0.78',
         status: 'SUCCESS',
         details: {
-          metrics: { accuracy: 0.873, precision: 0.891 },
-          artifacts: ['mdl_001.h5', 'mdl_001_config.json']
+          metrics: { weightedF1: 0.78, longF1: 0.82, neutralF1: 0.76, shortF1: 0.75 }
         }
+      },
+      {
+        id: 'evt_006',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-11T12:40:00Z',
+        eventType: 'VALIDATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Fold 2',
+        user: 'research.team',
+        metadata: 'Weighted F1: 0.81',
+        status: 'SUCCESS',
+        details: {
+          metrics: { weightedF1: 0.81, longF1: 0.84, neutralF1: 0.79, shortF1: 0.80 }
+        }
+      },
+      {
+        id: 'evt_007',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-11T14:00:00Z',
+        eventType: 'VALIDATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Fold 3',
+        user: 'research.team',
+        metadata: 'Weighted F1: 0.79',
+        status: 'SUCCESS',
+        details: {
+          metrics: { weightedF1: 0.79, longF1: 0.81, neutralF1: 0.78, shortF1: 0.77 }
+        }
+      },
+      {
+        id: 'evt_008',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-11T15:20:00Z',
+        eventType: 'VALIDATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Fold 4',
+        user: 'research.team',
+        metadata: 'Weighted F1: 0.82',
+        status: 'SUCCESS',
+        details: {
+          metrics: { weightedF1: 0.82, longF1: 0.85, neutralF1: 0.80, shortF1: 0.81 }
+        }
+      },
+      {
+        id: 'evt_009',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-11T16:40:00Z',
+        eventType: 'VALIDATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Fold 5',
+        user: 'research.team',
+        metadata: 'Weighted F1: 0.80',
+        status: 'SUCCESS',
+        details: {
+          metrics: { weightedF1: 0.80, longF1: 0.83, neutralF1: 0.79, shortF1: 0.78 }
+        }
+      },
+      {
+        id: 'evt_010',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-11T17:00:00Z',
+        eventType: 'VALIDATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Purged Walk Forward Complete',
+        user: 'research.team',
+        metadata: 'Average Weighted F1: 0.80',
+        status: 'SUCCESS',
+        details: {
+          metrics: { avgWeightedF1: 0.80, avgLongF1: 0.83, avgNeutralF1: 0.78, avgShortF1: 0.78 }
+        }
+      },
+      {
+        id: 'evt_011',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-12T09:00:00Z',
+        eventType: 'CALIBRATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Calibration',
+        user: 'research.team',
+        metadata: 'ECE After: 0.024',
+        status: 'SUCCESS',
+        details: {
+          metrics: { eceBefore: 0.089, eceAfter: 0.024, brierScore: 0.041 }
+        }
+      },
+      {
+        id: 'evt_012',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-12T11:00:00Z',
+        eventType: 'EVALUATION',
+        entity: 'exp_btc_194',
+        entityId: 'exp_btc_194',
+        action: 'Evaluation',
+        user: 'research.team',
+        metadata: 'PSI: 0.12, Drift: Low',
+        status: 'SUCCESS',
+        details: {
+          metrics: { psi: 0.12, drift: 'low', confidenceDistribution: 0.87, predictionStability: 0.91 }
+        }
+      },
+      {
+        id: 'evt_013',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-12T13:00:00Z',
+        eventType: 'MODEL',
+        entity: 'model_btc_v194',
+        entityId: 'model_btc_v194',
+        action: 'Model Registered',
+        user: 'research.team',
+        metadata: 'Version: v194',
+        status: 'SUCCESS',
+        details: {
+          metrics: { weightedF1: 0.80 },
+          artifacts: ['model_btc_v194.pkl', 'model_btc_v194_config.json']
+        }
+      },
+      {
+        id: 'evt_014',
+        journeyId: 'journey_001',
+        timestamp: '2026-07-12T14:00:00Z',
+        eventType: 'PROMOTION',
+        entity: 'model_btc_v194',
+        entityId: 'model_btc_v194',
+        action: 'Candidate',
+        user: 'research.team',
+        metadata: 'Status: Candidate',
+        status: 'INFO'
       }
     ]
   },
   {
     journeyId: 'journey_002',
-    title: 'Ensemble Multi-Strategy Production Push',
+    title: 'ETHUSDT 4h Production Deployment',
     researcher: 'ml.ops',
     startDate: '2026-07-09T06:00:00Z',
     endDate: '2026-07-12T13:15:00Z',
@@ -127,88 +259,85 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_002',
         timestamp: '2026-07-09T06:00:00Z',
         eventType: 'MODEL',
-        entity: 'Ensemble_Multi_Strategy',
-        entityId: 'mdl_004',
+        entity: 'model_eth_v203',
+        entityId: 'model_eth_v203',
         action: 'Model Registered',
         user: 'ml.ops',
-        metadata: 'Version: v2.1',
+        metadata: 'Symbol: ETHUSDT, Timeframe: 4h',
         status: 'SUCCESS'
       },
       {
         id: 'evt_007',
         journeyId: 'journey_002',
         timestamp: '2026-07-10T10:00:00Z',
-        eventType: 'VALIDATION',
-        entity: 'Ensemble_Multi_Strategy',
-        entityId: 'val_004',
-        action: 'Validation Started',
+        eventType: 'EVALUATION',
+        entity: 'model_eth_v203',
+        entityId: 'model_eth_v203',
+        action: 'Evaluation',
         user: 'ml.ops',
-        metadata: 'Test Set: Q2_2026',
+        metadata: 'PSI: 0.08',
         status: 'INFO'
       },
       {
         id: 'evt_008',
         journeyId: 'journey_002',
         timestamp: '2026-07-11T14:20:00Z',
-        eventType: 'VALIDATION',
-        entity: 'Ensemble_Multi_Strategy',
-        entityId: 'val_004',
-        action: 'Validation Passed',
+        eventType: 'CALIBRATION',
+        entity: 'model_eth_v203',
+        entityId: 'model_eth_v203',
+        action: 'Calibration',
         user: 'ml.ops',
-        metadata: 'Accuracy: 89.7%',
+        metadata: 'ECE After: 0.021',
         status: 'SUCCESS',
         details: {
-          metrics: { accuracy: 0.897, f1Score: 0.903, auc: 0.912 }
+          metrics: { eceBefore: 0.089, eceAfter: 0.021, brierScore: 0.045 }
         }
       },
       {
         id: 'evt_009',
         journeyId: 'journey_002',
         timestamp: '2026-07-11T16:00:00Z',
-        eventType: 'CALIBRATION',
-        entity: 'Ensemble_Multi_Strategy',
-        entityId: 'cal_004',
-        action: 'Calibration Complete',
+        eventType: 'PROMOTION',
+        entity: 'model_eth_v203',
+        entityId: 'model_eth_v203',
+        action: 'Approved',
         user: 'ml.ops',
-        metadata: 'ECE: 2.1%',
-        status: 'SUCCESS',
-        details: {
-          metrics: { ece: 0.021, brier: 0.045 }
-        }
+        metadata: 'Status: Approved',
+        status: 'SUCCESS'
       },
       {
         id: 'evt_010',
         journeyId: 'journey_002',
         timestamp: '2026-07-12T09:00:00Z',
-        eventType: 'PROMOTION',
-        entity: 'Ensemble_Multi_Strategy',
-        entityId: 'prm_004',
-        action: 'Promotion Approved',
+        eventType: 'PRODUCTION',
+        entity: 'prod_eth_4h',
+        entityId: 'prod_eth_4h',
+        action: 'Production',
         user: 'ml.ops',
-        metadata: 'Gates: 8/8',
+        metadata: 'Deployed to prod_eth_4h',
         status: 'SUCCESS'
       },
       {
         id: 'evt_011',
         journeyId: 'journey_002',
         timestamp: '2026-07-12T13:15:00Z',
-        eventType: 'MODEL',
-        entity: 'Ensemble_Multi_Strategy',
-        entityId: 'mdl_004',
-        action: 'Promoted to Production',
+        eventType: 'SIGNAL',
+        entity: 'sig_8821',
+        entityId: 'sig_8821',
+        action: 'Signal Generated',
         user: 'ml.ops',
-        metadata: 'Approval Score: 95%',
+        metadata: 'Direction: LONG, Confidence: 0.87',
         status: 'SUCCESS',
         details: {
-          metrics: { approvalScore: 0.95 },
-          artifacts: ['mdl_004_prod.bin', 'mdl_004_manifest.json']
+          metrics: { confidence: 0.87, direction: 'LONG' },
+          artifacts: ['sig_8821.json']
         }
       }
     ]
   },
   {
     journeyId: 'journey_003',
-    title: 'XGBoost Ensemble Validation Failure Analysis',
+    title: 'SOLUSDT 1h Validation Failure Analysis',
     researcher: 'quant.team',
     startDate: '2026-07-11T08:00:00Z',
     endDate: '2026-07-12T12:45:00Z',
@@ -219,11 +348,11 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_003',
         timestamp: '2026-07-11T08:00:00Z',
         eventType: 'MODEL',
-        entity: 'XGBoost_Ensemble',
-        entityId: 'mdl_003',
+        entity: 'model_sol_v187',
+        entityId: 'model_sol_v187',
         action: 'Model Registered',
         user: 'quant.team',
-        metadata: 'Version: v1.2',
+        metadata: 'Symbol: SOLUSDT, Timeframe: 1h',
         status: 'SUCCESS'
       },
       {
@@ -231,11 +360,11 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_003',
         timestamp: '2026-07-11T14:30:00Z',
         eventType: 'VALIDATION',
-        entity: 'XGBoost_Ensemble',
-        entityId: 'val_003',
-        action: 'Validation Started',
+        entity: 'exp_sol_187',
+        entityId: 'exp_sol_187',
+        action: 'Fold 4',
         user: 'quant.team',
-        metadata: 'Test Set: Live_2026_Q2',
+        metadata: 'Weighted F1: 0.58',
         status: 'INFO'
       },
       {
@@ -243,14 +372,14 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_003',
         timestamp: '2026-07-12T12:45:00Z',
         eventType: 'VALIDATION',
-        entity: 'XGBoost_Ensemble',
-        entityId: 'val_003',
-        action: 'Validation Failed',
+        entity: 'exp_sol_187',
+        entityId: 'exp_sol_187',
+        action: 'Fold 5',
         user: 'quant.team',
-        metadata: 'Accuracy: 58.9%',
+        metadata: 'Weighted F1: 0.54',
         status: 'FAILED',
         details: {
-          metrics: { accuracy: 0.589, threshold: 0.75 },
+          metrics: { weightedF1: 0.54, threshold: 0.75 },
           logs: ['Failed threshold check', 'Performance degradation detected']
         }
       }
@@ -258,7 +387,7 @@ export const mockResearchJourneys: ResearchJourney[] = [
   },
   {
     journeyId: 'journey_004',
-    title: 'RandomForest Classifier Recalibration',
+    title: 'BNBUSDT 4h Recalibration',
     researcher: 'ml.ops',
     startDate: '2026-07-12T09:00:00Z',
     endDate: '2026-07-12T11:20:00Z',
@@ -269,9 +398,9 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_004',
         timestamp: '2026-07-12T09:00:00Z',
         eventType: 'CALIBRATION',
-        entity: 'RandomForest_Classifier',
-        entityId: 'cal_002',
-        action: 'Recalibration Started',
+        entity: 'model_bnb_v156',
+        entityId: 'model_bnb_v156',
+        action: 'Calibration',
         user: 'ml.ops',
         metadata: 'Method: Isotonic',
         status: 'INFO'
@@ -281,21 +410,21 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_004',
         timestamp: '2026-07-12T11:20:00Z',
         eventType: 'CALIBRATION',
-        entity: 'RandomForest_Classifier',
-        entityId: 'cal_002',
-        action: 'Recalibration Complete',
+        entity: 'model_bnb_v156',
+        entityId: 'model_bnb_v156',
+        action: 'Calibration',
         user: 'ml.ops',
-        metadata: 'ECE: 3.1%',
+        metadata: 'ECE After: 0.031',
         status: 'SUCCESS',
         details: {
-          metrics: { ece: 0.031, previousEce: 0.089, improvement: 0.058 }
+          metrics: { eceAfter: 0.031, eceBefore: 0.089, brierScore: 0.058 }
         }
       }
     ]
   },
   {
     journeyId: 'journey_005',
-    title: 'Sentiment Analysis v3 Pipeline',
+    title: 'HYPEUSDT 1h Feature Store Pipeline',
     researcher: 'data.eng',
     startDate: '2026-07-11T14:00:00Z',
     endDate: '2026-07-12T10:05:00Z',
@@ -305,47 +434,47 @@ export const mockResearchJourneys: ResearchJourney[] = [
         id: 'evt_017',
         journeyId: 'journey_005',
         timestamp: '2026-07-11T14:00:00Z',
-        eventType: 'FEATURE',
-        entity: 'Sentiment_Score_Aggregator',
-        entityId: 'feat_301',
-        action: 'Feature Engineered',
+        eventType: 'DATASET',
+        entity: 'dataset_hype_1h_v12',
+        entityId: 'dataset_hype_1h_v12',
+        action: 'Dataset Imported',
         user: 'data.eng',
-        metadata: 'Sources: 12',
+        metadata: 'Symbol: HYPEUSDT, Timeframe: 1h',
         status: 'SUCCESS'
       },
       {
         id: 'evt_018',
         journeyId: 'journey_005',
         timestamp: '2026-07-12T08:00:00Z',
-        eventType: 'DATASET',
-        entity: 'Sentiment_Analysis_v3',
-        entityId: 'ds_015',
-        action: 'Dataset Processing',
+        eventType: 'FEATURE',
+        entity: 'feature_store_v19',
+        entityId: 'feature_store_v19',
+        action: 'Feature Store Generated',
         user: 'data.eng',
-        metadata: 'Stage: ETL',
+        metadata: 'Features: 98',
         status: 'INFO'
       },
       {
         id: 'evt_019',
         journeyId: 'journey_005',
         timestamp: '2026-07-12T10:05:00Z',
-        eventType: 'DATASET',
-        entity: 'Sentiment_Analysis_v3',
-        entityId: 'ds_015',
-        action: 'Dataset Created',
+        eventType: 'FEATURE',
+        entity: 'feature_store_v19',
+        entityId: 'feature_store_v19',
+        action: 'Feature Store Generated',
         user: 'data.eng',
-        metadata: 'Size: 2.4M rows',
+        metadata: 'Features: 98',
         status: 'SUCCESS',
         details: {
-          metrics: { rows: 2400000, features: 24, sources: 12 },
-          artifacts: ['ds_015.parquet', 'ds_015_schema.json']
+          metrics: { features: 98, samples: 4380 },
+          artifacts: ['feature_store_v19.parquet', 'feature_store_v19_schema.json']
         }
       }
     ]
   },
   {
     journeyId: 'journey_006',
-    title: 'Volume Momentum Feature Deployment',
+    title: 'BTCUSDT 1h Trade Execution',
     researcher: 'research.team',
     startDate: '2026-07-12T07:00:00Z',
     endDate: '2026-07-12T09:30:00Z',
@@ -355,49 +484,49 @@ export const mockResearchJourneys: ResearchJourney[] = [
         id: 'evt_020',
         journeyId: 'journey_006',
         timestamp: '2026-07-12T07:00:00Z',
-        eventType: 'FEATURE',
-        entity: 'Volume_Momentum_Ratio',
-        entityId: 'feat_128',
-        action: 'Feature Engineered',
+        eventType: 'SIGNAL',
+        entity: 'sig_8822',
+        entityId: 'sig_8822',
+        action: 'Signal Generated',
         user: 'research.team',
-        metadata: 'Lookback: 20d',
+        metadata: 'Direction: SHORT, Confidence: 0.82',
         status: 'SUCCESS'
       },
       {
         id: 'evt_021',
         journeyId: 'journey_006',
         timestamp: '2026-07-12T08:15:00Z',
-        eventType: 'FEATURE',
-        entity: 'Volume_Momentum_Ratio',
-        entityId: 'feat_128',
-        action: 'Backtesting Complete',
+        eventType: 'TRADE',
+        entity: 'trade_551',
+        entityId: 'trade_551',
+        action: 'Trade Closed',
         user: 'research.team',
-        metadata: 'Sharpe: 2.4',
+        metadata: 'PnL: +2.4%',
         status: 'SUCCESS',
         details: {
-          metrics: { sharpe: 2.4, importance: 0.87, correlation: 0.72 }
+          metrics: { pnl: 0.024, duration: '1.25h', confidence: 0.82 }
         }
       },
       {
         id: 'evt_022',
         journeyId: 'journey_006',
         timestamp: '2026-07-12T09:30:00Z',
-        eventType: 'FEATURE',
-        entity: 'Volume_Momentum_Ratio',
-        entityId: 'feat_128',
-        action: 'Feature Deployed',
+        eventType: 'AI_REVIEW',
+        entity: 'trade_551',
+        entityId: 'trade_551',
+        action: 'AI Review',
         user: 'research.team',
-        metadata: 'Importance: 87%',
+        metadata: 'Decision Quality: High',
         status: 'SUCCESS',
         details: {
-          artifacts: ['feat_128_pipeline.py', 'feat_128_config.yaml']
+          artifacts: ['trade_551_review.json', 'trade_551_lessons.json']
         }
       }
     ]
   },
   {
     journeyId: 'journey_007',
-    title: 'Transformer Attention Model Development',
+    title: 'ETHUSDT 4h Drift Detection',
     researcher: 'research.team',
     startDate: '2026-07-11T16:00:00Z',
     endDate: '2026-07-12T08:50:00Z',
@@ -408,46 +537,46 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_007',
         timestamp: '2026-07-11T16:00:00Z',
         eventType: 'DATASET',
-        entity: 'High_Freq_Trades_2026',
-        entityId: 'ds_016',
-        action: 'Dataset Created',
+        entity: 'dataset_eth_4h_v18',
+        entityId: 'dataset_eth_4h_v18',
+        action: 'Dataset Imported',
         user: 'research.team',
-        metadata: 'Size: 8.1M rows',
+        metadata: 'Symbol: ETHUSDT, Timeframe: 4h',
         status: 'SUCCESS'
       },
       {
         id: 'evt_024',
         journeyId: 'journey_007',
         timestamp: '2026-07-12T06:00:00Z',
-        eventType: 'EXPERIMENT',
-        entity: 'Transformer_Attention',
-        entityId: 'exp_2846',
-        action: 'Training Started',
+        eventType: 'EVALUATION',
+        entity: 'exp_eth_203',
+        entityId: 'exp_eth_203',
+        action: 'Evaluation',
         user: 'research.team',
-        metadata: 'Layers: 12, Heads: 8',
+        metadata: 'PSI: 0.48',
         status: 'INFO'
       },
       {
         id: 'evt_025',
         journeyId: 'journey_007',
         timestamp: '2026-07-12T08:50:00Z',
-        eventType: 'EXPERIMENT',
-        entity: 'Transformer_Attention',
-        entityId: 'exp_2846',
-        action: 'Training Failed',
+        eventType: 'EVALUATION',
+        entity: 'exp_eth_203',
+        entityId: 'exp_eth_203',
+        action: 'Evaluation',
         user: 'research.team',
-        metadata: 'Error: OOM',
+        metadata: 'Drift: High',
         status: 'FAILED',
         details: {
-          logs: ['GPU memory exceeded', 'Required: 32GB, Available: 24GB'],
-          metrics: { memoryRequired: 32, memoryAvailable: 24 }
+          logs: ['Drift threshold exceeded', 'PSI: 0.48 > 0.25'],
+          metrics: { psi: 0.48, threshold: 0.25 }
         }
       }
     ]
   },
   {
     journeyId: 'journey_008',
-    title: 'GRU Volatility Model Promotion',
+    title: 'SOLUSDT 1h Model Promotion',
     researcher: 'quant.team',
     startDate: '2026-07-11T18:00:00Z',
     endDate: '2026-07-12T06:00:00Z',
@@ -458,11 +587,11 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_008',
         timestamp: '2026-07-11T18:00:00Z',
         eventType: 'MODEL',
-        entity: 'GRU_Volatility_Model',
-        entityId: 'mdl_005',
+        entity: 'model_sol_v187',
+        entityId: 'model_sol_v187',
         action: 'Model Registered',
         user: 'quant.team',
-        metadata: 'Version: v3.0',
+        metadata: 'Symbol: SOLUSDT, Timeframe: 1h',
         status: 'SUCCESS'
       },
       {
@@ -470,11 +599,11 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_008',
         timestamp: '2026-07-12T03:00:00Z',
         eventType: 'VALIDATION',
-        entity: 'GRU_Volatility_Model',
-        entityId: 'val_005',
-        action: 'Validation Passed',
+        entity: 'exp_sol_187',
+        entityId: 'exp_sol_187',
+        action: 'Purged Walk Forward Complete',
         user: 'quant.team',
-        metadata: 'Accuracy: 84.2%',
+        metadata: 'Weighted F1: 0.78',
         status: 'SUCCESS'
       },
       {
@@ -482,14 +611,14 @@ export const mockResearchJourneys: ResearchJourney[] = [
         journeyId: 'journey_008',
         timestamp: '2026-07-12T06:00:00Z',
         eventType: 'PROMOTION',
-        entity: 'GRU_Volatility_Model',
-        entityId: 'prm_005',
-        action: 'Promotion Pending',
+        entity: 'model_sol_v187',
+        entityId: 'model_sol_v187',
+        action: 'Candidate',
         user: 'quant.team',
-        metadata: 'Gates: 6/8',
+        metadata: 'Status: Candidate',
         status: 'WARNING',
         details: {
-          metrics: { gatesPassed: 6, gatesTotal: 8 },
+          metrics: { weightedF1: 0.78 },
           logs: ['Pending: Calibration check', 'Pending: Risk review']
         }
       }
@@ -497,7 +626,7 @@ export const mockResearchJourneys: ResearchJourney[] = [
   },
   {
     journeyId: 'journey_009',
-    title: 'Market Depth v2 Data Update',
+    title: 'BTCUSDT 1h Feature Store Update',
     researcher: 'data.eng',
     startDate: '2026-07-12T02:00:00Z',
     endDate: '2026-07-12T04:45:00Z',
@@ -507,35 +636,35 @@ export const mockResearchJourneys: ResearchJourney[] = [
         id: 'evt_029',
         journeyId: 'journey_009',
         timestamp: '2026-07-12T02:00:00Z',
-        eventType: 'DATASET',
-        entity: 'Market_Depth_v2',
-        entityId: 'ds_014',
-        action: 'Dataset Update Started',
+        eventType: 'FEATURE',
+        entity: 'feature_store_v20',
+        entityId: 'feature_store_v20',
+        action: 'Feature Store Generated',
         user: 'data.eng',
-        metadata: 'Source: Exchange API',
+        metadata: 'Symbol: BTCUSDT, Timeframe: 1h',
         status: 'INFO'
       },
       {
         id: 'evt_030',
         journeyId: 'journey_009',
         timestamp: '2026-07-12T04:45:00Z',
-        eventType: 'DATASET',
-        entity: 'Market_Depth_v2',
-        entityId: 'ds_014',
-        action: 'Dataset Updated',
+        eventType: 'FEATURE',
+        entity: 'feature_store_v20',
+        entityId: 'feature_store_v20',
+        action: 'Feature Store Generated',
         user: 'data.eng',
-        metadata: 'Added: 340K rows',
+        metadata: 'Features: 132',
         status: 'SUCCESS',
         details: {
-          metrics: { rowsAdded: 340000, totalRows: 5200000 },
-          artifacts: ['ds_014_v2.parquet']
+          metrics: { features: 132, samples: 8760 },
+          artifacts: ['feature_store_v20.parquet']
         }
       }
     ]
   },
   {
     journeyId: 'journey_010',
-    title: 'Mean Reversion Strategy Backtest',
+    title: 'BTCUSDT 1h Trade Analysis',
     researcher: 'quant.team',
     startDate: '2026-07-10T10:00:00Z',
     endDate: '2026-07-12T15:00:00Z',
@@ -545,51 +674,51 @@ export const mockResearchJourneys: ResearchJourney[] = [
         id: 'evt_031',
         journeyId: 'journey_010',
         timestamp: '2026-07-10T10:00:00Z',
-        eventType: 'FEATURE',
-        entity: 'Zscore_Normalized',
-        entityId: 'feat_401',
-        action: 'Feature Engineered',
+        eventType: 'PRODUCTION',
+        entity: 'prod_btc_1h',
+        entityId: 'prod_btc_1h',
+        action: 'Production',
         user: 'quant.team',
-        metadata: 'Window: 60d',
+        metadata: 'Symbol: BTCUSDT, Timeframe: 1h',
         status: 'SUCCESS'
       },
       {
         id: 'evt_032',
         journeyId: 'journey_010',
         timestamp: '2026-07-11T08:00:00Z',
-        eventType: 'EXPERIMENT',
-        entity: 'Mean_Reversion_v2',
-        entityId: 'exp_2848',
-        action: 'Backtest Started',
+        eventType: 'SIGNAL',
+        entity: 'sig_8821',
+        entityId: 'sig_8821',
+        action: 'Signal Generated',
         user: 'quant.team',
-        metadata: 'Period: 2024-2026',
+        metadata: 'Direction: LONG, Confidence: 0.84',
         status: 'INFO'
       },
       {
         id: 'evt_033',
         journeyId: 'journey_010',
         timestamp: '2026-07-12T14:00:00Z',
-        eventType: 'EXPERIMENT',
-        entity: 'Mean_Reversion_v2',
-        entityId: 'exp_2848',
-        action: 'Backtest Complete',
+        eventType: 'TRADE',
+        entity: 'trade_552',
+        entityId: 'trade_552',
+        action: 'Trade Closed',
         user: 'quant.team',
-        metadata: 'Sharpe: 1.8',
+        metadata: 'PnL: +1.8%',
         status: 'SUCCESS',
         details: {
-          metrics: { sharpe: 1.8, maxDrawdown: 0.12, winRate: 0.64 }
+          metrics: { pnl: 0.018, duration: '30h', confidence: 0.84 }
         }
       },
       {
         id: 'evt_034',
         journeyId: 'journey_010',
         timestamp: '2026-07-12T15:00:00Z',
-        eventType: 'VALIDATION',
-        entity: 'Mean_Reversion_v2',
-        entityId: 'val_010',
-        action: 'Validation Started',
+        eventType: 'AI_REVIEW',
+        entity: 'trade_552',
+        entityId: 'trade_552',
+        action: 'Lessons Learned',
         user: 'quant.team',
-        metadata: 'Test Set: Out_of_Sample',
+        metadata: 'Status: Complete',
         status: 'INFO'
       }
     ]
