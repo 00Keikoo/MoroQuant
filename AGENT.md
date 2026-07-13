@@ -174,3 +174,463 @@ When finished:
 - stop
 
 Never git push.
+
+
+# ======================================================
+# STITCH FOUNDATION
+# ======================================================
+
+Google Stitch is the official UI source of truth.
+
+Before implementing any screen, the project must have a single approved UI Foundation.
+
+The UI Foundation consists ONLY of:
+
+- app/layout.tsx
+- app/globals.css
+
+Foundation may contain ONLY:
+
+- Font loading
+- Material Symbols loading
+- Global CSS variables
+- Color tokens
+- Typography tokens
+- Spacing tokens
+- Utility classes
+- Global animation utilities
+
+The UI Foundation is implemented ONCE.
+
+After CTO approval the Foundation becomes LOCKED.
+
+Future implementation tasks are NOT allowed to modify:
+
+- app/layout.tsx
+- app/globals.css
+
+unless explicit CTO approval is given.
+
+
+# ======================================================
+# SCREEN IMPLEMENTATION MODE
+# ======================================================
+
+Frontend implementation is performed ONE SCREEN at a time.
+
+Never implement an entire workspace.
+
+Workflow:
+
+Read Stitch
+
+↓
+
+Read implementation package
+
+↓
+
+Implement ONE screen
+
+↓
+
+Build
+
+↓
+
+Visual Review
+
+↓
+
+CTO Approval
+
+↓
+
+Next screen
+
+
+# ======================================================
+# PIXEL PERFECT RULE
+# ======================================================
+
+Google Stitch is NOT inspiration.
+
+Google Stitch is NOT guidance.
+
+Google Stitch is the implementation target.
+
+Frontend engineers must COPY the Stitch layout.
+
+Do NOT:
+
+- redesign
+- simplify
+- reorganize
+- improve
+- reinterpret
+- optimize layout
+
+Pixel Perfect means visual reproduction.
+
+
+# ======================================================
+# FILE MODIFICATION LOCK
+# ======================================================
+
+Every implementation task has a modification boundary.
+
+Claude may modify ONLY files directly required for the current screen.
+
+Example:
+
+Trading Dashboard
+
+Allowed:
+
+- app/dashboard/**
+- components/dashboard/**
+- lib/mock-data/dashboard*
+
+Forbidden:
+
+- app/layout.tsx
+- app/globals.css
+- MQDS
+- Research pages
+- Operations pages
+- unrelated shared components
+
+If a forbidden file appears necessary:
+
+STOP.
+
+Explain why.
+
+Wait for CTO approval.
+
+
+# ======================================================
+# VISUAL REVIEW
+# ======================================================
+
+A screen is NOT finished when:
+
+- TypeScript passes
+- Build passes
+
+A screen is finished ONLY when:
+
+Implementation
+
+≈
+
+Stitch screenshot
+
+If visual differences remain,
+
+continue fixing.
+
+Do NOT continue to another screen.
+
+
+# ======================================================
+# GIT POLICY
+# ======================================================
+
+Claude Code NEVER executes:
+
+- git add
+- git commit
+- git push
+- git merge
+- git rebase
+- git stash
+- git checkout
+- git switch
+- git tag
+- git status
+- git diff
+
+Git ownership belongs exclusively to the CTO.
+
+Claude only reports:
+
+- Files modified
+- Files created
+- Build status
+- Remaining issues
+
+
+# ======================================================
+# COMPLETION RULE
+# ======================================================
+
+After every task output ONLY:
+
+Screen Completed
+
+Files Modified
+
+Files Created
+
+Build Result
+
+Visual Differences Remaining
+
+Ready for CTO Review
+
+STOP.
+
+Never continue to another screen automatically.
+
+
+# ======================================================
+# STITCH HTML IS CANONICAL
+# ======================================================
+
+When a Google Stitch design contains a generated HTML file
+(code.html),
+
+that HTML becomes the canonical implementation specification.
+
+The frontend engineer MUST treat the HTML as the source of truth.
+
+The screenshot (screen.png) is used ONLY for visual verification.
+
+Priority:
+
+1. code.html
+2. screen.png
+
+Never reverse the priority.
+
+
+# ======================================================
+# HTML → REACT CONVERSION MODE
+# ======================================================
+
+Frontend implementation is a conversion process.
+
+NOT a redesign process.
+
+Workflow:
+
+Google Stitch
+
+↓
+
+code.html
+
+↓
+
+React Components
+
+↓
+
+Visual Review
+
+↓
+
+CTO Approval
+
+The engineer should think like an HTML compiler,
+not a UI designer.
+
+
+# ======================================================
+# STRUCTURE PRESERVATION
+# ======================================================
+
+When converting HTML into React:
+
+Preserve exactly:
+
+- DOM hierarchy
+- nesting
+- ordering
+- spacing containers
+- wrapper elements
+- layout containers
+- grid structure
+- flex structure
+
+Do NOT:
+
+- merge sections
+- move panels
+- simplify hierarchy
+- remove wrappers
+- invent new containers
+- reorganize layout
+
+Componentization happens ONLY AFTER
+the original hierarchy has been preserved.
+
+
+# ======================================================
+# COMPONENTIZATION POLICY
+# ======================================================
+
+Convert HTML into React first.
+
+Verify visual parity.
+
+Only after visual parity has been achieved
+may the implementation be split into reusable components.
+
+Never redesign HTML merely to create reusable components.
+
+Correct order:
+
+HTML
+
+↓
+
+React
+
+↓
+
+Visual Match
+
+↓
+
+Component Extraction
+
+Wrong order:
+
+HTML
+
+↓
+
+Architecture
+
+↓
+
+Redesign
+
+↓
+
+React
+
+
+# ======================================================
+# SCREEN RECOVERY MODE
+# ======================================================
+
+When recovering an existing screen:
+
+Step 1
+
+Read:
+
+code.html
+
+Step 2
+
+Read:
+
+screen.png
+
+Step 3
+
+Convert HTML into React.
+
+Step 4
+
+Build.
+
+Step 5
+
+Compare against screenshot.
+
+Step 6
+
+Repeat until visually matching.
+
+Do NOT continue to another screen.
+
+
+# ======================================================
+# VISUAL PARITY
+# ======================================================
+
+Passing TypeScript
+
+≠
+
+Passing Build
+
+Passing Build
+
+≠
+
+Pixel Perfect
+
+The implementation is complete ONLY IF:
+
+The React implementation visually matches
+the official Stitch screenshot.
+
+
+# ======================================================
+# THINKING MODE
+# ======================================================
+
+When implementing frontend,
+the engineer should think:
+
+"I am converting an existing UI
+from HTML into React."
+
+NOT
+
+"I am designing a dashboard."
+
+The engineer is NOT responsible for UI decisions.
+
+The UI decisions have already been made
+inside Google Stitch.
+
+
+# ======================================================
+# HTML SECTION MODE
+# ======================================================
+
+When a Stitch HTML file is large,
+
+the implementation MUST be divided into sections.
+
+Examples:
+
+Section 1
+
+- Sidebar
+- Top Bar
+
+Section 2
+
+- KPI Cards
+
+Section 3
+
+- Chart Area
+
+Section 4
+
+- Data Table
+
+Section 5
+
+- Inspector
+
+Each section must be completed independently.
+
+Each section must compile.
+
+Each section must be visually reviewed.
+
+Only after approval may the engineer continue
+to the next HTML section.
+
+Never convert an entire HTML page
+in a single implementation task.

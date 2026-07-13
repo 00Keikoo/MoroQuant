@@ -1,3 +1,17 @@
+# AGENTS.md
+
+Version: 2.0
+
+Status: FROZEN
+
+Last Updated: 2026-07-13
+
+This document defines the official engineering workflow of MoroQuant.
+
+Changes require CTO approval.
+
+This document is considered part of the project architecture.
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
@@ -176,3 +190,17 @@ The CTO is solely responsible for:
 - Creating commits
 - Pushing to GitHub
 
+
+========================================================
+
+ENGINEERING WORKFLOW STATUS
+
+Architecture      : FROZEN
+ADR               : FROZEN
+MQDS              : FROZEN
+Google Stitch     : FROZEN
+AGENTS            : FROZEN
+
+Only implementation changes are allowed.
+
+========================================================
