@@ -1,0 +1,65 @@
+export interface Signal {
+  id: string;
+  symbol: string;
+  direction: 'LONG' | 'SHORT';
+  confidence: number;
+  timeframe: '1h' | '4h' | '1d';
+  entryPrice: number;
+  targetPrice: number;
+  stopLoss: number;
+  timestamp: string;
+  model: string;
+  features: string[];
+}
+
+export interface SignalsData {
+  signals: Signal[];
+  symbols: string[];
+  timeframes: ('1h' | '4h' | '1d')[];
+}
+
+export const signalsData: SignalsData = {
+  signals: [
+    {
+      id: "1",
+      symbol: "BTC-USDT-PERP",
+      direction: "LONG",
+      confidence: 0.87,
+      timeframe: "1h",
+      entryPrice: 63410.50,
+      targetPrice: 64820.00,
+      stopLoss: 62100.00,
+      timestamp: "2026-07-13T09:41:02Z",
+      model: "XGBoost_v4.2",
+      features: ["MOMENTUM_CROSS", "VOL_SPIKE", "ORDERFLOW_IMB"]
+    },
+    {
+      id: "2",
+      symbol: "ETH-USDT-PERP",
+      direction: "SHORT",
+      confidence: 0.72,
+      timeframe: "1h",
+      entryPrice: 3392.10,
+      targetPrice: 3310.00,
+      stopLoss: 3450.00,
+      timestamp: "2026-07-13T09:38:15Z",
+      model: "LightGBM_v3.8",
+      features: ["RSI_DIVERGENCE", "VOLUME_DECLINE"]
+    },
+    {
+      id: "3",
+      symbol: "SOL-USDT-PERP",
+      direction: "LONG",
+      confidence: 0.65,
+      timeframe: "4h",
+      entryPrice: 141.95,
+      targetPrice: 148.20,
+      stopLoss: 138.40,
+      timestamp: "2026-07-13T08:12:48Z",
+      model: "XGBoost_v4.2",
+      features: ["TREND_REVERSAL", "SUPPORT_BOUNCE"]
+    }
+  ],
+  symbols: ["BTC-USDT-PERP", "ETH-USDT-PERP", "SOL-USDT-PERP", "XAU-USD", "AAPL", "TSLA"],
+  timeframes: ["1h", "4h", "1d"]
+};

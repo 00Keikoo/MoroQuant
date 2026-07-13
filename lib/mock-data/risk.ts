@@ -1,0 +1,83 @@
+export interface RiskAnalytics {
+  var95: number;
+  expectedShortfall: number;
+  sharpeRatio: number;
+  maxDrawdown: number;
+  volatility: number;
+  beta: number;
+  correlationBTC: number;
+}
+
+export interface StressTest {
+  scenario: string;
+  portfolioImpact: number;
+  impactPercent: number;
+  probability: number;
+}
+
+export interface ExposureBreakdown {
+  crypto: number;
+  commodities: number;
+  equities: number;
+}
+
+export interface ConcentrationRisk {
+  btcExposure: number;
+  ethExposure: number;
+  topThreeConcentration: number;
+}
+
+export interface RiskData {
+  analytics: RiskAnalytics;
+  stressTests: StressTest[];
+  exposureBreakdown: ExposureBreakdown;
+  concentrationRisk: ConcentrationRisk;
+}
+
+export const riskData: RiskData = {
+  analytics: {
+    var95: 142580.00,
+    expectedShortfall: 198420.00,
+    sharpeRatio: 3.42,
+    maxDrawdown: 0.0214,
+    volatility: 0.0182,
+    beta: 1.12,
+    correlationBTC: 0.87
+  },
+  stressTests: [
+    {
+      scenario: "Market Crash -20%",
+      portfolioImpact: -2028481.60,
+      impactPercent: -20.0,
+      probability: 0.02
+    },
+    {
+      scenario: "Volatility Spike +50%",
+      portfolioImpact: -508120.40,
+      impactPercent: -5.0,
+      probability: 0.08
+    },
+    {
+      scenario: "Liquidity Crisis",
+      portfolioImpact: -1014240.80,
+      impactPercent: -10.0,
+      probability: 0.05
+    },
+    {
+      scenario: "BTC Correlation Break",
+      portfolioImpact: -304272.24,
+      impactPercent: -3.0,
+      probability: 0.12
+    }
+  ],
+  exposureBreakdown: {
+    crypto: 0.88,
+    commodities: 0.12,
+    equities: 0.00
+  },
+  concentrationRisk: {
+    btcExposure: 0.42,
+    ethExposure: 0.28,
+    topThreeConcentration: 0.88
+  }
+};

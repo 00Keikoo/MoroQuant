@@ -4,139 +4,175 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+
 # AI Collaboration & Responsibilities
 
-This repository defines strict, non-overlapping roles for AI agents (Claude Code and Antigravity) to maintain structural consistency and code quality.
+This repository defines strict, non-overlapping roles for the CTO, AI agents (Claude Code and Antigravity), and design tools to maintain structural consistency and code quality.
 
 For a full description, see the [AI Collaboration Standard](file:///home/zafka/trade-dashboard/docs/book/02-ai-collaboration.md).
 
+## Engineering Workflow
+
+```mermaid
+graph TD
+    A[Architecture] --> B[Design]
+    B --> C[Implementation Contract]
+    C --> D[Frontend Implementation]
+    D --> E[CTO Review]
+    E --> F[Git]
+    F --> G[Deployment]
+```
+
+---
+
 ## Division of Responsibilities
 
-### 💻 Claude Code (Implementation & Build)
-*   Implementation
-*   Refactoring
-*   Components
-*   Frontend
-*   Backend
-*   Testing
-*   Build Verification
-*   Production implementation (features, services, APIs)
-*   Bug fixing and hotfix implementation
-*   SQL database migrations
-*   Writing and executing test suites
-*   Runtime integration and package wiring
-*   Performance optimization
-
-> [!CAUTION]
-> Claude Code should **not** generate architectural audits, reviews, ADRs, RFCs, sprint reports, design specifications, or repository governance documentation unless explicitly requested.
+### 👑 CTO (Project Owner)
+Responsible exclusively for:
+- Git history
+- Code review
+- Commit approval
+- Branch management
+- Merge
+- Release
+- Deployment
 
 ### 🛸 Antigravity (Governance, Audits & Design)
-*   Architecture
-*   ADR
-*   Documentation
-*   Audits
-*   Design
-*   Governance
-*   Research
-*   Architecture decisions and ADR management
-*   Technical design reviews and RFCs
-*   Data, schema, and logic audits
-*   Repository classification and directory organization
-*   Sprint reporting and retrospective compilation
-*   Root cause analysis (RCA)
-*   Writing development guides, indices, and collaboration standards
+Responsible for:
+- Architecture
+- ADR (Architecture Decision Records)
+- Documentation
+- Research
+- Audits
+- Implementation Packages
+- Backend / API analysis
+- Data flow analysis
+
+> [!IMPORTANT]
+> - Never implement frontend.
+> - Never perform Git operations.
+
+### 🎨 Google Stitch (Design Source of Truth)
+Responsible for:
+- UI Design
+- UX Design
+- MQDS (MoroQuant Design System)
+- Visual Specifications
 
 > [!NOTE]
-> The architecture phase is complete. The frontend implementation phase should prioritize execution over rediscovery.
+> Design is the official UI source of truth.
+> - Never redesign UI during implementation.
+> - Implement pixel-perfect.
+> - If UI conflicts with code, the design wins.
+> - If architecture conflicts with design, architecture wins.
+> - If design changes, update Stitch first, then implement.
 
-## UI Source of Truth
+### 💻 Claude Code (Implementation & Build Only)
+Responsible ONLY for implementation.
 
-Official UI lives in
+**Responsibilities:**
+- Implement frontend
+- Edit files
+- Refactor code
+- Fix build errors
+- Run `npm run build`
+- Report completion
 
-design/stitch/current/
+**Claude Code is NOT responsible for:**
+- Architecture
+- UI redesign
+- Product decisions
+- Git history
 
-Never redesign UI during implementation.
+---
 
-Implement pixel-perfect.
+## Git Policy
 
-If UI conflicts with code,
+Claude Code must **NEVER** execute Git commands.
 
-the design wins.
+Never run:
+- `git status`
+- `git diff`
+- `git add`
+- `git commit`
+- `git push`
+- `git pull`
+- `git merge`
+- `git rebase`
+- `git checkout`
+- `git restore`
+- `git reset`
+- `git stash`
+- `git tag`
 
-If architecture conflicts with design,
+Git is managed exclusively by the CTO.
 
-architecture wins.
+---
 
-If design changes,
+## Implementation Policy
 
-update Stitch first.
+For every task, Claude Code must:
+1. Read the implementation guide.
+2. Read the Stitch reference.
+3. Implement only the requested screen.
+4. Reuse existing MQDS components.
+5. Reuse existing hooks.
+6. Reuse existing API clients.
+7. Connect READY APIs.
+8. Preserve mock data for MISSING APIs.
+9. Run `npm run build`.
+10. Stop.
 
-Then implement.
-
-# Frontend Engineering Rules
-
-## Pattern-Driven Development
+### Pattern-Driven Development & Workspace Inheritance
 
 The MoroQuant frontend has entered the implementation phase.
+- Architecture, ADRs, MQDS, UI specifications, and Visual Design are considered frozen.
+- Claude Code must NOT redesign existing interfaces.
+- Every new workspace must reuse the nearest existing implementation pattern (e.g., Experiment Workspace → Dataset Workspace, Dataset Workspace → Feature Workspace, etc.).
+- Reuse existing page structure and only replace domain-specific content. Do not introduce new UI paradigms without an ADR.
 
-Architecture, ADRs, MQDS, UI specifications and Visual Design are considered frozen after Sprint 5.
+---
 
-Claude Code must NOT redesign existing interfaces.
+## Completion Report
 
-Every new workspace must reuse the nearest existing implementation pattern.
+Instead of committing code, Claude Code must finish with a report containing:
 
-**Examples**
+```markdown
+### Implementation Summary
+<Summary of what was done>
 
-Experiment Workspace → Dataset Workspace
+### Files Modified
+- <File path 1>
+- <File path 2>
 
-Dataset Workspace → Feature Workspace
+### Files Created
+- <File path 1>
 
-Feature Workspace → Validation Center
+### Build Status
+<Build status output/verification>
 
-Validation Center → Calibration Center
+### Remaining TODOs
+- <Remaining task 1>
 
-Calibration Center → Model Registry
+### Known Limitations
+- <Limitation 1>
 
-Model Registry → Promotion Center
+### Ready for CTO Review
+Yes/No
+```
 
-Research Command Center → Research Timeline
+Do NOT perform any Git operations.
 
-Experiment Workspace → Trade Forensics
+---
 
-## Implementation Rules
+## Commit Policy
 
-1. Never redesign layouts that already exist.
+One screen equals one implementation task.
 
-2. Reuse MQDS components whenever possible.
+The CTO is solely responsible for:
+- Reviewing git diff
+- Selecting staged files
+- Writing commit messages
+- Creating commits
+- Pushing to GitHub
 
-3. Reuse existing page structure.
-
-4. Only replace domain-specific content.
-
-5. Do not reread ADRs or documentation unless explicitly requested.
-
-6. Treat previous workspaces as implementation templates.
-
-7. Every workspace must pass `npm run build` before completion.
-
-8. Each workspace is an independent Git checkpoint.
-
-**Recommended workflow**
-
-Workspace → Build → Commit → Push → Next Workspace
-
-Never accumulate multiple unfinished workspaces.
-
-9. Frontend implementation follows Pattern-Driven Development. The objective is consistency, maintainability, and implementation speed rather than creating new layouts.
-
-## Workspace Inheritance Rule
-
-Before implementing a new workspace:
-
-1. Find the closest completed workspace.
-2. Reuse its layout and interaction pattern.
-3. Replace only domain-specific content.
-4. Preserve MQDS consistency.
-5. Do not introduce new UI paradigms without an ADR.
-
-Workspace inheritance is preferred over redesign.
