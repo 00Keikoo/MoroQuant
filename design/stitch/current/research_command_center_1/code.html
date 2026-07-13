@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoroQuant Lab | Research Command Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#1b1c1c",
+                        "on-background": "#e4e2e1",
+                        "on-primary-fixed": "#351000",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "on-tertiary": "#003257",
+                        "tertiary-fixed-dim": "#9ccaff",
+                        "secondary": "#c8c6c5",
+                        "inverse-on-surface": "#303030",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#00497b",
+                        "on-secondary-container": "#b7b5b4",
+                        "secondary-container": "#474746",
+                        "background": "#131313",
+                        "inverse-primary": "#a04100",
+                        "surface-tint": "#ffb693",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-bright": "#393939",
+                        "primary-container": "#ff6b00",
+                        "inverse-surface": "#e4e2e1",
+                        "on-tertiary-container": "#003357",
+                        "on-primary": "#561f00",
+                        "on-tertiary-fixed": "#001d35",
+                        "on-secondary": "#313030",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353535",
+                        "outline": "#a98a7d",
+                        "tertiary-fixed": "#d0e4ff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-variant": "#353535",
+                        "on-secondary-fixed-variant": "#474746",
+                        "error-container": "#93000a",
+                        "tertiary": "#9ccaff",
+                        "outline-variant": "#5a4136",
+                        "tertiary-container": "#059eff",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "primary-fixed": "#ffdbcc",
+                        "on-surface": "#e4e2e1",
+                        "surface-dim": "#131313",
+                        "error": "#ffb4ab",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#ffb693",
+                        "surface-container": "#1f2020",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-primary-container": "#572000",
+                        "on-surface-variant": "#e2bfb0",
+                        "primary": "#ffb693"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "cell-padding-x": "6px",
+                        "container-padding": "8px",
+                        "cell-padding-y": "2px",
+                        "panel-gap": "1px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "mono-code": ["JetBrains Mono"],
+                        "mono-label": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "mono-label": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "mono-data": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "headline-sm": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #000000;
+            color: #e4e2e1;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+            font-size: 18px;
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .grid-panel { border: 0.5px solid #2D2D2D; }
+        .active-border-left { border-left: 2px solid #ff6b00; }
+        .sparkline-bar { width: 2px; background: #ff6b00; transition: height 0.3s ease; }
+        .status-dot { width: 6px; height: 6px; border-radius: 1px; }
+        .scanline {
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 107, 0, 0.1);
+            position: absolute;
+            top: 0;
+            animation: scan 4s linear infinite;
+        }
+        @keyframes scan {
+            from { top: 0; }
+            to { top: 100%; }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col font-body-md text-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation (Shared Component: TopAppBar) -->
+<header class="flex h-10 w-full items-center pl-16 pr-4 gap-0 border-b border-outline-variant bg-surface dark:bg-surface fixed top-0 z-40">
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface mr-8">MoroQuant Lab</div>
+<nav class="flex h-full items-center">
+<a class="h-full px-4 flex items-center border-t-2 border-primary text-on-surface bg-surface-container-high font-mono-code text-mono-code transition-all duration-75" href="#">Chronicle</a>
+<a class="h-full px-4 flex items-center border-t-2 border-transparent text-on-surface-variant hover:bg-surface-container-low font-mono-code text-mono-code transition-all duration-75" href="#">Trade-492</a>
+<a class="h-full px-4 flex items-center border-t-2 border-transparent text-on-surface-variant hover:bg-surface-container-low font-mono-code text-mono-code transition-all duration-75" href="#">Exp-921</a>
+</nav>
+<div class="ml-auto flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container-low border border-outline-variant rounded-sm">
+<span class="material-symbols-outlined text-[14px]">search</span>
+<input class="bg-transparent border-none p-0 text-mono-label font-mono-label focus:ring-0 placeholder:text-outline-variant w-32" placeholder="CMD+K TO SEARCH" type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface">hub</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface">lan</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-on-surface">terminal</button>
+</div>
+<button class="bg-primary-container text-on-primary-container px-3 py-1 font-mono-label text-mono-label rounded-[2px] font-bold">DEPLOY</button>
+</div>
+</header>
+<!-- Sidebar Navigation (Shared Component: SideNavBar) -->
+<aside class="fixed left-0 top-0 h-full w-16 flex flex-col items-center py-4 border-r border-outline-variant bg-surface-container-lowest z-50">
+<div class="mb-8">
+<div class="w-10 h-10 bg-black border border-outline-variant flex items-center justify-center">
+<span class="font-headline-sm text-headline-sm text-primary uppercase tracking-tighter">MQ</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 w-full">
+<div class="w-full h-12 flex items-center justify-center border-l-2 border-primary bg-secondary-container text-primary transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+</div>
+<div class="w-full h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined">show_chart</span>
+</div>
+<div class="w-full h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div class="w-full h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined">sensors</span>
+</div>
+<div class="w-full h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined">science</span>
+</div>
+</div>
+<div class="mt-auto flex flex-col gap-2 w-full">
+<div class="w-full h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+</div>
+<div class="w-full h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<div class="w-full h-12 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-100 ease-linear cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 ml-16 mt-10 mb-6 flex overflow-hidden">
+<!-- Left Panel: Active Research Queues -->
+<section class="w-80 border-r border-outline-variant flex flex-col bg-background">
+<div class="px-3 py-2 border-b border-outline-variant bg-surface-container-lowest flex justify-between items-center">
+<span class="font-mono-label text-mono-label text-outline uppercase tracking-wider">Research Queues</span>
+<span class="material-symbols-outlined text-[14px] cursor-pointer">more_vert</span>
+</div>
+<div class="flex-1 overflow-y-auto scrollbar-hide">
+<!-- Training Queue -->
+<div class="p-0">
+<div class="px-3 py-1 bg-surface-container-low flex items-center gap-2 border-b border-outline-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">model_training</span>
+<span class="font-mono-label text-mono-label text-on-surface uppercase">Training (12)</span>
+</div>
+<ul class="divide-y divide-outline-variant/10">
+<li class="px-3 py-2 hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-1">
+<span class="font-mono-code text-mono-code text-primary">ALPHA_X_GEN7</span>
+<span class="font-mono-data text-mono-data text-outline-variant">88%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-0.5">
+<div class="bg-primary-container h-full" style="width: 88%"></div>
+</div>
+<div class="flex gap-2 mt-1">
+<span class="text-[9px] font-mono-label bg-surface-container-high px-1 text-on-surface-variant">V100_NODE_A</span>
+<span class="text-[9px] font-mono-label bg-surface-container-high px-1 text-on-surface-variant">LOCKED</span>
+</div>
+</li>
+<li class="px-3 py-2 hover:bg-surface-container-high transition-colors cursor-pointer border-l-2 border-primary bg-surface-container">
+<div class="flex justify-between items-start mb-1">
+<span class="font-mono-code text-mono-code text-primary">BETA_HFT_SIGNAL</span>
+<span class="font-mono-data text-mono-data text-outline-variant">12%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-0.5">
+<div class="bg-primary-container h-full" style="width: 12%"></div>
+</div>
+<div class="flex gap-2 mt-1">
+<span class="text-[9px] font-mono-label bg-surface-container-high px-1 text-on-surface-variant">A100_NODE_01</span>
+<span class="text-[9px] font-mono-label bg-surface-container-high px-1 text-on-surface-variant">RUNNING</span>
+</div>
+</li>
+<!-- More items... -->
+<li class="px-3 py-2 hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<span class="font-mono-code text-mono-code text-on-surface-variant">GAM_DELTA_EXP</span>
+<span class="font-mono-data text-mono-data text-outline-variant">QUEUED</span>
+</div>
+<div class="w-full bg-surface-container-highest h-0.5"></div>
+</li>
+</ul>
+</div>
+<!-- Validation Queue -->
+<div class="p-0 mt-2">
+<div class="px-3 py-1 bg-surface-container-low flex items-center gap-2 border-b border-outline-variant border-t border-outline-variant">
+<span class="material-symbols-outlined text-[14px] text-tertiary">fact_check</span>
+<span class="font-mono-label text-mono-label text-on-surface uppercase">Validation (4)</span>
+</div>
+<ul class="divide-y divide-outline-variant/10">
+<li class="px-3 py-2 hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex justify-between items-center">
+<span class="font-mono-code text-mono-code text-tertiary">STRESS_TEST_04</span>
+<span class="status-dot bg-tertiary"></span>
+</div>
+<div class="text-[9px] font-mono-label text-outline-variant mt-1">SCENARIO: BLACK_SWAN_VOL</div>
+</li>
+<li class="px-3 py-2 hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex justify-between items-center">
+<span class="font-mono-code text-mono-code text-tertiary">SHARPE_OPT_V2</span>
+<span class="status-dot bg-outline-variant"></span>
+</div>
+<div class="text-[9px] font-mono-label text-outline-variant mt-1">EST. TIME: 4h 12m</div>
+</li>
+</ul>
+</div>
+<!-- Promotion Queue -->
+<div class="p-0 mt-2">
+<div class="px-3 py-1 bg-surface-container-low flex items-center gap-2 border-b border-outline-variant border-t border-outline-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">rocket_launch</span>
+<span class="font-mono-label text-mono-label text-on-surface uppercase">Promotion (2)</span>
+</div>
+<div class="p-3">
+<div class="bg-surface-container-lowest border border-outline-variant p-2 flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="font-mono-label text-[9px] text-outline uppercase">Pending Approval</span>
+<span class="font-mono-data text-mono-data text-primary">0x9F...2E</span>
+</div>
+<div class="text-mono-code text-on-surface">QUANT_MOMENTUM_STABLE</div>
+<button class="w-full bg-primary-container/10 border border-primary text-primary py-1 font-mono-label text-[10px] hover:bg-primary-container hover:text-black transition-all">PROMOTE TO PROD</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Center Panel: System Health Dashboard -->
+<section class="flex-1 flex flex-col bg-black relative">
+<div class="scanline"></div>
+<div class="px-4 py-2 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest/50 backdrop-blur-md">
+<div class="flex items-center gap-4">
+<span class="font-mono-label text-mono-label text-outline uppercase tracking-wider">System Telemetry</span>
+<div class="flex items-center gap-2">
+<span class="status-dot bg-[#00C853] animate-pulse"></span>
+<span class="font-mono-label text-[9px] text-[#00C853]">SCHEDULER: ACTIVE</span>
+</div>
+</div>
+<span class="font-mono-data text-mono-data text-outline-variant">UPTIME: 142:22:04</span>
+</div>
+<div class="flex-1 p-6 flex flex-col gap-8 overflow-y-auto">
+<!-- Large Telemetry Stats -->
+<div class="grid grid-cols-3 gap-6">
+<div class="border border-outline-variant p-4 bg-surface-container-lowest/30">
+<div class="font-mono-label text-[10px] text-outline mb-2">CORE GPU UTILIZATION</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-mono-code text-primary">84</span>
+<span class="text-xl font-mono-code text-outline-variant">%</span>
+</div>
+<div class="mt-4 flex gap-1 h-8 items-end">
+<div class="sparkline-bar h-[60%]"></div>
+<div class="sparkline-bar h-[75%]"></div>
+<div class="sparkline-bar h-[90%]"></div>
+<div class="sparkline-bar h-[84%]"></div>
+<div class="sparkline-bar h-[70%]"></div>
+<div class="sparkline-bar h-[84%]"></div>
+<div class="sparkline-bar h-[95%]"></div>
+<div class="sparkline-bar h-[82%]"></div>
+<div class="sparkline-bar h-[78%]"></div>
+</div>
+</div>
+<div class="border border-outline-variant p-4 bg-surface-container-lowest/30">
+<div class="font-mono-label text-[10px] text-outline mb-2">SYSTEM RAM LOAD</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-mono-code text-on-surface">1.2</span>
+<span class="text-xl font-mono-code text-outline-variant">TB</span>
+</div>
+<div class="mt-4 flex items-center justify-between text-mono-data text-[10px] text-outline-variant">
+<span>USED: 1,228 GB</span>
+<span>FREE: 819 GB</span>
+</div>
+<div class="mt-2 w-full h-1 bg-surface-container-highest">
+<div class="bg-on-surface h-full" style="width: 60%"></div>
+</div>
+</div>
+<div class="border border-outline-variant p-4 bg-surface-container-lowest/30">
+<div class="font-mono-label text-[10px] text-outline mb-2">NET THROUGHPUT</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-mono-code text-tertiary">9.4</span>
+<span class="text-xl font-mono-code text-outline-variant">GB/s</span>
+</div>
+<div class="mt-4">
+<div class="flex justify-between font-mono-label text-[9px] text-outline-variant uppercase mb-1">
+<span>Ingress</span>
+<span>6.1 GB/s</span>
+</div>
+<div class="flex justify-between font-mono-label text-[9px] text-outline-variant uppercase">
+<span>Egress</span>
+<span>3.3 GB/s</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Worker Grid -->
+<div class="flex-1 border border-outline-variant bg-surface-container-lowest/20 flex flex-col">
+<div class="px-3 py-2 border-b border-outline-variant bg-surface-container-low flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">memory</span>
+<span class="font-mono-label text-mono-label text-on-surface">WORKER CLUSTER (0x900 - 0x9FF)</span>
+</div>
+<div class="p-4 grid grid-cols-8 gap-2">
+<!-- Simulated Grid of 64 workers -->
+<script>
+                            for(let i=0; i<48; i++) {
+                                const id = (2351 + i).toString(16);
+                                const status = i === 12 ? 'bg-primary-container' : (i % 7 === 0 ? 'bg-tertiary' : (i % 15 === 0 ? 'bg-error' : 'bg-[#00C853]'));
+                                const opacity = i === 12 ? 'opacity-100 ring-1 ring-primary' : 'opacity-40';
+                                document.write(`<div class="aspect-square flex flex-col items-center justify-center border border-outline-variant/30 hover:border-primary cursor-pointer transition-all ${opacity} group">
+                                    <div class="w-2 h-2 ${status} mb-1"></div>
+                                    <span class="font-mono-label text-[7px] text-outline-variant group-hover:text-primary">0x${id}</span>
+                                </div>`);
+                            }
+                        </script>
+</div>
+</div>
+<!-- Live Stream Console -->
+<div class="h-32 border border-outline-variant bg-surface-container-lowest/50 p-2 overflow-hidden">
+<div class="font-mono-label text-[9px] text-outline-variant mb-2 uppercase border-b border-outline-variant/20 pb-1">Live Engine Stream</div>
+<div class="font-mono-code text-[11px] text-[#00C853] leading-tight space-y-0.5 opacity-80">
+<p>[14:22:01.034] INFO: SCHEDULER: Dispatched job 0x92f to Cluster_B</p>
+<p>[14:22:01.045] INFO: WORKER_0x92f: Loading weights for ALPHA_X...</p>
+<p>[14:22:02.112] WARN: LATENCY: Cluster_A node 04 reporting 12ms delay</p>
+<p>[14:22:03.001] INFO: VALIDATOR: Checksum verified for STRESS_TEST_04</p>
+<p class="animate-pulse">[14:22:04.221] INFO: HEARTBEAT: All systems nominal...</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel: Inspector -->
+<aside class="w-80 border-l border-outline-variant flex flex-col bg-background">
+<div class="px-3 py-2 border-b border-outline-variant bg-surface-container-lowest flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">info</span>
+<span class="font-mono-label text-mono-label text-outline uppercase tracking-wider">Worker Inspector</span>
+</div>
+<div class="flex-1 p-4 flex flex-col gap-6 overflow-y-auto">
+<!-- Selected Worker Stats -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 border border-primary bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">developer_board</span>
+</div>
+<div>
+<div class="font-mono-code text-on-surface">WORKER ID: 0x92f</div>
+<div class="flex items-center gap-2">
+<span class="status-dot bg-[#00C853]"></span>
+<span class="font-mono-label text-[10px] text-[#00C853] uppercase">Status: Running</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 border-y border-outline-variant divide-y divide-outline-variant">
+<div class="py-2 flex justify-between items-center">
+<span class="font-mono-label text-outline-variant uppercase">Current Task</span>
+<span class="font-mono-code text-on-surface text-right">ALPHA_X_GEN7</span>
+</div>
+<div class="py-2 flex justify-between items-center">
+<span class="font-mono-label text-outline-variant uppercase">Local Temp</span>
+<span class="font-mono-code text-on-surface">64.2°C</span>
+</div>
+<div class="py-2 flex justify-between items-center">
+<span class="font-mono-label text-outline-variant uppercase">Memory Usage</span>
+<span class="font-mono-code text-on-surface">42.8 GB</span>
+</div>
+<div class="py-2 flex justify-between items-center">
+<span class="font-mono-label text-outline-variant uppercase">Clock Speed</span>
+<span class="font-mono-code text-on-surface">1,945 MHz</span>
+</div>
+</div>
+</div>
+<!-- Parameters Panel -->
+<div class="flex flex-col gap-3">
+<div class="font-mono-label text-mono-label text-outline uppercase">Active Hyperparameters</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<label class="font-mono-label text-[9px] text-outline-variant w-24">LEARNING_RATE</label>
+<input class="flex-1 bg-surface-container-lowest border border-outline-variant text-mono-code text-[11px] px-2 py-0.5 focus:ring-0" readonly="" type="text" value="0.000421"/>
+</div>
+<div class="flex items-center gap-2">
+<label class="font-mono-label text-[9px] text-outline-variant w-24">BATCH_SIZE</label>
+<input class="flex-1 bg-surface-container-lowest border border-outline-variant text-mono-code text-[11px] px-2 py-0.5 focus:ring-0" readonly="" type="text" value="1024"/>
+</div>
+<div class="flex items-center gap-2">
+<label class="font-mono-label text-[9px] text-outline-variant w-24">OPT_ALGO</label>
+<input class="flex-1 bg-surface-container-lowest border border-outline-variant text-mono-code text-[11px] px-2 py-0.5 focus:ring-0" readonly="" type="text" value="ADAM_STOCH"/>
+</div>
+</div>
+</div>
+<!-- Visualization Trigger -->
+<div class="mt-auto">
+<div class="w-full aspect-video border border-outline-variant bg-black mb-4 flex items-center justify-center group cursor-crosshair overflow-hidden relative">
+<div class="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity" data-alt="A high-density financial data visualization with complex candle charts and overlayed neural network heatmaps. The style is strictly technical, with orange and white lines on a pure black background. No curves, only sharp grid-based data plotting in a 4k professional terminal aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBbd4swl4o4kuSixU8eWqXvOYAydmQM8C_zF4RvcYNM_JAOVPoXJzHuC61VjYalxesaKH3LOjPnsvEzyCwaO-qdkuhI0ujVJ6CQRc3BVP1dQYB4BuZHV_1Ll0_lLL9n4CAMHONeHgVhGvjJlBarEyuu0RrGiQzLz61Lbm0xkgjL0mwO0Cp89sXgvLLtKiiuVfk3WsUHre4DISziN2vY5VDkis4BzRXp8-Q8yZt5q22AC8QxYUVY_Yn6SwVNFxfYsXB3GTaTm1MqgyQ')"></div>
+<div class="z-10 flex flex-col items-center">
+<span class="material-symbols-outlined text-primary mb-2">query_stats</span>
+<span class="font-mono-label text-[10px] text-primary uppercase">Open Visualizer</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 border border-outline-variant py-2 font-mono-label text-[10px] uppercase hover:bg-surface-container-low transition-colors">Abort Job</button>
+<button class="flex-1 border border-outline-variant py-2 font-mono-label text-[10px] uppercase hover:bg-surface-container-low transition-colors">Flush Cache</button>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- Footer Status Bar (Shared Component: Footer) -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex items-center justify-between px-3 h-6 border-t border-outline-variant bg-black font-mono-data text-mono-data text-tertiary-container">
+<div class="flex items-center gap-4">
+<span class="text-on-surface">SYSTEM STATUS: NOMINAL</span>
+<span class="text-outline-variant/50">|</span>
+<span>GPU: 84%</span>
+<span class="text-outline-variant/50">|</span>
+<span>WORKER_ID: 0x92f</span>
+</div>
+<div class="flex items-center gap-4">
+<a class="text-on-surface-variant hover:text-on-surface" href="#">Logs</a>
+<a class="text-on-surface-variant hover:text-on-surface" href="#">Network</a>
+<a class="text-on-surface-variant hover:text-on-surface" href="#">Scheduler</a>
+<div class="flex items-center gap-1 ml-2">
+<span class="w-2 h-2 rounded-full bg-[#00C853]"></span>
+<span class="text-on-surface-variant">ONLINE</span>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions for live feeling
+        setInterval(() => {
+            const bars = document.querySelectorAll('.sparkline-bar');
+            bars.forEach(bar => {
+                const newHeight = Math.floor(Math.random() * 60) + 40;
+                bar.style.height = `${newHeight}%`;
+            });
+        }, 1200);
+
+        // Click to select worker interaction
+        document.querySelectorAll('.grid-cols-8 > div').forEach(node => {
+            node.addEventListener('click', () => {
+                document.querySelectorAll('.grid-cols-8 > div').forEach(n => {
+                    n.classList.remove('opacity-100', 'ring-1', 'ring-primary');
+                    n.classList.add('opacity-40');
+                });
+                node.classList.add('opacity-100', 'ring-1', 'ring-primary');
+                node.classList.remove('opacity-40');
+            });
+        });
+    </script>
+</body></html>

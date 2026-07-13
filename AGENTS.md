@@ -49,6 +49,30 @@ For a full description, see the [AI Collaboration Standard](file:///home/zafka/t
 > [!NOTE]
 > The architecture phase is complete. The frontend implementation phase should prioritize execution over rediscovery.
 
+## UI Source of Truth
+
+Official UI lives in
+
+design/stitch/current/
+
+Never redesign UI during implementation.
+
+Implement pixel-perfect.
+
+If UI conflicts with code,
+
+the design wins.
+
+If architecture conflicts with design,
+
+architecture wins.
+
+If design changes,
+
+update Stitch first.
+
+Then implement.
+
 # Frontend Engineering Rules
 
 ## Pattern-Driven Development

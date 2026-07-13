@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoroQuant V2 OS | Risk Management Workstation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 16px;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e0e; }
+        ::-webkit-scrollbar-thumb { background: #2d2d2d; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #353535; }
+        
+        .panel-border { border: 1px solid #2d2d2d; }
+        .data-grid-row:hover { background-color: #1A1A1A; }
+        
+        /* High-density table sizing */
+        td, th { padding: 2px 6px; }
+
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        .status-alert { animation: pulse-red 2s infinite; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#ffb693",
+                      "outline-variant": "#5a4136",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "on-background": "#e4e2e1",
+                      "primary-fixed-dim": "#ffb693",
+                      "inverse-on-surface": "#303030",
+                      "on-tertiary-container": "#003357",
+                      "error-container": "#93000a",
+                      "surface-variant": "#353535",
+                      "on-primary-fixed": "#351000",
+                      "on-error": "#690005",
+                      "secondary-container": "#474746",
+                      "on-surface-variant": "#e2bfb0",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "primary-container": "#ff6b00",
+                      "tertiary-container": "#059eff",
+                      "on-tertiary-fixed-variant": "#00497b",
+                      "surface-container-lowest": "#0e0e0e",
+                      "on-surface": "#e4e2e1",
+                      "on-secondary": "#313030",
+                      "tertiary": "#9ccaff",
+                      "error": "#ffb4ab",
+                      "on-secondary-fixed-variant": "#474746",
+                      "primary": "#ffb693",
+                      "background": "#131313",
+                      "on-tertiary-fixed": "#001d35",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "surface-dim": "#131313",
+                      "inverse-surface": "#e4e2e1",
+                      "on-primary": "#561f00",
+                      "surface-container": "#1f2020",
+                      "outline": "#a98a7d",
+                      "tertiary-fixed": "#d0e4ff",
+                      "surface-bright": "#393939",
+                      "secondary": "#c8c6c5",
+                      "surface": "#131313",
+                      "surface-container-low": "#1b1c1c",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed": "#e5e2e1",
+                      "on-primary-container": "#572000",
+                      "surface-container-high": "#2a2a2a",
+                      "inverse-primary": "#a04100",
+                      "surface-container-highest": "#353535",
+                      "on-tertiary": "#003257",
+                      "on-secondary-container": "#b7b5b4",
+                      "primary-fixed": "#ffdbcc",
+                      "tertiary-fixed-dim": "#9ccaff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "panel-gap": "1px",
+                      "container-padding": "8px",
+                      "cell-padding-y": "2px",
+                      "cell-padding-x": "6px"
+              },
+              "fontFamily": {
+                      "mono-label": ["JetBrains Mono"],
+                      "mono-data": ["JetBrains Mono"],
+                      "mono-code": ["JetBrains Mono"],
+                      "headline-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "mono-label": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "mono-data": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-sm": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden flex flex-col h-screen">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between px-container-padding w-full border-b border-outline-variant bg-surface h-12 flex-shrink-0">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">MoroQuant</span>
+<div class="flex items-center bg-surface-container-low border border-outline-variant rounded px-2 py-1">
+<span class="material-symbols-outlined text-on-surface-variant mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-mono-data w-64 p-0" placeholder="Search Risk Nodes..." type="text"/>
+</div>
+<nav class="flex gap-4">
+<span class="font-mono-data text-mono-data text-primary cursor-pointer">Nominal</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant cursor-pointer hover:text-primary transition-colors">Risk Cluster v4.2</span>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<button class="bg-primary-container text-on-primary-container font-mono-label px-3 py-1 rounded text-mono-label active:opacity-80">Deploy</button>
+<button class="border border-error text-error font-mono-label px-3 py-1 rounded text-mono-label active:bg-error active:text-on-error">Emergency Kill Switch</button>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">account_circle</span>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="h-full w-64 flex-shrink-0 flex flex-col border-r border-outline-variant bg-background">
+<div class="p-4 border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-container-highest rounded-full flex items-center justify-center border border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A macro portrait of a futuristic worker profile icon, featuring high-contrast geometric patterns and glowing orange data overlays. The aesthetic is Institutional Technical with a dark background and sharp digital lines, reflecting high-stakes quantitative finance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6yF6EY2SHPKtgjVyHKH13Ct2TDQ4Zzmne01ZHBKDfyVxaMj8hYiCr4zpCdtK4uoL-M6GpRzs24fnl3hdEl0QqOFmotVKdR09-AV0moClgLAEC505zKOa7yiDqiS0ZE3ufXt6E8tP8yd73u6xfjz6td9Y_CmVgUaPkoipToUiEgDCPvTa8E39jP0DX2kbtXYoqjxw4T76B5wjrqszZxA5R4HeT9_1EgtoOaWeBwoXDq1vNue8Titjw8TJLS7rcPR8sfYehwNJgylc"/>
+</div>
+<div>
+<div class="font-mono-label text-mono-label text-on-surface">Worker ID Profile</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant">V2 OS: ACTIVE</div>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto py-2">
+<!-- Manually setting "Risk" as active per prompt instructions -->
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-mono-label text-mono-label">Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-primary font-bold border-l-2 border-primary bg-surface-container-high transition-colors duration-75 cursor-pointer">
+<span class="material-symbols-outlined">security</span>
+<span class="font-mono-label text-mono-label">Risk</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 cursor-pointer">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span class="font-mono-label text-mono-label">Trades</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 cursor-pointer">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-mono-label text-mono-label">Live Analytics</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 cursor-pointer">
+<span class="material-symbols-outlined">pie_chart</span>
+<span class="font-mono-label text-mono-label">Portfolio</span>
+</div>
+<div class="mt-4 px-4 py-1 text-on-surface-variant opacity-50 text-[9px] uppercase tracking-widest font-bold">System Management</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 cursor-pointer">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-mono-label text-mono-label">Command Center</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 cursor-pointer">
+<span class="material-symbols-outlined">database</span>
+<span class="font-mono-label text-mono-label">Datasets</span>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface-container-low">
+<div class="flex items-center gap-3 px-2 py-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-mono-label text-mono-label">Settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Workspace Canvas -->
+<main class="flex-1 flex overflow-hidden bg-background">
+<!-- Center Content: Risk Dashboards -->
+<div class="flex-1 flex flex-col overflow-y-auto">
+<!-- Top Row: Summary Stats -->
+<div class="grid grid-cols-4 border-b border-outline-variant bg-surface-container-lowest h-24">
+<div class="p-3 border-r border-outline-variant">
+<div class="text-mono-label font-mono-label text-on-surface-variant uppercase">Total Exposure (Notional)</div>
+<div class="text-2xl font-mono-data text-on-surface mt-1">$412,903,220.00</div>
+<div class="text-mono-label font-mono-label text-tertiary-container mt-1">+1.2% Day Change</div>
+</div>
+<div class="p-3 border-r border-outline-variant">
+<div class="text-mono-label font-mono-label text-on-surface-variant uppercase">99% VaR (1D)</div>
+<div class="text-2xl font-mono-data text-error mt-1">-$2,430,912.44</div>
+<div class="text-mono-label font-mono-label text-on-surface-variant mt-1">Simulated: 10k Paths</div>
+</div>
+<div class="p-3 border-r border-outline-variant">
+<div class="text-mono-label font-mono-label text-on-surface-variant uppercase">Liquidity Score</div>
+<div class="text-2xl font-mono-data text-on-surface mt-1">0.88</div>
+<div class="w-full bg-surface-container-highest h-1 mt-2 rounded-full overflow-hidden">
+<div class="bg-primary w-[88%] h-full"></div>
+</div>
+</div>
+<div class="p-3">
+<div class="text-mono-label font-mono-label text-on-surface-variant uppercase">System Health</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="w-3 h-3 bg-tertiary-container rounded-sm status-alert"></span>
+<span class="text-mono-data text-on-surface">Telemetry Nominal</span>
+</div>
+<div class="text-mono-label font-mono-label text-on-surface-variant mt-1">Latency: 1.2ms</div>
+</div>
+</div>
+<!-- Main Grid Layout -->
+<div class="grid grid-cols-12 flex-1 p-panel-gap bg-outline-variant gap-panel-gap">
+<!-- Stress Testing Scenarios -->
+<div class="col-span-8 bg-surface p-4 flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-headline-sm text-headline-sm text-primary uppercase tracking-tight">Stress Test Matrices</h2>
+<div class="flex gap-2">
+<button class="bg-surface-container-high border border-outline-variant px-2 py-1 text-mono-label text-on-surface-variant rounded">RE-RUN ALL</button>
+<button class="bg-surface-container-high border border-outline-variant px-2 py-1 text-mono-label text-on-surface-variant rounded">EXPORT CSV</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<!-- Scenario Card -->
+<div class="panel-border bg-surface-container-low p-3">
+<div class="flex justify-between items-start mb-2">
+<span class="font-mono-label text-mono-label font-bold text-on-surface">S&amp;P 500 -10%</span>
+<span class="text-error font-mono-label text-mono-label">-4.2M</span>
+</div>
+<div class="h-24 relative overflow-hidden bg-background mb-2">
+
+<div class="absolute inset-0 flex items-end p-2">
+<div class="w-full h-1/2 flex items-end gap-1">
+<div class="bg-error w-full" style="height: 60%"></div>
+<div class="bg-error w-full" style="height: 40%"></div>
+<div class="bg-error w-full opacity-50" style="height: 80%"></div>
+</div>
+</div>
+</div>
+<p class="text-mono-label text-on-surface-variant">Estimated P&amp;L Shock based on current beta profile.</p>
+</div>
+<div class="panel-border bg-surface-container-low p-3">
+<div class="flex justify-between items-start mb-2">
+<span class="font-mono-label text-mono-label font-bold text-on-surface">Vol Spike +50%</span>
+<span class="text-error font-mono-label text-mono-label">-1.8M</span>
+</div>
+<div class="h-24 relative overflow-hidden bg-background mb-2">
+
+<div class="absolute inset-0 flex items-end p-2">
+<div class="w-full h-1/2 flex items-end gap-1">
+<div class="bg-error w-full" style="height: 30%"></div>
+<div class="bg-error w-full" style="height: 90%"></div>
+<div class="bg-error w-full opacity-50" style="height: 50%"></div>
+</div>
+</div>
+</div>
+<p class="text-mono-label text-on-surface-variant">Vega sensitivity analysis under extreme implied vol shifts.</p>
+</div>
+<div class="panel-border bg-surface-container-low p-3 border-l-2 border-primary">
+<div class="flex justify-between items-start mb-2">
+<span class="font-mono-label text-mono-label font-bold text-on-surface">USD Liquidity Crunch</span>
+<span class="text-tertiary-container font-mono-label text-mono-label">-0.4M</span>
+</div>
+<div class="h-24 relative overflow-hidden bg-background mb-2">
+
+<div class="absolute inset-0 flex items-end p-2">
+<div class="w-full h-1/2 flex items-end gap-1">
+<div class="bg-tertiary-container w-full" style="height: 20%"></div>
+<div class="bg-tertiary-container w-full" style="height: 15%"></div>
+<div class="bg-tertiary-container w-full opacity-50" style="height: 35%"></div>
+</div>
+</div>
+</div>
+<p class="text-mono-label text-on-surface-variant">3-day bid-ask spread widening simulation.</p>
+</div>
+</div>
+<!-- Top Risk Contributors Table -->
+<div class="mt-6 flex-1 flex flex-col">
+<h3 class="font-mono-label text-mono-label text-on-surface-variant mb-2 uppercase tracking-widest">Top Risk Contributors</h3>
+<div class="panel-border overflow-hidden flex-1 bg-surface-container-lowest">
+<table class="w-full text-left font-mono-data text-mono-data border-collapse">
+<thead class="bg-surface-container-high text-on-surface-variant sticky top-0 uppercase">
+<tr>
+<th class="border-b border-outline-variant py-1">Asset ID</th>
+<th class="border-b border-outline-variant py-1">Type</th>
+<th class="border-b border-outline-variant py-1 text-right">Delta ($)</th>
+<th class="border-b border-outline-variant py-1 text-right">Gamma ($)</th>
+<th class="border-b border-outline-variant py-1 text-right">Vega ($)</th>
+<th class="border-b border-outline-variant py-1 text-right">VaR Contrib.</th>
+<th class="border-b border-outline-variant py-1 text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="data-grid-row">
+<td class="text-primary font-bold">NVDA.NASD</td>
+<td>Equity Option</td>
+<td class="text-right">12,402,110</td>
+<td class="text-right text-error">42,501</td>
+<td class="text-right">11,902</td>
+<td class="text-right">14.2%</td>
+<td class="text-right text-error">CRITICAL</td>
+</tr>
+<tr class="data-grid-row">
+<td class="text-primary font-bold">BTC.USDT-PERP</td>
+<td>Crypto Perp</td>
+<td class="text-right">4,500,000</td>
+<td class="text-right">0</td>
+<td class="text-right">0</td>
+<td class="text-right">8.9%</td>
+<td class="text-right text-tertiary-container">STABLE</td>
+</tr>
+<tr class="data-grid-row">
+<td class="text-primary font-bold">XAU.USD</td>
+<td>Commodity</td>
+<td class="text-right">-8,201,332</td>
+<td class="text-right">0</td>
+<td class="text-right">0</td>
+<td class="text-right">5.1%</td>
+<td class="text-right text-tertiary-container">STABLE</td>
+</tr>
+<tr class="data-grid-row">
+<td class="text-primary font-bold">AAPL.NASD-CALL</td>
+<td>Equity Option</td>
+<td class="text-right">2,110,000</td>
+<td class="text-right text-error">12,040</td>
+<td class="text-right text-error">8,401</td>
+<td class="text-right">4.8%</td>
+<td class="text-right text-on-surface-variant">NORMAL</td>
+</tr>
+<tr class="data-grid-row">
+<td class="text-primary font-bold">TSLA.NASD</td>
+<td>Equity</td>
+<td class="text-right">1,900,220</td>
+<td class="text-right">0</td>
+<td class="text-right">0</td>
+<td class="text-right">3.2%</td>
+<td class="text-right text-on-surface-variant">NORMAL</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Greek Ladders & Concentration -->
+<div class="col-span-4 bg-surface p-4 flex flex-col gap-4">
+<div class="flex-1 panel-border bg-surface-container-lowest p-3">
+<h3 class="font-mono-label text-mono-label text-on-surface-variant mb-4 uppercase tracking-widest">Greek Concentration</h3>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-mono-label mb-1">
+<span>Delta Ladder</span>
+<span class="text-primary">NET LONG</span>
+</div>
+<div class="flex h-4 gap-0.5">
+<div class="bg-error opacity-20 flex-1"></div>
+<div class="bg-error opacity-40 w-4"></div>
+<div class="bg-surface-container-highest w-2"></div>
+<div class="bg-primary-container w-12"></div>
+<div class="bg-primary w-24"></div>
+<div class="bg-primary opacity-50 flex-1"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-mono-label mb-1">
+<span>Gamma Convexity</span>
+<span class="text-error">SHORT GAMMA</span>
+</div>
+<div class="flex h-4 gap-0.5">
+<div class="bg-error w-32"></div>
+<div class="bg-error opacity-50 w-12"></div>
+<div class="bg-surface-container-highest w-2"></div>
+<div class="bg-primary opacity-20 flex-1"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-mono-label mb-1">
+<span>Vega Exposure</span>
+<span class="text-on-surface-variant">NEUTRAL</span>
+</div>
+<div class="flex h-4 gap-0.5">
+<div class="bg-error opacity-10 w-8"></div>
+<div class="bg-surface-container-highest w-2"></div>
+<div class="bg-primary-container opacity-30 w-10"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-1 panel-border bg-surface-container-lowest p-3">
+<h3 class="font-mono-label text-mono-label text-on-surface-variant mb-2 uppercase tracking-widest">VaR History (30D)</h3>
+<div class="h-full max-h-[200px] flex items-end gap-1 px-2 pb-4">
+<!-- Mock Chart Bars -->
+<div class="bg-error-container w-full" style="height: 40%"></div>
+<div class="bg-error-container w-full" style="height: 45%"></div>
+<div class="bg-error-container w-full" style="height: 42%"></div>
+<div class="bg-error w-full" style="height: 60%"></div>
+<div class="bg-error-container w-full" style="height: 50%"></div>
+<div class="bg-error-container w-full" style="height: 55%"></div>
+<div class="bg-error-container w-full" style="height: 48%"></div>
+<div class="bg-error-container w-full" style="height: 40%"></div>
+<div class="bg-error-container w-full" style="height: 45%"></div>
+<div class="bg-error-container w-full" style="height: 50%"></div>
+<div class="bg-error w-full" style="height: 75%"></div>
+<div class="bg-error-container w-full" style="height: 55%"></div>
+<div class="bg-error-container w-full" style="height: 52%"></div>
+<div class="bg-error-container w-full" style="height: 50%"></div>
+<div class="bg-error w-full" style="height: 90%"></div>
+<div class="bg-error-container w-full" style="height: 70%"></div>
+<div class="bg-error-container w-full" style="height: 65%"></div>
+<div class="bg-error-container w-full" style="height: 60%"></div>
+</div>
+<div class="flex justify-between text-[8px] text-on-surface-variant font-mono-label px-2">
+<span>T-30D</span>
+<span>CURRENT</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Inspector: Historical & Margin -->
+<aside class="w-80 border-l border-outline-variant bg-surface flex flex-col">
+<div class="p-3 border-b border-outline-variant bg-surface-container-high">
+<h2 class="font-mono-label text-mono-label font-bold text-on-surface uppercase">Inspector Panel</h2>
+</div>
+<div class="p-4 flex-1 overflow-y-auto space-y-6">
+<!-- Margin Requirements -->
+<section>
+<h3 class="text-mono-label text-primary uppercase mb-3 font-bold">Margin Requirements</h3>
+<div class="space-y-2">
+<div class="flex justify-between text-mono-data border-b border-outline-variant py-1">
+<span class="text-on-surface-variant">Maintenance Margin</span>
+<span>$142.1M</span>
+</div>
+<div class="flex justify-between text-mono-data border-b border-outline-variant py-1">
+<span class="text-on-surface-variant">Excess Liquidity</span>
+<span class="text-tertiary-container">$28.4M</span>
+</div>
+<div class="flex justify-between text-mono-data border-b border-outline-variant py-1">
+<span class="text-on-surface-variant">Margin Usage</span>
+<span>82%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden mt-1">
+<div class="bg-primary-container w-[82%] h-full"></div>
+</div>
+</div>
+</section>
+<!-- Historical Drawdown Analysis -->
+<section>
+<h3 class="text-mono-label text-primary uppercase mb-3 font-bold">Historical Drawdown</h3>
+<div class="panel-border bg-background p-2 mb-2">
+<div class="flex justify-between text-mono-label mb-2">
+<span class="text-on-surface-variant">Max Drawdown (YTD)</span>
+<span class="text-error">-12.4%</span>
+</div>
+<div class="h-32 flex items-start gap-[1px]">
+<!-- Drawdown inversion chart -->
+<div class="bg-error opacity-10 flex-1" style="height: 10%"></div>
+<div class="bg-error opacity-20 flex-1" style="height: 15%"></div>
+<div class="bg-error opacity-30 flex-1" style="height: 25%"></div>
+<div class="bg-error opacity-60 flex-1" style="height: 50%"></div>
+<div class="bg-error flex-1" style="height: 80%"></div>
+<div class="bg-error opacity-70 flex-1" style="height: 60%"></div>
+<div class="bg-error opacity-40 flex-1" style="height: 30%"></div>
+<div class="bg-error opacity-20 flex-1" style="height: 10%"></div>
+<div class="bg-error opacity-10 flex-1" style="height: 5%"></div>
+<div class="bg-error opacity-30 flex-1" style="height: 20%"></div>
+<div class="bg-error opacity-50 flex-1" style="height: 40%"></div>
+</div>
+</div>
+<p class="text-mono-label text-on-surface-variant leading-relaxed">
+                            Current recovery period: 12 days. Significant kurtosis detected in return distribution tail. Recommend hedging long delta in NVDA cluster.
+                        </p>
+</section>
+<!-- Risk Alerts Feed -->
+<section>
+<h3 class="text-mono-label text-primary uppercase mb-3 font-bold">Real-time Violations</h3>
+<div class="space-y-2">
+<div class="bg-error-container/20 border-l-2 border-error p-2">
+<div class="text-mono-label font-bold text-error">CONCENTRATION LIMIT</div>
+<div class="text-[10px] text-on-surface-variant">NVDA Exposure &gt; 15% Portfolio</div>
+</div>
+<div class="bg-surface-container-high border-l-2 border-on-surface-variant p-2">
+<div class="text-mono-label font-bold text-on-surface">DATA SOURCE LAG</div>
+<div class="text-[10px] text-on-surface-variant">Coinbase WebSocket latency &gt; 500ms</div>
+</div>
+</div>
+</section>
+</div>
+<div class="p-4 border-t border-outline-variant">
+<button class="w-full bg-primary text-on-primary font-mono-label py-2 rounded uppercase text-mono-label tracking-widest font-bold">Run Monte Carlo</button>
+</div>
+</aside>
+</main>
+</div>
+<!-- Footer Telemetry -->
+<footer class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-1 bg-surface-container-lowest border-t border-outline-variant h-8">
+<div class="flex items-center gap-4 text-mono-label text-tertiary">
+<span class="flex items-center gap-1"><span class="w-2 h-2 bg-tertiary rounded-full"></span> GPU 42%</span>
+<span>Latency 1.2ms</span>
+<span class="text-on-surface-variant">|</span>
+<span>System Nominal</span>
+</div>
+<div class="flex gap-4 text-mono-label text-on-surface-variant">
+<a class="hover:text-primary transition-opacity duration-150" href="#">Logs</a>
+<a class="hover:text-primary transition-opacity duration-150" href="#">Workers</a>
+<a class="hover:text-primary transition-opacity duration-150" href="#">Scheduler</a>
+</div>
+</footer>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple mock for real-time value flicker to simulate live data
+        setInterval(() => {
+            const dataElements = document.querySelectorAll('.font-mono-data');
+            const randomEl = dataElements[Math.floor(Math.random() * dataElements.length)];
+            if (randomEl.innerText.includes('$') || randomEl.innerText.includes('.')) {
+                randomEl.classList.add('opacity-50');
+                setTimeout(() => randomEl.classList.remove('opacity-50'), 100);
+            }
+        }, 3000);
+    </script>
+</body></html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoroQuant OS | ML Signals Workstation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=IBM+Plex+Sans:wght@500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#131313",
+                        "primary-fixed": "#ffdbcc",
+                        "on-surface": "#e5e2e1",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "tertiary-container": "#9a9999",
+                        "primary-fixed-dim": "#ffb693",
+                        "on-error-container": "#ffdad6",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "surface-container": "#201f1f",
+                        "on-primary-container": "#572000",
+                        "primary": "#ffb693",
+                        "on-surface-variant": "#e2bfb0",
+                        "on-secondary": "#313030",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "outline": "#a98a7d",
+                        "tertiary-fixed": "#e4e2e1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-variant": "#353534",
+                        "on-secondary-fixed-variant": "#474646",
+                        "error-container": "#93000a",
+                        "tertiary": "#c8c6c5",
+                        "outline-variant": "#5a4136",
+                        "secondary-container": "#4a4949",
+                        "on-secondary-container": "#bab8b7",
+                        "inverse-primary": "#a04100",
+                        "background": "#131313",
+                        "surface-tint": "#ffb693",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-bright": "#3a3939",
+                        "primary-container": "#ff6b00",
+                        "inverse-surface": "#e5e2e1",
+                        "on-tertiary-container": "#313131",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "on-primary": "#561f00",
+                        "on-background": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-primary-fixed": "#351000",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "on-tertiary": "#303030",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "secondary": "#c8c6c5",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "inverse-on-surface": "#313030"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "lg": "16px",
+                        "sm": "8px",
+                        "md": "12px",
+                        "container-margin": "12px",
+                        "unit": "4px",
+                        "panel-gutter": "1px"
+                    },
+                    "fontFamily": {
+                        "data-tabular": ["JetBrains Mono"],
+                        "code-sm": ["JetBrains Mono"],
+                        "label-caps": ["Inter"],
+                        "header-md": ["IBM Plex Sans"],
+                        "body-base": ["Inter"],
+                        "display-lg": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "data-tabular": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "code-sm": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "header-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "body-base": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #090909;
+            color: #e5e2e1;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #131313; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #353534; border-radius: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ff6b00; }
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 64px 1fr 320px;
+            grid-template-rows: 48px 1fr 24px;
+            height: 100vh;
+        }
+        .panel-border { border: 1px solid #262626; }
+        .etched-input { background: #090909; border: 1px solid #262626; }
+        .etched-input:focus { border-color: #ff6b00; outline: none; }
+        .long-indicator { color: #00ff88; }
+        .short-indicator { color: #ff3333; }
+        .gradient-long { background: linear-gradient(90deg, #00ff88 0%, transparent 100%); opacity: 0.1; }
+        .gradient-short { background: linear-gradient(90deg, #ff3333 0%, transparent 100%); opacity: 0.1; }
+    </style>
+</head>
+<body class="font-body-base text-body-base">
+<div class="grid-layout">
+<!-- LEFT RAIL (SideNavBar) -->
+<aside class="fixed left-0 top-0 bottom-0 z-40 w-16 md:w-56 h-screen border-r border-outline-variant bg-surface-dim flex flex-col items-center py-sm">
+<div class="mb-lg px-sm w-full text-center md:text-left">
+<span class="font-header-md text-header-md font-bold tracking-tighter text-primary">MoroQuant</span>
+<div class="hidden md:block font-label-caps text-label-caps text-tertiary opacity-60">TRADING INTELLIGENCE</div>
+</div>
+<nav class="flex-1 w-full space-y-1">
+<div class="text-on-surface-variant hover:text-on-surface flex items-center gap-2 px-3 py-2 hover:bg-surface-container-high transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="hidden md:block font-label-caps text-label-caps">Trading</span>
+</div>
+<div class="border-l-2 border-primary bg-surface-container-highest text-primary font-bold flex items-center gap-2 px-3 py-2 cursor-pointer">
+<span class="material-symbols-outlined">science</span>
+<span class="hidden md:block font-label-caps text-label-caps">Research</span>
+</div>
+<div class="text-on-surface-variant hover:text-on-surface flex items-center gap-2 px-3 py-2 hover:bg-surface-container-high transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="hidden md:block font-label-caps text-label-caps">Operations</span>
+</div>
+<div class="text-on-surface-variant hover:text-on-surface flex items-center gap-2 px-3 py-2 hover:bg-surface-container-high transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="hidden md:block font-label-caps text-label-caps">Analytics</span>
+</div>
+<div class="text-on-surface-variant hover:text-on-surface flex items-center gap-2 px-3 py-2 hover:bg-surface-container-high transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span class="hidden md:block font-label-caps text-label-caps">Backtest</span>
+</div>
+</nav>
+<div class="w-full px-sm pb-lg space-y-4">
+<button class="w-full bg-primary-container text-on-primary font-label-caps text-label-caps py-2 rounded-sm uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all">
+                New Strategy
+            </button>
+<div class="space-y-1">
+<div class="text-on-surface-variant hover:text-on-surface flex items-center gap-2 px-3 py-2 cursor-pointer">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="hidden md:block font-label-caps text-label-caps">Support</span>
+</div>
+<div class="text-on-surface-variant hover:text-on-surface flex items-center gap-2 px-3 py-2 cursor-pointer">
+<span class="material-symbols-outlined">person</span>
+<span class="hidden md:block font-label-caps text-label-caps">Account</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TOP BAR (TopAppBar) -->
+<header class="col-start-2 col-span-2 flex justify-between items-center w-full px-lg sticky top-0 z-50 bg-surface-dim border-b border-outline-variant h-12">
+<div class="flex items-center gap-lg">
+<span class="font-header-md text-header-md font-black text-primary uppercase">MoroQuant OS</span>
+<div class="relative group">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-[16px] text-tertiary">search</span>
+</span>
+<input class="etched-input font-body-base text-body-base pl-8 pr-4 py-1 w-64 focus:ring-0" placeholder="Search Symbols..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-lg h-full">
+<a class="text-on-surface-variant pb-2 border-b-2 border-transparent hover:text-primary transition-all duration-200 font-label-caps text-label-caps" href="#">Dashboard</a>
+<a class="text-on-surface-variant pb-2 border-b-2 border-transparent hover:text-primary transition-all duration-200 font-label-caps text-label-caps" href="#">Positions</a>
+<a class="text-primary border-b-2 border-primary pb-2 font-label-caps text-label-caps" href="#">Signals</a>
+</nav>
+<div class="flex items-center gap-md">
+<div class="flex gap-sm mr-md border-r border-outline-variant pr-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">settings</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">sync</span>
+</div>
+<button class="bg-red-600 text-white font-label-caps text-[10px] px-3 py-1 rounded-sm hover:bg-red-700 transition-colors">KILL SWITCH</button>
+<img alt="System Administrator" class="w-8 h-8 rounded-full border border-outline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWswHyC8_YEDfvGZcfVYXqd3a5sljycYFhrzaYAsUfNWcM1p6StJKbv32WS3cRGPUScwjaCo4wGvxzmBf8LtH51n3z2p0vi4E5V7pZWvgllMbR51vs108tDmhmCxD9w1hoItyf7vNIVmGUybHBkOJ6C7dvFgDvqCQOK1fOBDEFSdzh_yerGIjy73AnpbesLlO3za7idk3wB52ZLgJT8RMpYOkx1IAOgX9uo3WgEXIM4eA2WYPh8J_MotT7hnF26oXsozqi_zpWn0o"/>
+</div>
+</header>
+<!-- MAIN CONTENT (Signal Grid) -->
+<main class="col-start-2 overflow-y-auto custom-scrollbar bg-surface-container-lowest p-sm">
+<div class="flex justify-between items-end mb-sm px-xs">
+<div>
+<h1 class="font-header-md text-header-md text-on-surface font-bold">ML Trading Intelligence <span class="bg-green-900/30 text-green-400 text-[9px] px-2 py-0.5 rounded ml-2 border border-green-800/50">LIVE</span></h1>
+<p class="text-tertiary font-body-base text-[11px] opacity-70">Real-time trading signals powered by XGBoost &amp; LightGBM Ensemble</p>
+</div>
+<div class="flex items-center gap-lg font-data-tabular text-[11px] text-tertiary">
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span> 11 Longs</div>
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-500"></span> 8 Shorts</div>
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-gray-500"></span> 4 Neutral</div>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-sm">
+<!-- BTC Signal Card -->
+<div class="bg-surface-container panel-border p-sm relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+<div class="flex justify-between items-start">
+<div>
+<div class="font-header-md text-header-md font-bold flex items-center gap-2">
+                            BTCUSDT
+                            <span class="text-[9px] bg-surface-container-highest px-1 text-tertiary border border-outline-variant">LENS_PROB_v4.2</span>
+</div>
+<div class="font-label-caps text-label-caps text-green-400">DIRECTION: LONG</div>
+</div>
+<div class="text-right">
+<div class="font-data-tabular text-data-tabular text-on-surface">$64,184.20</div>
+<div class="font-label-caps text-label-caps text-tertiary">SIGNAL AGE: 00:04:12</div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between font-label-caps text-[9px] text-tertiary">
+<span>CONFIDENCE SCORE</span>
+<span>84.2%</span>
+</div>
+<div class="w-full bg-surface-dim h-1">
+<div class="bg-green-500 h-full w-[84.2%] shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-xs bg-surface-dim p-xs">
+<div class="text-center border-r border-outline-variant">
+<div class="font-label-caps text-[8px] text-tertiary">ENTRY</div>
+<div class="font-data-tabular text-[11px] text-on-surface">63,899.90</div>
+</div>
+<div class="text-center border-r border-outline-variant">
+<div class="font-label-caps text-[8px] text-tertiary">TARGET</div>
+<div class="font-data-tabular text-[11px] text-green-400">65,243.28</div>
+</div>
+<div class="text-center">
+<div class="font-label-caps text-[8px] text-tertiary">STOP</div>
+<div class="font-data-tabular text-[11px] text-red-400">62,731.33</div>
+</div>
+</div>
+<div class="flex-1 min-h-[60px] relative mt-1">
+<!-- Fake Sparkline -->
+<div class="w-full h-full bg-center bg-no-repeat bg-contain opacity-50" data-alt="A dark, high-contrast technical stock chart sparkline showing a volatile price trend in bright green, set against a deep charcoal grid background. The visual style is inspired by institutional Bloomberg terminals, featuring sharp 1px lines and no smoothing. High-frequency trading vibes with digital overlays." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAqvJQ6drrdMUcm1FOitpofjnOoR_drhP4E-4Pr_9vjJKckKDzNP0lfiU3GeX3GA8P033otXhSNNw1R_GjkatpeBiPVDEeoELr-ytG6QBDblG29j-dzVRAY7b8PrwmKRLpD141zowGwWSYpEEKniEWi1Og3vAQOlOG84udWNVED7J3ClIxdbUHXQ5kdrnBqORixAv2eCCUsz4ci1uOxnIOyXxpXq9zFY73jDLXv3sZiNCwD4JY1cvb2pX-_J_DMfUSHmFotoiSoIHs')"></div>
+</div>
+<div class="border-t border-outline-variant pt-sm">
+<div class="font-label-caps text-[9px] text-tertiary mb-1">TOP PREDICTIVE FEATURES</div>
+<div class="space-y-1">
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">volatility_30d</span>
+<span class="text-green-400">0.92</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">ema_200_distance</span>
+<span class="text-green-400">0.78</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">orderflow_imbalance</span>
+<span class="text-tertiary">0.64</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ETH Signal Card (Short Example) -->
+<div class="bg-surface-container panel-border p-sm relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+<div class="flex justify-between items-start">
+<div>
+<div class="font-header-md text-header-md font-bold flex items-center gap-2">
+                            ETHUSDT
+                            <span class="text-[9px] bg-surface-container-highest px-1 text-tertiary border border-outline-variant">LENS_PROB_v4.2</span>
+</div>
+<div class="font-label-caps text-label-caps text-red-400">DIRECTION: SHORT</div>
+</div>
+<div class="text-right">
+<div class="font-data-tabular text-data-tabular text-on-surface">$3,452.12</div>
+<div class="font-label-caps text-label-caps text-tertiary">SIGNAL AGE: 00:01:45</div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between font-label-caps text-[9px] text-tertiary">
+<span>CONFIDENCE SCORE</span>
+<span>71.8%</span>
+</div>
+<div class="w-full bg-surface-dim h-1">
+<div class="bg-red-500 h-full w-[71.8%] shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-xs bg-surface-dim p-xs">
+<div class="text-center border-r border-outline-variant">
+<div class="font-label-caps text-[8px] text-tertiary">ENTRY</div>
+<div class="font-data-tabular text-[11px] text-on-surface">3,460.00</div>
+</div>
+<div class="text-center border-r border-outline-variant">
+<div class="font-label-caps text-[8px] text-tertiary">TARGET</div>
+<div class="font-data-tabular text-[11px] text-red-400">3,320.50</div>
+</div>
+<div class="text-center">
+<div class="font-label-caps text-[8px] text-tertiary">STOP</div>
+<div class="font-data-tabular text-[11px] text-green-400">3,510.00</div>
+</div>
+</div>
+<div class="flex-1 min-h-[60px] relative mt-1">
+<div class="w-full h-full bg-center bg-no-repeat bg-contain opacity-50" data-alt="A technical stock chart sparkline showing a downward bear trend in bright red. The interface has a charcoal gray and black theme with sharp 1px grid lines and no rounded corners. The design is institutional and sophisticated, focusing on data density and high-contrast readability." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCxLjj7d9kDoDiwtmF-VJKDmvJAf9g10nRxE70QH1c2v5kw7MaQ7aBvuSGgw9pzO0NAjhdD-lV1flWa9fRfTWI3ijc_8Vt1GLsmK5wGHp6R3D6-mNmF2CJlBdytBwtFRQQKXSC5oSGvZGHsa_U7WNBE5bA-PiLrjoXYxOr_5vIwBptHijjdkFO6c96aYXbJmBtN0H-1R9lA42lfLAI2ws5VbfbT4CanpKdT03vSGwnKfUELym_dLDvCMJssEpQHjeMmYK60YKUsi2s')"></div>
+</div>
+<div class="border-t border-outline-variant pt-sm">
+<div class="font-label-caps text-[9px] text-tertiary mb-1">TOP PREDICTIVE FEATURES</div>
+<div class="space-y-1">
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">funding_rate_zscore</span>
+<span class="text-red-400">0.88</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">whale_flow_delta</span>
+<span class="text-red-400">0.72</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">rsi_divergence</span>
+<span class="text-tertiary">0.51</span>
+</div>
+</div>
+</div>
+</div>
+<!-- SOL Signal Card -->
+<div class="bg-surface-container panel-border p-sm relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+<div class="flex justify-between items-start">
+<div>
+<div class="font-header-md text-header-md font-bold flex items-center gap-2">
+                            SOLUSDT
+                            <span class="text-[9px] bg-surface-container-highest px-1 text-tertiary border border-outline-variant">LENS_PROB_v4.2</span>
+</div>
+<div class="font-label-caps text-label-caps text-green-400">DIRECTION: LONG</div>
+</div>
+<div class="text-right">
+<div class="font-data-tabular text-data-tabular text-on-surface">$142.12</div>
+<div class="font-label-caps text-label-caps text-tertiary">SIGNAL AGE: 00:15:33</div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between font-label-caps text-[9px] text-tertiary">
+<span>CONFIDENCE SCORE</span>
+<span>62.1%</span>
+</div>
+<div class="w-full bg-surface-dim h-1">
+<div class="bg-green-500 h-full w-[62.1%] shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-xs bg-surface-dim p-xs">
+<div class="text-center border-r border-outline-variant">ENTRY<br/><span class="font-data-tabular text-[11px] text-on-surface">140.50</span></div>
+<div class="text-center border-r border-outline-variant">TARGET<br/><span class="font-data-tabular text-[11px] text-green-400">148.00</span></div>
+<div class="text-center">STOP<br/><span class="font-data-tabular text-[11px] text-red-400">138.20</span></div>
+</div>
+<div class="flex-1 min-h-[60px] relative mt-1">
+<div class="w-full h-full bg-center bg-no-repeat bg-contain opacity-50" data-alt="A technical analysis sparkline for cryptocurrency trading, showing an upward trajectory in vibrant green. The background is a pitch black canvas with sharp, white and gray 1px grid lines. The look and feel is that of a professional quant workstation, focusing on mathematical precision and technical clarity." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDYddkZ6TACZ7jaBtOzRbr-Sik9bBuCdG32y_Q2c3tjPmZB3x8WLAaQV6fQNNxS0EgarhB4KRYDlT3-K__-JGy8ZhJtOIq8XzU7KTB7ZCJLtbDa8ephU7qiTwNGf-JHLFSS14IEPlc4wfQgeNDi-K-a668bXXgrdMsT-PtA3wksCWgBpbmKNgjK7Zx461JGGOXzaXx8KipEDvxua0sCfkh0mPcQo6wRhiVbdAhsp04zPNpgJQIpyOukhbqmXMVe-15rD8rAekxqrCs')"></div>
+</div>
+<div class="border-t border-outline-variant pt-sm">
+<div class="font-label-caps text-[9px] text-tertiary mb-1">TOP PREDICTIVE FEATURES</div>
+<div class="space-y-1">
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">volatility_cluster</span>
+<span class="text-green-400">0.74</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">liquidity_grab_3m</span>
+<span class="text-green-400">0.69</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-data-tabular">
+<span class="text-on-surface">bid_ask_depth</span>
+<span class="text-tertiary">0.45</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Repeat cards for visual density -->
+<!-- CARD 4 (LNK) -->
+<div class="bg-surface-container panel-border p-sm relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+<div class="flex justify-between items-start">
+<div>
+<div class="font-header-md text-header-md font-bold flex items-center gap-2">LINKUSDT <span class="text-[9px] bg-surface-container-highest px-1 text-tertiary border border-outline-variant">v4.2</span></div>
+<div class="font-label-caps text-label-caps text-red-400">DIRECTION: SHORT</div>
+</div>
+<div class="text-right">
+<div class="font-data-tabular text-data-tabular text-on-surface">$17.442</div>
+</div>
+</div>
+<div class="w-full bg-surface-dim h-1 mt-1"><div class="bg-red-500 h-full w-[44.2%]"></div></div>
+<div class="grid grid-cols-2 gap-2 text-[10px] font-data-tabular py-1">
+<div class="text-tertiary">RR RATIO: <span class="text-on-surface">1:3.4</span></div>
+<div class="text-tertiary text-right">RISK: <span class="text-red-400">0.5%</span></div>
+</div>
+<div class="flex-1 min-h-[40px] border-y border-outline-variant/30 my-1"></div>
+<div class="flex justify-between items-center text-[9px] font-label-caps">
+<span class="text-tertiary">FEATURE_IMP: LENS_A</span>
+<span class="text-on-surface">ID: #88129</span>
+</div>
+</div>
+<!-- CARD 5 (ADA) -->
+<div class="bg-surface-container panel-border p-sm relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+<div class="flex justify-between items-start">
+<div>
+<div class="font-header-md text-header-md font-bold flex items-center gap-2">ADAUSDT <span class="text-[9px] bg-surface-container-highest px-1 text-tertiary border border-outline-variant">v4.2</span></div>
+<div class="font-label-caps text-label-caps text-green-400">DIRECTION: LONG</div>
+</div>
+<div class="text-right">
+<div class="font-data-tabular text-data-tabular text-on-surface">$0.3421</div>
+</div>
+</div>
+<div class="w-full bg-surface-dim h-1 mt-1"><div class="bg-green-500 h-full w-[91.5%] shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div></div>
+<div class="grid grid-cols-2 gap-2 text-[10px] font-data-tabular py-1">
+<div class="text-tertiary">RR RATIO: <span class="text-on-surface">1:5.1</span></div>
+<div class="text-tertiary text-right">RISK: <span class="text-green-400">0.2%</span></div>
+</div>
+<div class="flex-1 min-h-[40px] border-y border-outline-variant/30 my-1"></div>
+<div class="flex justify-between items-center text-[9px] font-label-caps">
+<span class="text-tertiary">FEATURE_IMP: LENS_B</span>
+<span class="text-on-surface">ID: #88130</span>
+</div>
+</div>
+<!-- CARD 6 (DOT) -->
+<div class="bg-surface-container panel-border p-sm relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+<div class="flex justify-between items-start">
+<div>
+<div class="font-header-md text-header-md font-bold flex items-center gap-2">DOTUSDT <span class="text-[9px] bg-surface-container-highest px-1 text-tertiary border border-outline-variant">v4.2</span></div>
+<div class="font-label-caps text-label-caps text-green-400">DIRECTION: LONG</div>
+</div>
+<div class="text-right">
+<div class="font-data-tabular text-data-tabular text-on-surface">$6.882</div>
+</div>
+</div>
+<div class="w-full bg-surface-dim h-1 mt-1"><div class="bg-green-500 h-full w-[54.0%]"></div></div>
+<div class="grid grid-cols-2 gap-2 text-[10px] font-data-tabular py-1">
+<div class="text-tertiary">RR RATIO: <span class="text-on-surface">1:2.8</span></div>
+<div class="text-tertiary text-right">RISK: <span class="text-green-400">0.8%</span></div>
+</div>
+<div class="flex-1 min-h-[40px] border-y border-outline-variant/30 my-1"></div>
+<div class="flex justify-between items-center text-[9px] font-label-caps">
+<span class="text-tertiary">FEATURE_IMP: LENS_C</span>
+<span class="text-on-surface">ID: #88131</span>
+</div>
+</div>
+</div>
+</main>
+<!-- RIGHT INSPECTOR (Context Panel) -->
+<aside class="col-start-3 bg-surface-dim border-l border-outline-variant flex flex-col p-sm overflow-hidden h-full">
+<div class="mb-lg">
+<h2 class="font-header-md text-header-md font-bold text-on-surface mb-xs">Signal Inspector</h2>
+<div class="bg-surface-container-high p-xs border border-outline-variant rounded-sm flex items-center gap-sm">
+<div class="w-8 h-8 bg-surface-dim flex items-center justify-center font-bold text-primary">BTC</div>
+<div>
+<div class="font-data-tabular text-[12px]">BTCUSDT:LONG</div>
+<div class="text-[9px] font-label-caps text-tertiary">ACTIVE SIGNAL ACTIVE SINCE 04:12</div>
+</div>
+</div>
+</div>
+<div class="flex-1 space-y-lg overflow-y-auto custom-scrollbar pr-xs">
+<!-- Feature Importance (Gini) Chart -->
+<div>
+<h3 class="font-label-caps text-label-caps text-tertiary mb-sm uppercase">Feature Importance (Gini)</h3>
+<div class="space-y-md">
+<div class="space-y-xs">
+<div class="flex justify-between font-data-tabular text-[10px] text-on-surface">
+<span>rsi_14_divergence</span>
+<span>0.245</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest">
+<div class="bg-primary h-full w-[78%]"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between font-data-tabular text-[10px] text-on-surface">
+<span>orderflow_vmap_diff</span>
+<span>0.182</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest">
+<div class="bg-primary h-full w-[58%] opacity-80"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between font-data-tabular text-[10px] text-on-surface">
+<span>funding_delta_30m</span>
+<span>0.144</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest">
+<div class="bg-primary h-full w-[42%] opacity-60"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between font-data-tabular text-[10px] text-on-surface">
+<span>vol_sma_cross_4h</span>
+<span>0.098</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest">
+<div class="bg-primary h-full w-[28%] opacity-40"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Model Performance -->
+<div class="border-t border-outline-variant pt-lg">
+<h3 class="font-label-caps text-label-caps text-tertiary mb-sm uppercase">Strategy Health (30D)</h3>
+<div class="grid grid-cols-2 gap-sm">
+<div class="bg-surface-container p-sm panel-border">
+<div class="font-label-caps text-[9px] text-tertiary">F1-SCORE</div>
+<div class="font-data-tabular text-display-lg text-primary">0.68</div>
+</div>
+<div class="bg-surface-container p-sm panel-border">
+<div class="font-label-caps text-[9px] text-tertiary">SHARPE</div>
+<div class="font-data-tabular text-display-lg text-green-400">3.22</div>
+</div>
+<div class="bg-surface-container p-sm panel-border col-span-2">
+<div class="flex justify-between items-center mb-xs">
+<div class="font-label-caps text-[9px] text-tertiary">MAX DRAWDOWN</div>
+<div class="font-data-tabular text-header-md text-red-400">-4.12%</div>
+</div>
+<div class="w-full h-1 bg-surface-container-highest">
+<div class="bg-red-400 h-full w-[41%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Live Prediction Stream -->
+<div class="border-t border-outline-variant pt-lg">
+<h3 class="font-label-caps text-label-caps text-tertiary mb-sm uppercase">Model Events</h3>
+<div class="space-y-2 font-code-sm text-code-sm">
+<div class="flex gap-2">
+<span class="text-tertiary">14:52:11</span>
+<span class="text-on-surface">Inference updated (Batch#221)</span>
+</div>
+<div class="flex gap-2">
+<span class="text-tertiary">14:52:08</span>
+<span class="text-green-400">Long confidence spike (SOLUSDT)</span>
+</div>
+<div class="flex gap-2">
+<span class="text-tertiary">14:51:55</span>
+<span class="text-red-400">Stop loss hit: PEPEUSDT</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- FOOTER (System Status) -->
+<footer class="col-start-1 col-span-3 h-6 w-full fixed bottom-0 z-50 border-t border-outline-variant bg-surface-container-lowest flex justify-between items-center px-lg text-[10px] uppercase tracking-widest text-primary-fixed-dim">
+<div class="flex items-center gap-lg">
+<span>SYSTEM STATUS: <span class="text-green-400">NOMINAL</span></span>
+<span class="text-tertiary">LATENCY: 4.2ms</span>
+<span class="text-tertiary">GPU: 22%</span>
+<span class="text-tertiary">MOROQUANT v1.0.4</span>
+</div>
+<div class="flex items-center gap-lg">
+<span class="text-tertiary-container hover:text-on-surface cursor-pointer">Logs</span>
+<span class="text-tertiary-container hover:text-on-surface cursor-pointer">Workers</span>
+<span class="text-tertiary-container hover:text-on-surface cursor-pointer">API Docs</span>
+</div>
+</footer>
+</div>
+<script>
+    // Simple pulse effect for confidence bars
+    setInterval(() => {
+        const bars = document.querySelectorAll('.bg-green-500, .bg-red-500');
+        bars.forEach(bar => {
+            bar.classList.add('opacity-80');
+            setTimeout(() => bar.classList.remove('opacity-80'), 1000);
+        });
+    }, 2000);
+</script>
+</body></html>

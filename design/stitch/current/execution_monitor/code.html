@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoroQuant | Live Execution Monitor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Inter:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131313;
+            color: #e4e2e1;
+            overflow: hidden;
+            height: 100vh;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 256px 1fr 320px;
+            grid-template-rows: 48px 1fr 180px 32px;
+            height: 100vh;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #131313;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2D2D2D;
+        }
+        .kill-switch-glow {
+            box-shadow: 0 0 15px rgba(255, 107, 0, 0.2);
+            transition: all 0.1s ease;
+        }
+        .kill-switch-glow:active {
+            box-shadow: 0 0 5px rgba(255, 107, 0, 0.5);
+            transform: scale(0.98);
+        }
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .status-pulse {
+            animation: pulse-red 2s infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#ffb693",
+                        "outline-variant": "#5a4136",
+                        "on-background": "#e4e2e1",
+                        "primary-fixed-dim": "#ffb693",
+                        "inverse-on-surface": "#303030",
+                        "on-tertiary-container": "#003357",
+                        "error-container": "#93000a",
+                        "surface-variant": "#353535",
+                        "on-error": "#690005",
+                        "secondary-container": "#474746",
+                        "on-surface-variant": "#e2bfb0",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-surface": "#e4e2e1",
+                        "on-secondary": "#313030",
+                        "tertiary": "#9ccaff",
+                        "error": "#ffb4ab",
+                        "primary": "#ffb693",
+                        "background": "#131313",
+                        "surface-dim": "#131313",
+                        "inverse-surface": "#e4e2e1",
+                        "on-primary": "#561f00",
+                        "surface-container": "#1f2020",
+                        "outline": "#a98a7d",
+                        "surface-bright": "#393939",
+                        "secondary": "#c8c6c5",
+                        "surface": "#131313",
+                        "on-primary-container": "#572000",
+                        "surface-container-high": "#2a2a2a",
+                        "inverse-primary": "#a04100",
+                        "surface-container-highest": "#353535",
+                        "on-tertiary": "#003257",
+                        "primary-container": "#ff6b00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "mono-label": ["JetBrains Mono"],
+                        "mono-data": ["JetBrains Mono"],
+                        "mono-code": ["JetBrains Mono"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-label": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "mono-data": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-body-md text-on-surface">
+<div class="grid-layout">
+<!-- TopAppBar -->
+<header class="col-span-3 flex items-center justify-between px-4 w-full border-b border-outline-variant bg-surface h-12">
+<div class="flex items-center gap-6">
+<div class="font-headline-sm text-headline-sm font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">terminal</span>
+                    MoroQuant
+                </div>
+<div class="flex items-center bg-surface-container-low px-2 py-1 rounded-sm border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-mono-data font-mono-data w-64 placeholder:text-on-surface-variant/40" placeholder="Search Tickers, Order IDs..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-4">
+<span class="font-mono-data text-mono-data text-primary cursor-pointer">Nominal</span>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<button class="bg-primary-container text-on-primary-container font-mono-label text-mono-label px-3 py-1.5 rounded-sm hover:opacity-90 active:opacity-80 transition-all uppercase">Deploy</button>
+<button class="border border-error text-error font-mono-label text-mono-label px-3 py-1.5 rounded-sm hover:bg-error/10 transition-all uppercase">Emergency Kill Switch</button>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">account_circle</span>
+</nav>
+</header>
+<!-- SideNavBar -->
+<aside class="row-span-2 flex flex-col h-full border-r border-outline-variant bg-background w-64">
+<div class="p-4 flex items-center gap-3 border-b border-outline-variant">
+<div class="w-8 h-8 bg-surface-container-high rounded-full flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">engineering</span>
+</div>
+<div>
+<div class="font-mono-label text-mono-label text-primary font-bold">Worker ID Profile</div>
+<div class="font-mono-label text-[9px] text-on-surface-variant uppercase tracking-tighter">V2 OS • Node_042</div>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto custom-scrollbar py-2">
+<div class="px-2 py-1 text-[9px] font-bold text-outline-variant uppercase tracking-widest mb-1">Execution Core</div>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">monitoring</span> Live Analytics
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">sensors</span> Signals
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-primary font-bold border-l-2 border-primary bg-surface-container-high transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">swap_horiz</span> Trades
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">pie_chart</span> Portfolio
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">security</span> Risk
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">play_circle</span> Execution
+                </a>
+<div class="px-2 py-4 text-[9px] font-bold text-outline-variant uppercase tracking-widest mb-1">Infrastructure</div>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">database</span> Datasets
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">view_in_ar</span> Model Registry
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors duration-75 font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">manage_search</span> Trade Forensics
+                </a>
+</nav>
+<div class="mt-auto border-t border-outline-variant bg-surface-container-lowest">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant transition-colors font-mono-label text-mono-label" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span> Settings
+                </a>
+</div>
+</aside>
+<!-- Main Content Area: Orders Table & Queue -->
+<main class="flex flex-col overflow-hidden bg-background">
+<!-- Header/Summary bar -->
+<div class="flex items-center justify-between px-4 py-2 bg-surface-container-low border-b border-outline-variant">
+<div class="flex items-center gap-6">
+<div>
+<span class="font-mono-label text-[9px] uppercase text-on-surface-variant">Active Orders</span>
+<div class="font-mono-data text-headline-sm font-bold text-primary">1,248</div>
+</div>
+<div>
+<span class="font-mono-label text-[9px] uppercase text-on-surface-variant">Filled Today</span>
+<div class="font-mono-data text-headline-sm font-bold text-tertiary">42,901.4k</div>
+</div>
+<div>
+<span class="font-mono-label text-[9px] uppercase text-on-surface-variant">Avg Slippage</span>
+<div class="font-mono-data text-headline-sm font-bold text-error">0.42 bps</div>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container-high border border-outline-variant text-on-surface-variant font-mono-label text-[10px] px-2 py-1 rounded-sm uppercase">Pause All</button>
+<button class="bg-surface-container-high border border-outline-variant text-on-surface-variant font-mono-label text-[10px] px-2 py-1 rounded-sm uppercase">Export CSV</button>
+</div>
+</div>
+<!-- Orders Table Container -->
+<div class="flex-1 overflow-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-high z-10">
+<tr>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant font-mono-label text-mono-label uppercase text-on-surface-variant">ID</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant font-mono-label text-mono-label uppercase text-on-surface-variant">Ticker</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant font-mono-label text-mono-label uppercase text-on-surface-variant">Type</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant font-mono-label text-mono-label uppercase text-on-surface-variant">Status</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant font-mono-label text-mono-label uppercase text-on-surface-variant">Filled/Total</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant font-mono-label text-mono-label uppercase text-on-surface-variant">Avg Price</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant font-mono-label text-mono-label uppercase text-on-surface-variant">Slippage</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30 font-mono-data text-mono-data">
+<!-- Simulated Rows -->
+<tr class="hover:bg-surface-container-highest cursor-pointer group">
+<td class="px-cell-padding-x py-1 text-primary">#ORD-9902</td>
+<td class="px-cell-padding-x py-1 font-bold">NVDA.O</td>
+<td class="px-cell-padding-x py-1 text-tertiary">LIMIT BUY</td>
+<td class="px-cell-padding-x py-1"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> Working</span></td>
+<td class="px-cell-padding-x py-1">450 / 1,000</td>
+<td class="px-cell-padding-x py-1">118.42</td>
+<td class="px-cell-padding-x py-1 text-primary">-0.02</td>
+</tr>
+<tr class="hover:bg-surface-container-highest cursor-pointer group">
+<td class="px-cell-padding-x py-1 text-primary">#ORD-9899</td>
+<td class="px-cell-padding-x py-1 font-bold">TSLA.O</td>
+<td class="px-cell-padding-x py-1 text-error">MARKET SELL</td>
+<td class="px-cell-padding-x py-1 text-on-surface-variant">Partial</td>
+<td class="px-cell-padding-x py-1">2,100 / 5,000</td>
+<td class="px-cell-padding-x py-1">242.11</td>
+<td class="px-cell-padding-x py-1 text-error">+1.40</td>
+</tr>
+<tr class="hover:bg-surface-container-highest cursor-pointer group bg-surface-container-low/30">
+<td class="px-cell-padding-x py-1 text-primary">#ORD-9892</td>
+<td class="px-cell-padding-x py-1 font-bold">AAPL.O</td>
+<td class="px-cell-padding-x py-1 text-tertiary">VWAP BUY</td>
+<td class="px-cell-padding-x py-1 text-on-surface-variant">Pending</td>
+<td class="px-cell-padding-x py-1">0 / 2,500</td>
+<td class="px-cell-padding-x py-1">224.30</td>
+<td class="px-cell-padding-x py-1">0.00</td>
+</tr>
+<!-- More rows to fill space -->
+<script>
+                            const tickers = ['AMD.O', 'MSFT.O', 'GOOGL.O', 'AMZN.O', 'META.O', 'BTC/USD', 'ETH/USD'];
+                            const types = ['LIMIT BUY', 'LIMIT SELL', 'VWAP SELL', 'TWAP BUY'];
+                            for(let i=0; i<15; i++) {
+                                document.write(`
+                                    <tr class="hover:bg-surface-container-highest cursor-pointer">
+                                        <td class="px-cell-padding-x py-1 text-primary">#ORD-${9890 - i}</td>
+                                        <td class="px-cell-padding-x py-1 font-bold">${tickers[i%tickers.length]}</td>
+                                        <td class="px-cell-padding-x py-1 ${i%2===0 ? 'text-tertiary' : 'text-error'}">${types[i%types.length]}</td>
+                                        <td class="px-cell-padding-x py-1"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span> ${i%3===0 ? 'Filled' : 'Paused'}</span></td>
+                                        <td class="px-cell-padding-x py-1">${Math.floor(Math.random()*1000)} / 1,000</td>
+                                        <td class="px-cell-padding-x py-1">${(Math.random()*500 + 10).toFixed(2)}</td>
+                                        <td class="px-cell-padding-x py-1 ${Math.random() > 0.5 ? 'text-primary' : 'text-error'}">${(Math.random()*0.5).toFixed(2)}</td>
+                                    </tr>
+                                `);
+                            }
+                        </script>
+</tbody>
+</table>
+</div>
+<!-- Execution Queue Visualization -->
+<div class="h-32 border-t border-outline-variant bg-surface-container-lowest p-2">
+<div class="flex items-center justify-between mb-2">
+<span class="font-mono-label text-[9px] uppercase tracking-wider text-on-surface-variant">Execution Queue Distribution</span>
+<span class="font-mono-label text-[9px] text-tertiary">98.2% Throughput</span>
+</div>
+<div class="flex items-end gap-1 h-16 w-full px-1">
+<script>
+                        for(let i=0; i<60; i++) {
+                            const h = Math.floor(Math.random() * 80) + 20;
+                            const color = h > 85 ? 'bg-error' : (h > 60 ? 'bg-primary' : 'bg-tertiary');
+                            document.write(`<div class="${color} opacity-80 hover:opacity-100 transition-all cursor-crosshair" style="height: ${h}%; flex: 1;"></div>`);
+                        }
+                    </script>
+</div>
+<div class="flex justify-between mt-1 px-1">
+<span class="font-mono-label text-[8px] text-outline-variant">T-60s</span>
+<span class="font-mono-label text-[8px] text-outline-variant">T-30s</span>
+<span class="font-mono-label text-[8px] text-outline-variant">NOW</span>
+</div>
+</div>
+</main>
+<!-- Right Inspector: Health & Kill Switch -->
+<aside class="row-span-2 border-l border-outline-variant bg-surface flex flex-col w-[320px]">
+<div class="p-4 border-b border-outline-variant">
+<h3 class="font-mono-label text-mono-label uppercase text-on-surface-variant mb-4">System Health</h3>
+<div class="space-y-4">
+<!-- Latency -->
+<div class="bg-surface-container p-3 border border-outline-variant rounded-sm">
+<div class="flex justify-between items-center mb-1">
+<span class="font-mono-label text-[10px] text-on-surface-variant">LBM LATENCY</span>
+<span class="font-mono-data text-primary font-bold">1.22 ms</span>
+</div>
+<div class="w-full bg-background h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 15%"></div>
+</div>
+</div>
+<!-- Broker Health -->
+<div class="space-y-2">
+<div class="flex justify-between items-center p-2 border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#00C853]"></span>
+<span class="font-mono-data text-mono-data">NASDAQ (OUCH)</span>
+</div>
+<span class="font-mono-label text-[9px] text-on-surface-variant">CONNECTED</span>
+</div>
+<div class="flex justify-between items-center p-2 border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#00C853]"></span>
+<span class="font-mono-data text-mono-data">NYSE (FIX 4.4)</span>
+</div>
+<span class="font-mono-label text-[9px] text-on-surface-variant">CONNECTED</span>
+</div>
+<div class="flex justify-between items-center p-2 border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error status-pulse"></span>
+<span class="font-mono-data text-mono-data">CME (MDP 3.0)</span>
+</div>
+<span class="font-mono-label text-[9px] text-error">RETRIYING</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Kill Switch Area -->
+<div class="flex-1 flex flex-col p-4 justify-end gap-4 bg-gradient-to-t from-surface-container-lowest to-surface">
+<div class="bg-error-container/10 border border-error/20 p-4 rounded-sm">
+<div class="flex items-start gap-2 mb-2">
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+<div class="font-mono-label text-error font-bold uppercase text-[11px]">Hazard Protocol</div>
+</div>
+<p class="font-mono-data text-[11px] text-on-surface-variant leading-relaxed">
+                        Activating the emergency kill switch will immediately cancel all pending orders and flatten all active positions across all connected exchanges.
+                    </p>
+</div>
+<button class="kill-switch-glow w-full bg-error text-[#131313] py-8 rounded-sm font-headline-sm font-extrabold uppercase tracking-tighter flex flex-col items-center justify-center gap-2 border-4 border-background hover:bg-[#ffb4ab] transition-all">
+<span class="material-symbols-outlined text-[48px]" style="font-variation-settings: 'FILL' 1;">dangerous</span>
+                    EMERGENCY KILL SWITCH
+                    <span class="font-mono-label text-[10px] opacity-70 mt-2">CTRL + ALT + SHIFT + K</span>
+</button>
+</div>
+</aside>
+<!-- Bottom Log Terminal -->
+<section class="col-start-2 col-end-4 border-t border-outline-variant bg-[#0e0e0e] flex flex-col font-mono-code text-mono-code">
+<div class="flex items-center justify-between px-3 py-1.5 bg-surface-container-high/50 border-b border-outline-variant">
+<div class="flex gap-4">
+<span class="text-primary font-bold">FIX/BINARY LOGS</span>
+<span class="text-on-surface-variant/40 hover:text-on-surface cursor-pointer">TELEMETRY</span>
+<span class="text-on-surface-variant/40 hover:text-on-surface cursor-pointer">ERRORS (2)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant cursor-pointer">pause</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant cursor-pointer">delete</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-2 custom-scrollbar space-y-0.5 leading-tight select-all">
+<div class="text-[#888]"><span class="text-tertiary">[14:32:01.002]</span> <span class="text-[#00C853]">INFO:</span> FIX.4.4:Snd: 8=FIX.4.4|9=112|35=D|49=MORO_Q|56=NASDAQ|11=ORD_9902|54=1|38=1000|40=2|44=118.42|10=204|</div>
+<div class="text-[#888]"><span class="text-tertiary">[14:32:01.008]</span> <span class="text-[#00C853]">INFO:</span> FIX.4.4:Rcv: 8=FIX.4.4|9=96|35=8|49=NASDAQ|56=MORO_Q|37=EX_1029|11=ORD_9902|39=0|150=0|10=152|</div>
+<div class="text-[#888]"><span class="text-tertiary">[14:32:01.442]</span> <span class="text-[#00C853]">INFO:</span> Binary: Snd OUCH_EnterOrder [Token: ORD_9902, Side: B, Qty: 1000, Price: 1184200]</div>
+<div class="text-[#888]"><span class="text-tertiary">[14:32:02.115]</span> <span class="text-error">WARN:</span> CME Gateway latency spike detected (+4.2ms)</div>
+<div class="text-[#888]"><span class="text-tertiary">[14:32:02.116]</span> <span class="text-error">ERRO:</span> CME Connectivity heartbeat lost. Attempting reconnection 1/5...</div>
+<div class="text-[#888]"><span class="text-tertiary">[14:32:02.501]</span> <span class="text-[#00C853]">INFO:</span> FIX.4.4:Rcv: ExecutionReport [Fill: 450/1000, LastPx: 118.42]</div>
+<div class="text-[#888]"><span class="text-tertiary">[14:32:03.004]</span> <span class="text-primary">DEBG:</span> Internal Pipeline Flush: 14.2k messages processed.</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="col-span-3 flex items-center justify-between px-4 py-1 bg-surface-container-lowest border-t border-outline-variant z-50">
+<div class="flex items-center gap-6 font-mono-label text-mono-label text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#00C853]"></span> ENGINE: NOMINAL</span>
+<span class="text-tertiary">Real-time Telemetry: GPU 42% | Latency 1.2ms | System Nominal</span>
+</div>
+<div class="flex items-center gap-4 font-mono-label text-mono-label">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Logs</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Workers</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Scheduler</a>
+</div>
+</footer>
+</div>
+<script>
+        // Micro-interaction for logs: Auto-scroll simulator
+        const terminal = document.querySelector('section .flex-1');
+        setInterval(() => {
+            if (terminal.scrollTop + terminal.offsetHeight >= terminal.scrollHeight - 20) {
+                const newLog = document.createElement('div');
+                newLog.className = 'text-[#888]';
+                const time = new Date().toLocaleTimeString('en-GB', { hour12: false }) + '.' + Math.floor(Math.random()*999).toString().padStart(3, '0');
+                newLog.innerHTML = `<span class="text-tertiary">[${time}]</span> <span class="text-[#00C853]">INFO:</span> Trace Update: Position delta calculation synchronized for Node_${Math.floor(Math.random()*100)}.`;
+                terminal.appendChild(newLog);
+                terminal.scrollTop = terminal.scrollHeight;
+                
+                // Keep log size manageable
+                if (terminal.children.length > 50) {
+                    terminal.removeChild(terminal.firstChild);
+                }
+            }
+        }, 3000);
+
+        // Emergency Kill Switch Interaction
+        const killBtn = document.querySelector('.kill-switch-glow');
+        killBtn.addEventListener('click', () => {
+            if(confirm('CRITICAL ACTION: CONFIRM SYSTEM-WIDE LIQUIDATION?')) {
+                document.body.style.filter = 'grayscale(1) contrast(1.2) invert(1)';
+                setTimeout(() => {
+                    alert('ALL POSITIONS FLATTENED. SYSTEM HALTED.');
+                    document.body.style.filter = 'none';
+                }, 500);
+            }
+        });
+    </script>
+</body></html>

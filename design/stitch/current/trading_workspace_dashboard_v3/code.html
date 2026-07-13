@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoroQuant OS | Institutional Terminal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#131313",
+                    "primary-fixed": "#ffdbcc",
+                    "on-surface": "#e5e2e1",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "tertiary-container": "#9a9999",
+                    "primary-fixed-dim": "#ffb693",
+                    "on-error-container": "#ffdad6",
+                    "error": "#ffb4ab",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-container": "#201f1f",
+                    "on-primary-container": "#572000",
+                    "primary": "#ffb693",
+                    "on-surface-variant": "#e2bfb0",
+                    "on-secondary": "#313030",
+                    "surface": "#131313",
+                    "surface-container-highest": "#353534",
+                    "outline": "#a98a7d",
+                    "tertiary-fixed": "#e4e2e1",
+                    "surface-container-lowest": "#0e0e0e",
+                    "surface-variant": "#353534",
+                    "on-secondary-fixed-variant": "#474646",
+                    "error-container": "#93000a",
+                    "tertiary": "#c8c6c5",
+                    "outline-variant": "#5a4136",
+                    "secondary-container": "#4a4949",
+                    "on-secondary-container": "#bab8b7",
+                    "inverse-primary": "#a04100",
+                    "background": "#131313",
+                    "surface-tint": "#ffb693",
+                    "surface-container-high": "#2a2a2a",
+                    "surface-bright": "#3a3939",
+                    "primary-container": "#ff6b00",
+                    "inverse-surface": "#e5e2e1",
+                    "on-tertiary-container": "#313131",
+                    "on-tertiary-fixed": "#1b1c1c",
+                    "on-primary": "#561f00",
+                    "on-background": "#e5e2e1",
+                    "surface-container-low": "#1c1b1b",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-primary-fixed": "#351000",
+                    "on-primary-fixed-variant": "#7a3000",
+                    "on-tertiary": "#303030",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "secondary": "#c8c6c5",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed-variant": "#474746",
+                    "inverse-on-surface": "#313030"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "lg": "16px",
+                    "sm": "8px",
+                    "md": "12px",
+                    "container-margin": "12px",
+                    "unit": "4px",
+                    "panel-gutter": "1px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["JetBrains Mono"],
+                    "code-sm": ["JetBrains Mono"],
+                    "label-caps": ["Inter"],
+                    "header-md": ["IBM Plex Sans"],
+                    "body-base": ["Inter"],
+                    "display-lg": ["IBM Plex Sans"]
+            },
+            "fontSize": {
+                    "data-tabular": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "code-sm": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "header-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "body-base": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "display-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #090909; overflow: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #131313; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ff6b00; }
+        .etched-input { box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        .scanline { background: linear-gradient(to bottom, transparent 50%, rgba(255, 107, 0, 0.05) 50.5%, transparent 51%); background-size: 100% 4px; pointer-events: none; }
+    </style>
+</head>
+<body class="font-body-base text-on-surface h-screen flex flex-col">
+<!-- Top Bar -->
+<header class="h-12 w-full border-b border-outline-variant bg-surface-dim flex justify-between items-center px-lg z-50">
+<div class="flex items-center gap-6">
+<span class="font-header-md text-header-md font-black text-primary uppercase tracking-tighter">MoroQuant OS</span>
+<div class="hidden lg:flex items-center gap-4 text-on-surface-variant font-data-tabular text-[11px] tracking-widest uppercase opacity-60">
+<span>Server: HK-SOUTH-1</span>
+<span>|</span>
+<span>Uptime: 99.999%</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded">
+<div class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></div>
+<span class="font-data-tabular text-data-tabular text-primary uppercase">Engine Live</span>
+</div>
+<button class="bg-error-container text-on-error-container px-3 py-1 font-label-caps text-label-caps border border-error hover:bg-error hover:text-on-error transition-all">KILL SWITCH</button>
+<div class="flex items-center gap-3 text-tertiary">
+<span class="material-symbols-outlined text-[20px] cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined text-[20px] cursor-pointer hover:text-primary transition-colors">sync</span>
+<span class="material-symbols-outlined text-[20px] cursor-pointer hover:text-primary transition-colors">settings</span>
+<div class="w-8 h-8 rounded-full border border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIpIdyqWiFN9laOPmgQacjgqa2P-KWe1wpS8CJC6N80hy_5_cUeXZzS4UMdKKarR97Nqg-8KJZpATNyRniQE2lSML5-e17DekScIdbZlGzKr14Zme63qAKZCIpuAqbVkS0OZeVE33V5YKtQ0rawRHde0imonty_WUMW3gnFAdlKCDObGe88ezCGpu9vNxrt9XAtczazSQPtfu-y3BNlk9V6QmLoSS1aKgjakNkjlF-phXoMsZdygtUXRTWDL5Yt2v4m3t9M8KQwiY"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden">
+<!-- Primary Sidebar: Workspace Switcher -->
+<nav class="w-16 h-full border-r border-outline-variant bg-surface-container-lowest flex flex-col items-center py-4 gap-4 z-40">
+<div class="w-10 h-10 flex items-center justify-center bg-primary text-on-primary rounded-lg cursor-pointer group relative" title="Trading">
+<span class="material-symbols-outlined">candlestick_chart</span>
+<div class="absolute left-full ml-4 px-2 py-1 bg-surface-container-highest text-primary font-label-caps text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">TRADING</div>
+</div>
+<div class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-lg cursor-pointer transition-all group relative" title="Research Lab">
+<span class="material-symbols-outlined">science</span>
+<div class="absolute left-full ml-4 px-2 py-1 bg-surface-container-highest text-on-surface font-label-caps text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">RESEARCH LAB</div>
+</div>
+<div class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-lg cursor-pointer transition-all group relative" title="Operations">
+<span class="material-symbols-outlined">settings_input_component</span>
+<div class="absolute left-full ml-4 px-2 py-1 bg-surface-container-highest text-on-surface font-label-caps text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">OPERATIONS</div>
+</div>
+<div class="mt-auto w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary cursor-pointer transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</div>
+</nav>
+<!-- Secondary Sidebar: Trading Pages -->
+<nav class="w-56 h-full border-r border-outline-variant bg-surface-dim flex flex-col z-30">
+<div class="p-4 border-b border-outline-variant">
+<span class="font-label-caps text-label-caps text-tertiary-container tracking-[0.2em]">TRADING WORKSPACE</span>
+</div>
+<div class="flex-1 py-2 overflow-y-auto custom-scrollbar">
+<div class="bg-surface-container-highest text-primary border-r-2 border-primary flex items-center gap-3 px-4 py-3 font-bold cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center gap-3 px-4 py-3 transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">signal_cellular_alt</span>
+<span class="font-label-caps text-label-caps">Signals</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center gap-3 px-4 py-3 transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+<span class="font-label-caps text-label-caps">Portfolio</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center gap-3 px-4 py-3 transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="font-label-caps text-label-caps">Trades</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center gap-3 px-4 py-3 transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+<span class="font-label-caps text-label-caps">Execution</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center gap-3 px-4 py-3 transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">gpp_maybe</span>
+<span class="font-label-caps text-label-caps">Risk</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface flex items-center gap-3 px-4 py-3 transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant">
+<button class="w-full bg-primary-container text-on-primary-container font-label-caps text-label-caps py-2 rounded hover:opacity-90 active:scale-[0.98] transition-all">NEW ORDER</button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col bg-[#090909] overflow-hidden">
+<!-- Key Metrics Row -->
+<div class="grid grid-cols-5 gap-px bg-outline-variant border-b border-outline-variant">
+<div class="bg-surface p-4 flex flex-col justify-center">
+<span class="font-label-caps text-label-caps text-tertiary-container">DAILY PNL</span>
+<span class="font-data-tabular text-display-lg text-primary">+$142,408.00</span>
+</div>
+<div class="bg-surface p-4 flex flex-col justify-center">
+<span class="font-label-caps text-label-caps text-tertiary-container">DAILY RETURN</span>
+<span class="font-data-tabular text-display-lg text-primary">+1.24%</span>
+</div>
+<div class="bg-surface p-4 flex flex-col justify-center">
+<span class="font-label-caps text-label-caps text-tertiary-container">DRAWDOWN</span>
+<span class="font-data-tabular text-display-lg text-error">-2.14%</span>
+</div>
+<div class="bg-surface p-4 flex flex-col justify-center border-l border-outline-variant">
+<span class="font-label-caps text-label-caps text-tertiary-container">SHARPE RATIO</span>
+<span class="font-data-tabular text-display-lg text-on-surface">3.24</span>
+</div>
+<div class="bg-surface p-4 flex flex-col justify-center">
+<span class="font-label-caps text-label-caps text-tertiary-container">TOTAL EXPOSURE</span>
+<span class="font-data-tabular text-display-lg text-on-surface">$42.4M</span>
+</div>
+</div>
+<!-- Workspace Scroll Area -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-sm space-y-sm">
+<!-- Large Portfolio Equity Curve -->
+<section class="bg-surface-dim border border-outline-variant relative h-[340px] overflow-hidden">
+<div class="absolute top-4 left-4 z-10 flex flex-col">
+<span class="font-header-md text-header-md text-on-surface uppercase tracking-wider">Equity Curve</span>
+<span class="font-code-sm text-code-sm text-tertiary">Realized + Unrealized PnL | Real-time Stream</span>
+</div>
+<div class="absolute top-4 right-4 z-10 flex gap-2">
+<span class="px-2 py-0.5 bg-surface-container-highest font-label-caps text-label-caps text-primary border border-primary">1D</span>
+<span class="px-2 py-0.5 font-label-caps text-label-caps text-on-surface-variant hover:text-primary cursor-pointer transition-colors">1W</span>
+<span class="px-2 py-0.5 font-label-caps text-label-caps text-on-surface-variant hover:text-primary cursor-pointer transition-colors">1M</span>
+<span class="px-2 py-0.5 font-label-caps text-label-caps text-on-surface-variant hover:text-primary cursor-pointer transition-colors">ALL</span>
+</div>
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 300">
+<path d="M0,250 L100,240 L200,245 L300,210 L400,220 L500,180 L600,160 L700,170 L800,120 L900,130 L1000,80" fill="none" stroke="#ff6b00" stroke-width="2"></path>
+<path d="M0,250 L100,240 L200,245 L300,210 L400,220 L500,180 L600,160 L700,170 L800,120 L900,130 L1000,80 L1000,300 L0,300 Z" fill="url(#grad)" opacity="0.1"></path>
+<defs>
+<lineargradient id="grad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#ff6b00;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+</svg>
+<div class="scanline absolute inset-0 opacity-30"></div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-sm">
+<!-- Active Inventory Table -->
+<div class="bg-surface-dim border border-outline-variant flex flex-col">
+<div class="h-8 bg-surface-container px-lg flex items-center border-b border-outline-variant">
+<span class="font-label-caps text-label-caps">ACTIVE INVENTORY</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface text-tertiary-container font-label-caps text-label-caps border-b border-outline-variant">
+<tr>
+<th class="px-4 py-2 font-normal">TICKER</th>
+<th class="px-4 py-2 font-normal">SIDE</th>
+<th class="px-4 py-2 font-normal text-right">SIZE</th>
+<th class="px-4 py-2 font-normal text-right">ENTRY</th>
+<th class="px-4 py-2 font-normal text-right">UNREALIZED PNL</th>
+</tr>
+</thead>
+<tbody class="font-data-tabular text-data-tabular">
+<tr class="border-b border-outline-variant hover:bg-surface-container-high transition-colors">
+<td class="px-4 py-1.5 text-on-surface">BTCUSDT</td>
+<td class="px-4 py-1.5"><span class="bg-primary-container text-on-primary-container px-1 py-0.5 rounded-xs">LONG</span></td>
+<td class="px-4 py-1.5 text-right">24.50</td>
+<td class="px-4 py-1.5 text-right">62,450.00</td>
+<td class="px-4 py-1.5 text-right text-primary">+$4,210.00</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-high transition-colors">
+<td class="px-4 py-1.5 text-on-surface">ETHUSDT</td>
+<td class="px-4 py-1.5"><span class="bg-error-container text-on-error-container px-1 py-0.5 rounded-xs">SHORT</span></td>
+<td class="px-4 py-1.5 text-right">150.00</td>
+<td class="px-4 py-1.5 text-right">3,420.50</td>
+<td class="px-4 py-1.5 text-right text-error">-$1,120.00</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-high transition-colors">
+<td class="px-4 py-1.5 text-on-surface">SOLUSDT</td>
+<td class="px-4 py-1.5"><span class="bg-primary-container text-on-primary-container px-1 py-0.5 rounded-xs">LONG</span></td>
+<td class="px-4 py-1.5 text-right">1,200.00</td>
+<td class="px-4 py-1.5 text-right">145.20</td>
+<td class="px-4 py-1.5 text-right text-primary">+$890.40</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Market Regime Matrix -->
+<div class="bg-surface-dim border border-outline-variant flex flex-col">
+<div class="h-8 bg-surface-container px-lg flex items-center border-b border-outline-variant">
+<span class="font-label-caps text-label-caps">MARKET REGIME PERFORMANCE</span>
+</div>
+<div class="grid grid-cols-3 grid-rows-2 gap-px bg-outline-variant flex-1">
+<div class="bg-surface-dim p-3 flex flex-col">
+<span class="font-code-sm text-code-sm text-tertiary-container uppercase">Trending_High</span>
+<span class="font-data-tabular text-header-md text-primary mt-1">72.4% WR</span>
+<span class="font-code-sm text-[10px] text-tertiary mt-auto">Exp: +1.42</span>
+</div>
+<div class="bg-surface-dim p-3 flex flex-col">
+<span class="font-code-sm text-code-sm text-tertiary-container uppercase">Choppy_Norm</span>
+<span class="font-data-tabular text-header-md text-on-surface mt-1">51.0% WR</span>
+<span class="font-code-sm text-[10px] text-tertiary mt-auto">Exp: -0.05</span>
+</div>
+<div class="bg-surface-dim p-3 flex flex-col">
+<span class="font-code-sm text-code-sm text-tertiary-container uppercase">Transition_Low</span>
+<span class="font-data-tabular text-header-md text-primary mt-1">64.1% WR</span>
+<span class="font-code-sm text-[10px] text-tertiary mt-auto">Exp: +0.88</span>
+</div>
+<div class="bg-surface-dim p-3 flex flex-col">
+<span class="font-code-sm text-code-sm text-tertiary-container uppercase">Flash_Crash</span>
+<span class="font-data-tabular text-header-md text-error mt-1">12.5% WR</span>
+<span class="font-code-sm text-[10px] text-tertiary mt-auto">Exp: -4.20</span>
+</div>
+<div class="bg-surface-dim p-3 flex flex-col">
+<span class="font-code-sm text-code-sm text-tertiary-container uppercase">Mean_Rev</span>
+<span class="font-data-tabular text-header-md text-on-surface mt-1">48.2% WR</span>
+<span class="font-code-sm text-[10px] text-tertiary mt-auto">Exp: +0.02</span>
+</div>
+<div class="bg-surface-dim p-3 flex flex-col">
+<span class="font-code-sm text-code-sm text-tertiary-container uppercase">Breakout_V2</span>
+<span class="font-data-tabular text-header-md text-primary mt-1">59.8% WR</span>
+<span class="font-code-sm text-[10px] text-tertiary mt-auto">Exp: +1.15</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Confidence Distribution -->
+<div class="bg-surface-dim border border-outline-variant p-4">
+<span class="font-label-caps text-label-caps text-tertiary-container mb-4 block">WIN RATE BY CONFIDENCE BUCKET</span>
+<div class="space-y-3">
+<div class="flex items-center gap-4">
+<span class="w-16 font-data-tabular text-code-sm text-tertiary">90-100%</span>
+<div class="flex-1 h-3 bg-surface-container-low rounded-xs overflow-hidden border border-outline-variant/30">
+<div class="h-full bg-primary" style="width: 88%;"></div>
+</div>
+<span class="w-12 font-data-tabular text-code-sm text-primary">88.2%</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="w-16 font-data-tabular text-code-sm text-tertiary">80-89%</span>
+<div class="flex-1 h-3 bg-surface-container-low rounded-xs overflow-hidden border border-outline-variant/30">
+<div class="h-full bg-primary" style="width: 74%;"></div>
+</div>
+<span class="w-12 font-data-tabular text-code-sm text-primary">74.5%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Log Panel -->
+<footer class="h-6 w-full bg-surface-container-lowest border-t border-outline-variant flex justify-between items-center px-lg text-[10px] uppercase tracking-widest text-primary-fixed-dim">
+<div class="flex items-center gap-4 font-data-tabular">
+<span>SYSTEM STATUS: NOMINAL</span>
+<span class="text-on-surface-variant">|</span>
+<span>LATENCY: 4.2ms</span>
+<span class="text-on-surface-variant">|</span>
+<span>GPU: 22%</span>
+<span class="text-on-surface-variant">|</span>
+<span>MOROQUANT v1.1.0-ALPHA</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="hover:text-on-surface cursor-pointer transition-colors">Log Stream</span>
+<span class="hover:text-on-surface cursor-pointer transition-colors">Worker Nodes</span>
+<span class="hover:text-on-surface cursor-pointer transition-colors">API Console</span>
+</div>
+</footer>
+</main>
+<!-- Right Inspector -->
+<aside class="w-[320px] h-full border-l border-outline-variant bg-surface-dim flex flex-col hidden xl:flex">
+<!-- Signal Feed -->
+<div class="flex-1 flex flex-col overflow-hidden border-b border-outline-variant">
+<div class="h-10 bg-surface-container px-lg flex items-center justify-between">
+<span class="font-label-caps text-label-caps">SIGNAL FEED</span>
+<span class="material-symbols-outlined text-sm text-tertiary cursor-pointer hover:text-primary">history</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+<div class="p-2 border border-outline-variant bg-[#090909] font-code-sm text-code-sm space-y-1">
+<div class="flex justify-between items-center">
+<span class="text-primary font-bold">ETHUSDT SIGNAL</span>
+<span class="text-tertiary text-[9px]">14:22:04</span>
+</div>
+<p class="text-on-surface-variant leading-relaxed">Pattern detected: 3-Bar reversal with volume spike. Model Confidence: <span class="text-primary">82%</span></p>
+<div class="flex gap-2 mt-2">
+<span class="px-1.5 py-0.5 bg-primary-container/20 text-primary border border-primary/30 text-[9px] font-bold">ACTION: BUY</span>
+</div>
+</div>
+<div class="p-2 border border-outline-variant bg-[#090909] font-code-sm text-code-sm space-y-1 opacity-70">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant font-bold">BTCUSDT UPDATE</span>
+<span class="text-tertiary text-[9px]">14:21:55</span>
+</div>
+<p class="text-on-surface-variant leading-relaxed">Position stop-loss trailed to $62,100.32 based on ATR multiplier.</p>
+</div>
+</div>
+</div>
+<!-- Position Inspector -->
+<div class="h-[300px] flex flex-col">
+<div class="h-8 bg-surface-container px-lg flex items-center">
+<span class="font-label-caps text-label-caps">POSITION INSPECTOR: BTCUSDT</span>
+</div>
+<div class="p-4 space-y-4">
+<div class="space-y-1">
+<span class="font-label-caps text-[9px] text-tertiary uppercase tracking-tighter">LEVERAGE MULTIPLIER</span>
+<div class="flex gap-1 h-2">
+<div class="flex-1 bg-primary"></div>
+<div class="flex-1 bg-primary"></div>
+<div class="flex-1 bg-primary"></div>
+<div class="flex-1 bg-surface-container-highest"></div>
+<div class="flex-1 bg-surface-container-highest"></div>
+</div>
+<div class="flex justify-between font-data-tabular text-[10px] text-on-surface-variant uppercase">
+<span>Iso 5x</span>
+<span>Max 20x</span>
+</div>
+</div>
+<div class="space-y-2 border-t border-outline-variant/30 pt-3">
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-tertiary-container">FUNDING RATE</span>
+<span class="font-data-tabular text-data-tabular text-on-surface">0.0104%</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-tertiary-container">STOP-LOSS</span>
+<span class="font-data-tabular text-data-tabular text-error">59,210.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-tertiary-container">TAKE-PROFIT</span>
+<span class="font-data-tabular text-data-tabular text-primary">68,500.00</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<script>
+    // Micro-interaction logic
+    document.querySelectorAll('.material-symbols-outlined').forEach(icon => {
+        icon.addEventListener('click', function() {
+            this.classList.add('scale-90');
+            setTimeout(() => this.classList.remove('scale-90'), 100);
+        });
+    });
+
+    // Simulated system log stream
+    const footerLog = document.querySelector('footer div:first-child span:first-child');
+    setInterval(() => {
+        const statuses = ['NOMINAL', 'OPTIMIZING', 'RE-ROUTING', 'SYNCING'];
+        if(Math.random() > 0.8) {
+            footerLog.innerText = `SYSTEM STATUS: ${statuses[Math.floor(Math.random() * statuses.length)]}`;
+            footerLog.classList.add('text-primary');
+            setTimeout(() => footerLog.classList.remove('text-primary'), 1000);
+        } else {
+            footerLog.innerText = 'SYSTEM STATUS: NOMINAL';
+        }
+    }, 4000);
+</script>
+</body></html>

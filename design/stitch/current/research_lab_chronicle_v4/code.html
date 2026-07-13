@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>QuantOS | Research Lab</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e0e; }
+        ::-webkit-scrollbar-thumb { background: #353534; }
+        ::-webkit-scrollbar-thumb:hover { background: #5a4136; }
+        
+        .pipeline-node::before {
+            content: '';
+            position: absolute;
+            left: 23px;
+            top: 40px;
+            bottom: -20px;
+            width: 2px;
+            background: #262626;
+            z-index: 0;
+        }
+        .pipeline-node:last-child::before { display: none; }
+        
+        @keyframes pulse-orange {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        .status-running { animation: pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        .terminal-cursor {
+            display: inline-block;
+            width: 6px;
+            height: 14px;
+            background: #ffb693;
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline": "#a98a7d",
+                      "on-secondary": "#313030",
+                      "tertiary-container": "#9a9999",
+                      "surface-dim": "#131313",
+                      "on-error-container": "#ffdad6",
+                      "on-primary-container": "#572000",
+                      "on-background": "#e5e2e1",
+                      "error": "#ffb4ab",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "inverse-surface": "#e5e2e1",
+                      "surface": "#131313",
+                      "on-tertiary-fixed": "#1b1c1c",
+                      "inverse-primary": "#a04100",
+                      "outline-variant": "#5a4136",
+                      "secondary-fixed": "#e5e2e1",
+                      "surface-tint": "#ffb693",
+                      "tertiary-fixed-dim": "#c8c6c5",
+                      "secondary-container": "#4a4949",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "primary-fixed": "#ffdbcc",
+                      "tertiary": "#c8c6c5",
+                      "primary-container": "#ff6b00",
+                      "surface-container-lowest": "#0e0e0e",
+                      "surface-container-low": "#1c1b1b",
+                      "surface-container-high": "#2a2a2a",
+                      "on-primary-fixed": "#351000",
+                      "on-surface-variant": "#e2bfb0",
+                      "surface-bright": "#3a3939",
+                      "surface-container-highest": "#353534",
+                      "primary-fixed-dim": "#ffb693",
+                      "surface-variant": "#353534",
+                      "on-error": "#690005",
+                      "on-secondary-fixed-variant": "#474646",
+                      "inverse-on-surface": "#313030",
+                      "on-tertiary": "#303030",
+                      "on-secondary-container": "#bab8b7",
+                      "on-tertiary-fixed-variant": "#474746",
+                      "primary": "#ffb693",
+                      "on-primary": "#561f00",
+                      "error-container": "#93000a",
+                      "background": "#131313",
+                      "tertiary-fixed": "#e4e2e1",
+                      "on-surface": "#e5e2e1",
+                      "on-tertiary-container": "#313131",
+                      "surface-container": "#201f1f",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "secondary": "#c8c6c5"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "container-margin": "12px",
+                      "xs": "4px",
+                      "panel-gutter": "1px",
+                      "lg": "16px",
+                      "md": "12px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "display-lg": ["IBM Plex Sans"],
+                      "body-base": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "header-md": ["IBM Plex Sans"],
+                      "data-tabular": ["JetBrains Mono"],
+                      "code-sm": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "display-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "body-base": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "header-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                      "data-tabular": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "code-sm": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-surface-container-lowest text-on-surface font-body-base overflow-hidden select-none">
+<!-- PRIMARY RAIL: Workspace Switcher -->
+<aside class="fixed left-0 top-0 h-screen w-16 bg-surface-container-lowest border-r border-outline-variant flex flex-col items-center py-lg z-50">
+<div class="mb-lg">
+<span class="material-symbols-outlined text-primary text-3xl font-bold" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<nav class="flex flex-col gap-md items-center w-full">
+<button class="w-12 h-12 flex items-center justify-center transition-colors text-secondary hover:text-on-surface hover:bg-surface-container-high">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center border-l-2 border-primary text-primary bg-surface-container-low">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">science</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center transition-colors text-secondary hover:text-on-surface hover:bg-surface-container-high">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</nav>
+<div class="mt-auto flex flex-col gap-md items-center">
+<button class="w-12 h-12 flex items-center justify-center text-secondary hover:text-on-surface">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center text-secondary hover:text-on-surface relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-3 right-3 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+</div>
+</aside>
+<!-- SECONDARY SIDEBAR: Research Navigation -->
+<aside class="fixed left-16 top-0 h-screen w-64 bg-surface-container border-r border-outline-variant flex flex-col z-40">
+<header class="p-lg border-b border-outline-variant">
+<div class="font-header-md text-header-md font-bold text-on-surface tracking-wider">RESEARCH LAB</div>
+<div class="font-label-caps text-label-caps text-secondary uppercase mt-1">Pipeline Environment</div>
+</header>
+<nav class="flex-1 py-md overflow-y-auto">
+<div class="px-lg mb-md">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-sm text-outline">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-sm pl-8 pr-2 py-1 text-xs focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Search experiments..." type="text"/>
+</div>
+</div>
+<div class="mb-lg">
+<p class="px-lg font-label-caps text-label-caps text-outline mb-2">ACTIVE PIPELINES</p>
+<div class="space-y-0.5">
+<a class="flex items-center gap-md px-lg py-2 text-primary font-bold bg-surface-container-high" href="#">
+<span class="material-symbols-outlined text-sm">psychology</span>
+<span>ML Signals V4</span>
+</a>
+<a class="flex items-center gap-md px-lg py-2 text-secondary hover:bg-surface-container-highest hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-sm">insights</span>
+<span>Trend Predictor EX</span>
+</a>
+<a class="flex items-center gap-md px-lg py-2 text-secondary hover:bg-surface-container-highest hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-sm">query_stats</span>
+<span>Sentiment Analysis</span>
+</a>
+</div>
+</div>
+<div class="mb-lg">
+<p class="px-lg font-label-caps text-label-caps text-outline mb-2">RESOURCES</p>
+<div class="space-y-0.5">
+<a class="flex items-center gap-md px-lg py-2 text-secondary hover:bg-surface-container-highest hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-sm">database</span>
+<span>Dataset Registry</span>
+</a>
+<a class="flex items-center gap-md px-lg py-2 text-secondary hover:bg-surface-container-highest hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-sm">memory</span>
+<span>Feature Store</span>
+</a>
+<a class="flex items-center gap-md px-lg py-2 text-secondary hover:bg-surface-container-highest hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span>GPU Clusters</span>
+</a>
+</div>
+</div>
+</nav>
+<footer class="p-md bg-surface-container-high border-t border-outline-variant">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-sm bg-primary flex items-center justify-center text-on-primary font-bold text-xs">QT</div>
+<div class="flex-1 overflow-hidden">
+<div class="text-xs font-bold truncate">QuantTrader_Admin</div>
+<div class="text-[10px] text-secondary truncate">Connected: us-east-1</div>
+</div>
+</div>
+</footer>
+</aside>
+<!-- TOP NAV BAR -->
+<header class="fixed top-0 left-80 right-0 h-12 bg-surface-container-low px-lg flex items-center justify-between z-30 border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<h1 class="font-header-md text-header-md font-bold text-primary">ML Signals V4</h1>
+<span class="h-4 w-[1px] bg-outline-variant"></span>
+<nav class="flex items-center gap-md font-body-base text-secondary">
+<a class="hover:text-on-surface transition-colors" href="#">Pipeline</a>
+<a class="hover:text-on-surface transition-colors" href="#">Nodes</a>
+<a class="text-on-surface border-b border-primary" href="#">Chronicle View</a>
+</nav>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-sm font-code-sm text-code-sm text-secondary">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span>Worker Pool: 48/64</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="px-md py-1 border border-outline-variant text-secondary text-xs hover:text-on-surface transition-all">Deploy</button>
+<button class="px-md py-1 bg-primary-container text-on-primary-container font-bold text-xs rounded-sm hover:opacity-90">Kill Switch</button>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:text-on-surface">settings_input_component</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:text-on-surface">terminal</span>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN STAGE -->
+<main class="fixed top-12 left-80 right-80 bottom-48 bg-surface-container-lowest overflow-y-auto z-20">
+<div class="p-lg">
+<div class="flex items-center justify-between mb-lg">
+<div class="flex items-center gap-md">
+<h2 class="font-header-md text-header-md font-bold">Chronicle Pipeline</h2>
+<span class="px-sm py-0.5 bg-surface-container-high text-primary border border-outline-variant font-code-sm text-[10px] uppercase">Execution ID: RUN-4829-X</span>
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-1 hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined text-sm">refresh</span></button>
+<button class="p-1 hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined text-sm">pause</span></button>
+<button class="p-1 hover:bg-surface-container-high rounded transition-colors"><span class="material-symbols-outlined text-sm">stop</span></button>
+</div>
+</div>
+<!-- CHRONICLE PIPELINE VIEW -->
+<div class="max-w-4xl mx-auto space-y-md">
+<!-- Dataset -->
+<div class="pipeline-node relative flex gap-lg items-start">
+<div class="w-12 h-12 flex items-center justify-center bg-green-500/10 border border-green-500/30 text-green-500 rounded-full z-10">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 bg-surface-container border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Dataset: Market_Daily_v4.2</span>
+<span class="text-[10px] text-secondary">COMPLETED (12s)</span>
+</div>
+<p class="text-[11px] text-outline mb-2">Ingestion of 1.2M rows from primary data lake. Schema validation passed.</p>
+<div class="flex gap-md font-code-sm text-[10px] text-green-400">
+<span>Rows: 1,248,002</span>
+<span>Columns: 48</span>
+<span>Size: 4.2GB</span>
+</div>
+</div>
+</div>
+<!-- Feature Store -->
+<div class="pipeline-node relative flex gap-lg items-start">
+<div class="w-12 h-12 flex items-center justify-center bg-green-500/10 border border-green-500/30 text-green-500 rounded-full z-10">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 bg-surface-container border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Feature Store: Alpha_Gen_Set</span>
+<span class="text-[10px] text-secondary">COMPLETED (45s)</span>
+</div>
+<p class="text-[11px] text-outline mb-2">Calculating 156 derived features including momentum, volatility, and order flow metrics.</p>
+<div class="flex gap-md font-code-sm text-[10px] text-green-400">
+<span>Features: 156</span>
+<span>Nulls: 0.00%</span>
+<span>Drift: 0.02</span>
+</div>
+</div>
+</div>
+<!-- Experiment -->
+<div class="pipeline-node relative flex gap-lg items-start">
+<div class="w-12 h-12 flex items-center justify-center bg-green-500/10 border border-green-500/30 text-green-500 rounded-full z-10">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 bg-surface-container border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Experiment: EX-21_Base_Model</span>
+<span class="text-[10px] text-secondary">COMPLETED (2m 14s)</span>
+</div>
+<p class="text-[11px] text-outline mb-2">XGBoost parameter optimization using Optuna. Search space: 50 trials.</p>
+<div class="flex gap-md font-code-sm text-[10px] text-green-400">
+<span>Trials: 50</span>
+<span>Best Params: Log_Saved</span>
+</div>
+</div>
+</div>
+<!-- Training -->
+<div class="pipeline-node relative flex gap-lg items-start">
+<div class="w-12 h-12 flex items-center justify-center bg-green-500/10 border border-green-500/30 text-green-500 rounded-full z-10">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 bg-surface-container border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Training: Production_Refit</span>
+<span class="text-[10px] text-secondary">COMPLETED (8m 33s)</span>
+</div>
+<p class="text-[11px] text-outline mb-2">Final model fitting on the complete training set (2018-2023).</p>
+</div>
+</div>
+<!-- Purged Walk Forward -->
+<div class="pipeline-node relative flex gap-lg items-start">
+<div class="w-12 h-12 flex items-center justify-center bg-primary/10 border border-primary/30 text-primary rounded-full z-10 status-running">
+<span class="material-symbols-outlined">sync</span>
+</div>
+<div class="flex-1 bg-surface-container border border-primary p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Purged Walk Forward Validation</span>
+<span class="text-[10px] text-primary">RUNNING (Progress: 68%)</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1.5 mb-2 border border-outline-variant overflow-hidden">
+<div class="h-full bg-primary" style="width: 68%"></div>
+</div>
+<p class="text-[11px] text-outline">Applying combinatorial purged cross-validation to assess backtest overfitting.</p>
+</div>
+</div>
+<!-- Calibration -->
+<div class="pipeline-node relative flex gap-lg items-start opacity-50">
+<div class="w-12 h-12 flex items-center justify-center bg-surface-container border border-outline-variant text-secondary rounded-full z-10">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div class="flex-1 bg-surface-container border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Calibration: Platt Scaling</span>
+<span class="text-[10px] text-secondary">QUEUED</span>
+</div>
+</div>
+</div>
+<!-- Registry -->
+<div class="pipeline-node relative flex gap-lg items-start opacity-50">
+<div class="w-12 h-12 flex items-center justify-center bg-surface-container border border-outline-variant text-secondary rounded-full z-10">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="flex-1 bg-surface-container border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Model Registry Upload</span>
+<span class="text-[10px] text-secondary">QUEUED</span>
+</div>
+</div>
+</div>
+<!-- Promotion -->
+<div class="pipeline-node relative flex gap-lg items-start opacity-50">
+<div class="w-12 h-12 flex items-center justify-center bg-surface-container border border-outline-variant text-secondary rounded-full z-10">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<div class="flex-1 bg-surface-container border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-xs uppercase tracking-tight">Production Promotion</span>
+<span class="text-[10px] text-secondary">QUEUED</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- RIGHT INSPECTOR: Quantitative Analysis -->
+<aside class="fixed top-12 right-0 bottom-8 w-80 bg-surface-container border-l border-outline-variant z-40 flex flex-col">
+<header class="p-lg border-b border-outline-variant">
+<h3 class="font-header-md text-header-md font-bold uppercase tracking-wide">Quantitative Analysis</h3>
+<p class="font-label-caps text-label-caps text-secondary mt-1">Live Experiment Metrics</p>
+</header>
+<div class="flex-1 overflow-y-auto p-lg space-y-lg">
+<!-- Metric Section -->
+<section>
+<h4 class="font-label-caps text-label-caps text-outline mb-md uppercase">Core Performance</h4>
+<div class="space-y-sm">
+<div class="flex justify-between items-center p-sm bg-surface-container-lowest border border-outline-variant">
+<span class="text-xs text-secondary">F1 Score</span>
+<span class="font-data-tabular text-data-tabular text-primary tabular-nums">0.6822</span>
+</div>
+<div class="flex justify-between items-center p-sm bg-surface-container-lowest border border-outline-variant">
+<span class="text-xs text-secondary">Brier Score</span>
+<span class="font-data-tabular text-data-tabular text-primary tabular-nums">0.1429</span>
+</div>
+<div class="flex justify-between items-center p-sm bg-surface-container-lowest border border-outline-variant">
+<span class="text-xs text-secondary">Sharpe Ratio</span>
+<span class="font-data-tabular text-data-tabular text-primary tabular-nums">2.41</span>
+</div>
+<div class="flex justify-between items-center p-sm bg-surface-container-lowest border border-outline-variant">
+<span class="text-xs text-secondary">Max Drawdown</span>
+<span class="font-data-tabular text-data-tabular text-error tabular-nums">-8.44%</span>
+</div>
+</div>
+</section>
+<!-- Table Section -->
+<section>
+<h4 class="font-label-caps text-label-caps text-outline mb-md uppercase">Feature Importance</h4>
+<div class="border border-outline-variant overflow-hidden">
+<table class="w-full text-left font-body-base">
+<thead class="bg-surface-container-high border-b border-outline-variant">
+<tr>
+<th class="p-xs font-label-caps text-label-caps uppercase">Feature</th>
+<th class="p-xs font-label-caps text-label-caps text-right uppercase">Weight</th>
+</tr>
+</thead>
+<tbody class="bg-surface-container-lowest divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="p-xs text-[11px] font-code-sm">ADV_20D</td>
+<td class="p-xs text-[11px] font-data-tabular text-right">0.244</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="p-xs text-[11px] font-code-sm">RSI_14</td>
+<td class="p-xs text-[11px] font-data-tabular text-right">0.182</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="p-xs text-[11px] font-code-sm">ORDER_FLOW_IMB</td>
+<td class="p-xs text-[11px] font-data-tabular text-right">0.156</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="p-xs text-[11px] font-code-sm">VIX_CORR</td>
+<td class="p-xs text-[11px] font-data-tabular text-right">0.098</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Visual Asset -->
+<section>
+<h4 class="font-label-caps text-label-caps text-outline mb-md uppercase">Calibration Curve</h4>
+<div class="h-40 bg-surface-container-lowest border border-outline-variant relative overflow-hidden">
+<div class="w-full h-full bg-cover opacity-60" data-alt="A technical financial chart showing a probability calibration curve with a 45-degree reference line and a jagged dark orange curve representing model performance. The background is nearly black with sharp grey grid lines, following a high-density institutional trading aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAz5WCdTp7oDyKs3ZLboovORmllDURx8c6LA-wXMnMgK2hTKjVzSRf-u1pshBtmBbdK6FxTJsLCMNrnA1_7yI9yTwj2EvT8iufUDY1v8_ASwETebh-rw6g_18WebOWrJU5Y2U27I0sOhuHz692WyQjPBB0hRZUEMm5Fr_xOhAaKN1LES-UDTgZ_wzNHSP65YLtOIiPvtFkCad3RWuBTdK3lALAuBE3Zl2Wg6fgWneot38cdEVLRCF-XlJvw7HiVabqyBCfMCeQkpUQ')"></div>
+</div>
+</section>
+</div>
+</aside>
+<!-- LOG TERMINAL -->
+<section class="fixed left-80 right-80 bottom-8 h-40 bg-surface-container-lowest border-t border-outline-variant z-30 flex flex-col">
+<div class="h-8 bg-surface-container-high border-b border-outline-variant flex items-center px-md justify-between">
+<div class="flex items-center gap-md">
+<span class="font-label-caps text-label-caps uppercase font-bold">Worker Logs</span>
+<span class="text-[10px] text-outline font-code-sm tracking-tighter">instance-node-048 (Streaming)</span>
+</div>
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-xs text-secondary cursor-pointer hover:text-white">content_copy</span>
+<span class="material-symbols-outlined text-xs text-secondary cursor-pointer hover:text-white">close</span>
+</div>
+</div>
+<div class="flex-1 p-md font-code-sm text-code-sm overflow-y-auto bg-black text-on-surface">
+<div class="text-green-500">[INFO] Worker initialization successful. Seed set to 42.</div>
+<div class="text-secondary">[DEBUG] Loading dataset market_daily_v4.2... 100%</div>
+<div class="text-secondary">[DEBUG] Preprocessing: Normality check passed for feature subset B.</div>
+<div class="text-secondary">[INFO] Training refit started. Epoch 1/200...</div>
+<div class="text-secondary">[INFO] Training refit started. Epoch 42/200. Loss: 0.0421</div>
+<div class="text-primary">[WARNNING] Slight drift detected in feature 'RSI_14' (p=0.048).</div>
+<div class="text-on-surface">Running Purged Walk Forward Validation on shard 04...</div>
+<div class="text-on-surface">Iteration 482: Fold 3/5 completed. Metric: 0.6811<span class="terminal-cursor"></span></div>
+</div>
+</section>
+<!-- FOOTER -->
+<footer class="fixed bottom-0 left-0 w-full h-8 bg-surface-container-lowest border-t border-outline-variant z-50 flex items-center justify-between px-lg font-code-sm text-code-sm">
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-sm">
+<span class="text-primary font-bold">System Status:</span>
+<span class="text-green-400">Operational</span>
+</div>
+<div class="flex items-center gap-sm border-l border-outline-variant pl-lg">
+<span class="text-secondary">Latency:</span>
+<span class="text-on-surface">1.2ms</span>
+</div>
+</div>
+<nav class="flex items-center gap-lg">
+<a class="text-secondary hover:text-on-surface transition-colors" href="#">Logs</a>
+<a class="text-secondary hover:text-on-surface transition-colors" href="#">Metrics</a>
+<a class="text-secondary hover:text-on-surface transition-colors" href="#">Security</a>
+</nav>
+</footer>
+<script>
+        // Simple micro-interaction for the log streaming
+        const logsContainer = document.querySelector('.flex-1.p-md.font-code-sm');
+        setInterval(() => {
+            const lines = [
+                `[INFO] Validation shard ${Math.floor(Math.random()*100)} processed. Score: 0.${Math.floor(Math.random()*9000+1000)}`,
+                `[DEBUG] Memory usage: ${Math.floor(Math.random()*20+60)}% | Thread: ${Math.floor(Math.random()*16)}`,
+                `[INFO] Packet received from cluster node ${Math.floor(Math.random()*10)}.`
+            ];
+            const div = document.createElement('div');
+            div.className = 'text-secondary';
+            div.textContent = lines[Math.floor(Math.random() * lines.length)];
+            const cursor = logsContainer.querySelector('.terminal-cursor');
+            logsContainer.insertBefore(div, cursor.parentElement);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+            if (logsContainer.children.length > 20) logsContainer.removeChild(logsContainer.children[0]);
+        }, 3000);
+    </script>
+</body></html>

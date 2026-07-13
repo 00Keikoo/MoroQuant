@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoroQuant V2 OS | Portfolio Management Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131313;
+            color: #e4e2e1;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0e0e0e;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2d2d2d;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #ff6b00;
+        }
+        .panel-border {
+            border: 1px solid #2d2d2d;
+        }
+        .matrix-cell:hover {
+            outline: 1px solid #ffb693;
+            z-index: 10;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#ffb693",
+                      "outline-variant": "#5a4136",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "on-background": "#e4e2e1",
+                      "primary-fixed-dim": "#ffb693",
+                      "inverse-on-surface": "#303030",
+                      "on-tertiary-container": "#003357",
+                      "error-container": "#93000a",
+                      "surface-variant": "#353535",
+                      "on-primary-fixed": "#351000",
+                      "on-error": "#690005",
+                      "secondary-container": "#474746",
+                      "on-surface-variant": "#e2bfb0",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "primary-container": "#ff6b00",
+                      "tertiary-container": "#059eff",
+                      "on-tertiary-fixed-variant": "#00497b",
+                      "surface-container-lowest": "#0e0e0e",
+                      "on-surface": "#e4e2e1",
+                      "on-secondary": "#313030",
+                      "tertiary": "#9ccaff",
+                      "error": "#ffb4ab",
+                      "on-secondary-fixed-variant": "#474746",
+                      "primary": "#ffb693",
+                      "background": "#131313",
+                      "on-tertiary-fixed": "#001d35",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "surface-dim": "#131313",
+                      "inverse-surface": "#e4e2e1",
+                      "on-primary": "#561f00",
+                      "surface-container": "#1f2020",
+                      "outline": "#a98a7d",
+                      "tertiary-fixed": "#d0e4ff",
+                      "surface-bright": "#393939",
+                      "secondary": "#c8c6c5",
+                      "surface": "#131313",
+                      "surface-container-low": "#1b1c1c",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed": "#e5e2e1",
+                      "on-primary-container": "#572000",
+                      "surface-container-high": "#2a2a2a",
+                      "inverse-primary": "#a04100",
+                      "surface-container-highest": "#353535",
+                      "on-tertiary": "#003257",
+                      "on-secondary-container": "#b7b5b4",
+                      "primary-fixed": "#ffdbcc",
+                      "tertiary-fixed-dim": "#9ccaff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "panel-gap": "1px",
+                      "container-padding": "8px",
+                      "cell-padding-y": "2px",
+                      "cell-padding-x": "6px"
+              },
+              "fontFamily": {
+                      "mono-label": ["JetBrains Mono"],
+                      "mono-data": ["JetBrains Mono"],
+                      "mono-code": ["JetBrains Mono"],
+                      "headline-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "mono-label": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "mono-data": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-sm": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="flex flex-col h-screen overflow-hidden bg-background">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between px-container-padding w-full h-12 border-b border-outline-variant bg-surface shrink-0">
+<div class="flex items-center gap-6">
+<div class="font-headline-sm text-headline-sm font-bold text-primary tracking-tighter">MoroQuant</div>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<nav class="flex items-center gap-4">
+<span class="text-primary font-mono-data text-mono-data cursor-pointer uppercase tracking-widest">Portfolio</span>
+<span class="text-on-surface-variant font-mono-data text-mono-data cursor-pointer hover:bg-surface-container-highest px-2 py-1 transition-colors uppercase tracking-widest">Risk Analysis</span>
+<span class="text-on-surface-variant font-mono-data text-mono-data cursor-pointer hover:bg-surface-container-highest px-2 py-1 transition-colors uppercase tracking-widest">Compliance</span>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center bg-surface-container-lowest border border-outline-variant px-2 py-1 gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-mono-data font-mono-data w-48 placeholder:text-outline-variant" placeholder="TICKER OR ISIN..." type="text"/>
+</div>
+<button class="bg-primary text-on-primary px-4 py-1 text-mono-label font-mono-label uppercase font-bold tracking-widest rounded-sm active:opacity-80 transition-all">Deploy</button>
+<button class="border border-error text-error px-4 py-1 text-mono-label font-mono-label uppercase font-bold tracking-widest rounded-sm hover:bg-error hover:text-on-error transition-all">Emergency Kill Switch</button>
+<span class="material-symbols-outlined text-on-surface cursor-pointer">account_circle</span>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Side Navigation Bar -->
+<aside class="flex flex-col h-full w-48 border-r border-outline-variant bg-background shrink-0 font-mono-label text-mono-label">
+<div class="p-container-padding flex flex-col gap-1 overflow-y-auto custom-scrollbar">
+<div class="text-primary font-bold border-l-2 border-primary bg-surface-container-high px-3 py-2 flex items-center gap-3 transition-colors duration-75">
+<span class="material-symbols-outlined">pie_chart</span>
+<span>Portfolio</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">monitoring</span>
+<span>Live Analytics</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">sensors</span>
+<span>Signals</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span>Trades</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">security</span>
+<span>Risk</span>
+</div>
+<div class="mt-4 mb-2 px-3 text-[9px] text-outline uppercase tracking-[0.2em] font-bold">Research</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">history</span>
+<span>Chronicle</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">science</span>
+<span>Experiments</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">database</span>
+<span>Datasets</span>
+</div>
+</div>
+<div class="mt-auto p-container-padding border-t border-outline-variant">
+<div class="text-on-surface-variant hover:bg-surface-variant hover:text-primary px-3 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-75">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Workspace Toolbar -->
+<div class="h-8 border-b border-outline-variant bg-surface-container-low flex items-center px-2 gap-4">
+<div class="flex items-center gap-1">
+<span class="font-mono-label text-mono-label text-outline uppercase">Active Model:</span>
+<span class="font-mono-label text-mono-label text-primary font-bold">ALPHA_RECURSION_V9</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-1">
+<span class="font-mono-label text-mono-label text-outline uppercase">AUM:</span>
+<span class="font-mono-label text-mono-label text-on-surface">$1.24B</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-1">
+<span class="font-mono-label text-mono-label text-outline uppercase">Ex ante Vol:</span>
+<span class="font-mono-label text-mono-label text-tertiary">12.4%</span>
+</div>
+</div>
+<!-- Dashboard Grid -->
+<div class="flex-1 grid grid-cols-12 grid-rows-6 p-1 gap-1 overflow-hidden custom-scrollbar">
+<!-- Correlation Matrix (10x10) -->
+<section class="col-span-12 lg:col-span-7 row-span-4 panel-border bg-surface flex flex-col overflow-hidden">
+<div class="h-8 bg-surface-container-high border-b border-outline-variant flex items-center justify-between px-3">
+<span class="font-mono-label text-mono-label uppercase font-bold text-on-surface">10x10 Asset Correlation Matrix</span>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">settings_backup_restore</span>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">fullscreen</span>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden p-4">
+<div class="w-full h-full flex flex-col">
+<!-- Y-axis labels would go here, simplified layout for core component -->
+<div class="flex-1 grid grid-cols-10 grid-rows-10 gap-[2px]">
+<!-- Generative Correlation Grid -->
+<script>
+                                    const labels = ['SPY', 'QQQ', 'IWM', 'TLT', 'GLD', 'USO', 'BTC', 'ETH', 'VIX', 'DXY'];
+                                    const container = document.currentScript.parentElement;
+                                    for(let i=0; i<100; i++) {
+                                        const row = Math.floor(i / 10);
+                                        const col = i % 10;
+                                        let val = Math.random();
+                                        if (row === col) val = 1.0;
+                                        const opacity = val;
+                                        const color = val > 0.7 ? 'bg-primary-container' : (val > 0.4 ? 'bg-surface-variant' : 'bg-surface-container-lowest');
+                                        const div = document.createElement('div');
+                                        div.className = `matrix-cell ${color} flex items-center justify-center font-mono-label text-[8px] cursor-crosshair`;
+                                        div.title = `${labels[row]} vs ${labels[col]}: ${val.toFixed(2)}`;
+                                        div.innerText = val.toFixed(2);
+                                        container.appendChild(div);
+                                    }
+                                </script>
+</div>
+<div class="h-6 flex pt-2">
+<script>
+                                    const axisContainer = document.currentScript.parentElement;
+                                    labels.forEach(l => {
+                                        const div = document.createElement('div');
+                                        div.className = 'flex-1 text-center font-mono-label text-[8px] text-outline uppercase';
+                                        div.innerText = l;
+                                        axisContainer.appendChild(div);
+                                    });
+                                </script>
+</div>
+</div>
+</div>
+</section>
+<!-- Efficient Frontier Plot -->
+<section class="col-span-12 lg:col-span-5 row-span-3 panel-border bg-surface flex flex-col overflow-hidden">
+<div class="h-8 bg-surface-container-high border-b border-outline-variant flex items-center px-3">
+<span class="font-mono-label text-mono-label uppercase font-bold text-on-surface">Efficient Frontier &amp; Optimal Allocation</span>
+</div>
+<div class="flex-1 relative p-4 bg-surface-container-lowest flex items-center justify-center overflow-hidden">
+<!-- Simulated Chart -->
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+<div class="w-full h-full border-b border-l border-outline-variant m-4"></div>
+</div>
+<div class="relative w-full h-full">
+<!-- SVG for Charting -->
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 100">
+<!-- Frontier Curve -->
+<path d="M 10 90 Q 20 20, 90 10" fill="none" stroke="var(--primary)" stroke-width="0.5"></path>
+<!-- Dots -->
+<circle cx="45" cy="40" fill="#ff6b00" r="1.5"></circle>
+<circle cx="30" cy="65" fill="#e2bfb0" r="1"></circle>
+<circle cx="55" cy="25" fill="#e2bfb0" r="1"></circle>
+<circle cx="70" cy="15" fill="#e2bfb0" r="1"></circle>
+<!-- Cal Lines -->
+<line stroke="#2d2d2d" stroke-dasharray="2,2" stroke-width="0.2" x1="10" x2="90" y1="90" y2="10"></line>
+</svg>
+<!-- Label -->
+<div class="absolute top-10 left-[47%] font-mono-label text-[9px] text-primary bg-background px-1 border border-primary">SHARPE OPTIMAL</div>
+</div>
+</div>
+</section>
+<!-- Allocation Table -->
+<section class="col-span-12 lg:col-span-5 row-span-3 panel-border bg-surface flex flex-col overflow-hidden">
+<div class="h-8 bg-surface-container-high border-b border-outline-variant flex items-center px-3">
+<span class="font-mono-label text-mono-label uppercase font-bold text-on-surface">Asset Allocation Breakdown</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<table class="w-full text-left font-mono-data text-mono-data">
+<thead class="sticky top-0 bg-surface-container-highest">
+<tr>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant uppercase text-outline">Ticker</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant uppercase text-outline text-right">Weight</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant uppercase text-outline text-right">Target</th>
+<th class="px-cell-padding-x py-cell-padding-y border-b border-outline-variant uppercase text-outline text-right">Drift</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-high">
+<td class="px-cell-padding-x py-2 font-bold text-primary">SPY.US</td>
+<td class="px-cell-padding-x py-2 text-right">24.20%</td>
+<td class="px-cell-padding-x py-2 text-right">25.00%</td>
+<td class="px-cell-padding-x py-2 text-right text-error">-0.80%</td>
+</tr>
+<tr class="hover:bg-surface-container-high">
+<td class="px-cell-padding-x py-2 font-bold text-primary">QQQ.US</td>
+<td class="px-cell-padding-x py-2 text-right">18.50%</td>
+<td class="px-cell-padding-x py-2 text-right">18.00%</td>
+<td class="px-cell-padding-x py-2 text-right text-tertiary">+0.50%</td>
+</tr>
+<tr class="hover:bg-surface-container-high">
+<td class="px-cell-padding-x py-2 font-bold text-primary">TLT.US</td>
+<td class="px-cell-padding-x py-2 text-right">12.10%</td>
+<td class="px-cell-padding-x py-2 text-right">12.00%</td>
+<td class="px-cell-padding-x py-2 text-right text-tertiary">+0.10%</td>
+</tr>
+<tr class="hover:bg-surface-container-high">
+<td class="px-cell-padding-x py-2 font-bold text-primary">GLD.US</td>
+<td class="px-cell-padding-x py-2 text-right">8.40%</td>
+<td class="px-cell-padding-x py-2 text-right">8.00%</td>
+<td class="px-cell-padding-x py-2 text-right text-tertiary">+0.40%</td>
+</tr>
+<tr class="hover:bg-surface-container-high">
+<td class="px-cell-padding-x py-2 font-bold text-primary">BTC.PX</td>
+<td class="px-cell-padding-x py-2 text-right">4.20%</td>
+<td class="px-cell-padding-x py-2 text-right">5.00%</td>
+<td class="px-cell-padding-x py-2 text-right text-error">-0.80%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Performance Attribution -->
+<section class="col-span-12 lg:col-span-7 row-span-2 panel-border bg-surface flex flex-col overflow-hidden">
+<div class="h-8 bg-surface-container-high border-b border-outline-variant flex items-center px-3">
+<span class="font-mono-label text-mono-label uppercase font-bold text-on-surface">Performance Attribution (MTD)</span>
+</div>
+<div class="flex-1 overflow-hidden grid grid-cols-3 divide-x divide-outline-variant">
+<div class="p-4 flex flex-col gap-2">
+<div class="text-mono-label text-outline uppercase">Active Return</div>
+<div class="text-headline-sm font-bold text-tertiary">+242 bps</div>
+<div class="mt-auto h-2 w-full bg-surface-container-highest">
+<div class="h-full bg-tertiary w-[70%]"></div>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<div class="text-mono-label text-outline uppercase">Selection Effect</div>
+<div class="text-headline-sm font-bold text-primary">+118 bps</div>
+<div class="mt-auto h-2 w-full bg-surface-container-highest">
+<div class="h-full bg-primary w-[40%]"></div>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-2">
+<div class="text-mono-label text-outline uppercase">Allocation Effect</div>
+<div class="text-headline-sm font-bold text-tertiary">+124 bps</div>
+<div class="mt-auto h-2 w-full bg-surface-container-highest">
+<div class="h-full bg-tertiary w-[45%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Sector Exposure (Bar Chart) -->
+<section class="col-span-12 lg:col-span-12 row-span-2 panel-border bg-surface flex flex-col overflow-hidden">
+<div class="h-8 bg-surface-container-high border-b border-outline-variant flex items-center px-3">
+<span class="font-mono-label text-mono-label uppercase font-bold text-on-surface">Sector Exposure vs Benchmark</span>
+</div>
+<div class="flex-1 flex items-end justify-around p-6 gap-8">
+<script>
+                            const sectors = ['Tech', 'Fin', 'Health', 'Energy', 'Cons', 'Ind', 'Comm'];
+                            const sectContainer = document.currentScript.parentElement;
+                            sectors.forEach(s => {
+                                const val = Math.random() * 80 + 20;
+                                const bench = Math.random() * 80 + 20;
+                                const barGroup = document.createElement('div');
+                                barGroup.className = 'flex flex-col items-center flex-1 h-full';
+                                barGroup.innerHTML = `
+                                    <div class="flex-1 w-full flex items-end justify-center gap-1">
+                                        <div class="w-4 bg-primary" style="height: ${val}%"></div>
+                                        <div class="w-4 bg-outline-variant" style="height: ${bench}%"></div>
+                                    </div>
+                                    <div class="mt-2 text-mono-label text-outline uppercase text-[8px]">${s}</div>
+                                `;
+                                sectContainer.appendChild(barGroup);
+                            });
+                        </script>
+</div>
+</section>
+</div>
+</main>
+<!-- Right Inspector Panel -->
+<aside class="w-80 border-l border-outline-variant bg-surface flex flex-col shrink-0">
+<div class="h-12 bg-surface-container-high border-b border-outline-variant flex items-center px-4 shrink-0">
+<span class="material-symbols-outlined mr-2 text-primary">info</span>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Asset Inspector</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-container-padding flex flex-col gap-4">
+<!-- Asset Identity Card -->
+<div class="p-4 border border-outline-variant bg-surface-container-low">
+<div class="flex justify-between items-start mb-2">
+<div>
+<div class="text-headline-sm font-bold text-primary">SPY.US</div>
+<div class="text-mono-label text-outline">S&amp;P 500 ETF Trust</div>
+</div>
+<span class="bg-tertiary-container text-on-tertiary-container text-[10px] px-1 font-mono-label rounded-sm">NOMINAL</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mt-4">
+<div>
+<div class="text-mono-label text-outline uppercase">Position Val</div>
+<div class="text-mono-data font-bold">$302.1M</div>
+</div>
+<div>
+<div class="text-mono-label text-outline uppercase">Risk Cont.</div>
+<div class="text-mono-data font-bold text-error">18.4%</div>
+</div>
+</div>
+</div>
+<!-- Risk Decomposition -->
+<div class="flex flex-col gap-2">
+<div class="text-mono-label text-outline uppercase font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">analytics</span>
+                        Risk Decomposition
+                    </div>
+<div class="space-y-3 p-2 bg-surface-container-lowest border border-outline-variant">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-mono-label">
+<span class="text-on-surface-variant">Systematic (Beta)</span>
+<span class="text-on-surface">82%</span>
+</div>
+<div class="h-1 bg-surface-container-high">
+<div class="h-full bg-primary w-[82%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-mono-label">
+<span class="text-on-surface-variant">Idiosyncratic</span>
+<span class="text-on-surface">18%</span>
+</div>
+<div class="h-1 bg-surface-container-high">
+<div class="h-full bg-outline w-[18%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Volatility Smile / Gamma Profile Visual -->
+<div class="flex flex-col gap-2">
+<div class="text-mono-label text-outline uppercase font-bold">Gamma Surface (Local)</div>
+<div class="h-32 panel-border bg-surface-container-highest relative flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center opacity-40" data-alt="A complex 3D technical plot showing a volatility surface or gamma landscape, with glowing mesh lines in bright orange and cool blue, set against a dark architectural black background. The lighting is focused and dramatic, suggesting precision high-frequency financial modeling." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBItMOrcDWd06eFz9oN3aiuqRiRZpfEn6gS7JRnKhbry8tNdAF-7InWuTNbpoHcwjXY3xJkPuaEZEgJr5AdkY8nS1xK7JysjJfebc5xqP4WUaCgKxvWILVd6ZJqrAB1aqbl6SQU9Eu22TuAfZ5PsjK8h59vMcDbLqEu-lJcogUA0LQkDAkVGlBVbFeK8TtjqwrZT_ktBWw3K4ME53Oz1ZhrVzRhW1HMDOfm6roAA57L3zq5O5flR_5vntYz3Ft_rztC4g7NicH--SA')"></div>
+<span class="relative z-10 font-mono-label text-[9px] bg-background/80 px-2 border border-outline text-on-surface">LIVE SURFACE RENDER</span>
+</div>
+</div>
+<!-- Correlations List -->
+<div class="flex flex-col gap-2">
+<div class="text-mono-label text-outline uppercase font-bold">Top Correlates</div>
+<div class="space-y-1">
+<div class="flex justify-between p-2 bg-surface-container-high text-mono-data">
+<span>IVV.US</span>
+<span class="text-primary font-bold">0.99</span>
+</div>
+<div class="flex justify-between p-2 bg-surface-container-high text-mono-data">
+<span>VTI.US</span>
+<span class="text-primary font-bold">0.98</span>
+</div>
+<div class="flex justify-between p-2 bg-surface-container-high text-mono-data">
+<span>QQQ.US</span>
+<span class="text-tertiary">0.82</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Inspector Footer Action -->
+<div class="p-4 border-t border-outline-variant flex gap-2">
+<button class="flex-1 bg-primary text-on-primary py-2 font-mono-label font-bold uppercase rounded-sm">Rebalance</button>
+<button class="w-10 border border-outline-variant flex items-center justify-center rounded-sm hover:bg-surface-container-highest">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</aside>
+</div>
+<!-- Telemetry Footer -->
+<footer class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-1 bg-surface-container-lowest border-t border-outline-variant h-8 font-mono-label text-mono-label text-tertiary shrink-0">
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                Real-time Telemetry: GPU 42% | Latency 1.2ms | System Nominal
+            </span>
+</div>
+<div class="flex items-center gap-6">
+<span class="cursor-pointer hover:text-primary transition-opacity duration-150">Logs</span>
+<span class="cursor-pointer hover:text-primary transition-opacity duration-150">Workers</span>
+<span class="cursor-pointer hover:text-primary transition-opacity duration-150">Scheduler</span>
+<span class="text-outline">v2.4.12-STABLE</span>
+</div>
+</footer>
+<script>
+        // Simple click interaction simulation
+        document.querySelectorAll('.matrix-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const title = cell.getAttribute('title');
+                console.log(`Analyzing: ${title}`);
+                // In a real app, this would update the Inspector panel
+            });
+        });
+
+        // Dynamic highlight for nav
+        document.querySelectorAll('aside nav > div').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('aside nav > div').forEach(i => {
+                    i.classList.remove('text-primary', 'font-bold', 'border-l-2', 'border-primary', 'bg-surface-container-high');
+                    i.classList.add('text-on-surface-variant');
+                });
+                item.classList.add('text-primary', 'font-bold', 'border-l-2', 'border-primary', 'bg-surface-container-high');
+                item.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MoroQuant Lab | Trade Forensics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #131313;
+            color: #e4e2e1;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0e0e0e;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #353535;
+        }
+        .lineage-node::after {
+            content: '';
+            position: absolute;
+            right: -16px;
+            top: 50%;
+            width: 16px;
+            height: 1px;
+            background: #5a4136;
+        }
+        .lineage-node:last-child::after {
+            display: none;
+        }
+        .blink-anomaly {
+            animation: blink 1.5s step-end infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#1b1c1c",
+                      "on-background": "#e4e2e1",
+                      "on-primary-fixed": "#351000",
+                      "secondary-fixed": "#e5e2e1",
+                      "on-primary-fixed-variant": "#7a3000",
+                      "on-tertiary": "#003257",
+                      "tertiary-fixed-dim": "#9ccaff",
+                      "secondary": "#c8c6c5",
+                      "inverse-on-surface": "#303030",
+                      "on-error": "#690005",
+                      "on-tertiary-fixed-variant": "#00497b",
+                      "on-secondary-container": "#b7b5b4",
+                      "secondary-container": "#474746",
+                      "background": "#131313",
+                      "inverse-primary": "#a04100",
+                      "surface-tint": "#ffb693",
+                      "surface-container-high": "#2a2a2a",
+                      "surface-bright": "#393939",
+                      "primary-container": "#ff6b00",
+                      "inverse-surface": "#e4e2e1",
+                      "on-tertiary-container": "#003357",
+                      "on-primary": "#561f00",
+                      "on-tertiary-fixed": "#001d35",
+                      "on-secondary": "#313030",
+                      "surface": "#131313",
+                      "surface-container-highest": "#353535",
+                      "outline": "#a98a7d",
+                      "tertiary-fixed": "#d0e4ff",
+                      "surface-container-lowest": "#0e0e0e",
+                      "surface-variant": "#353535",
+                      "on-secondary-fixed-variant": "#474746",
+                      "error-container": "#93000a",
+                      "tertiary": "#9ccaff",
+                      "outline-variant": "#5a4136",
+                      "tertiary-container": "#059eff",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "primary-fixed": "#ffdbcc",
+                      "on-surface": "#e4e2e1",
+                      "surface-dim": "#131313",
+                      "error": "#ffb4ab",
+                      "on-error-container": "#ffdad6",
+                      "primary-fixed-dim": "#ffb693",
+                      "surface-container": "#1f2020",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "on-primary-container": "#572000",
+                      "on-surface-variant": "#e2bfb0",
+                      "primary": "#ffb693"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "cell-padding-x": "6px",
+                      "container-padding": "8px",
+                      "cell-padding-y": "2px",
+                      "panel-gap": "1px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "mono-code": ["JetBrains Mono"],
+                      "mono-label": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "mono-data": ["JetBrains Mono"],
+                      "body-sm": ["Inter"],
+                      "headline-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "mono-label": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "mono-data": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "headline-sm": ["16px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="flex h-screen w-screen bg-background overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<nav class="fixed left-0 top-0 h-full flex flex-col items-center py-4 h-screen w-16 border-r border-outline-variant bg-surface-container-lowest z-50">
+<div class="mb-8">
+<div class="font-headline-sm text-headline-sm text-primary uppercase tracking-tighter text-center">MQ</div>
+</div>
+<div class="flex flex-col gap-6 flex-grow">
+<button class="p-2 transition-colors duration-100 ease-linear text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="p-2 transition-colors duration-100 ease-linear border-l-2 border-primary bg-secondary-container text-primary">
+<span class="material-symbols-outlined">show_chart</span>
+</button>
+<button class="p-2 transition-colors duration-100 ease-linear text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+<button class="p-2 transition-colors duration-100 ease-linear text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="p-2 transition-colors duration-100 ease-linear text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface">
+<span class="material-symbols-outlined">science</span>
+</button>
+<button class="p-2 transition-colors duration-100 ease-linear text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="flex flex-col gap-4 mt-auto">
+<button class="p-2 text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">help</span></button>
+<button class="p-2 text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">notifications</span></button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow ml-16 flex flex-col relative h-full">
+<!-- TopAppBar (Shared Component) -->
+<header class="flex h-10 w-full items-center pl-4 pr-4 gap-0 border-b border-outline-variant bg-surface font-mono-code text-mono-code z-40">
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface mr-8">MoroQuant Lab</div>
+<nav class="flex h-full">
+<a class="px-4 flex items-center h-full text-on-surface-variant border-t-2 border-transparent hover:bg-surface-container-low transition-all duration-75" href="#">Chronicle</a>
+<a class="px-4 flex items-center h-full border-t-2 border-primary text-on-surface bg-surface-container-high transition-all duration-75" href="#">Trade-492</a>
+<a class="px-4 flex items-center h-full text-on-surface-variant border-t-2 border-transparent hover:bg-surface-container-low transition-all duration-75" href="#">Exp-921</a>
+</nav>
+<div class="ml-auto flex items-center gap-4">
+<div class="flex items-center gap-2 border border-outline-variant px-2 py-0.5 bg-surface-container-lowest">
+<span class="text-[10px] text-primary opacity-70">SEARCH</span>
+<input class="bg-transparent border-none focus:ring-0 text-mono-code p-0 w-32 placeholder:text-outline-variant" placeholder="TX_HASH..." type="text"/>
+</div>
+<button class="px-3 py-1 bg-primary-container text-on-primary-container font-bold text-xs rounded-sm">Deploy</button>
+<div class="flex gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">hub</span>
+<span class="material-symbols-outlined text-sm">lan</span>
+<span class="material-symbols-outlined text-sm">terminal</span>
+</div>
+</div>
+</header>
+<!-- Forensics Dashboard Layout -->
+<div class="flex-grow flex overflow-hidden">
+<!-- Center Panel: Trace & Replay -->
+<section class="flex-grow flex flex-col border-r border-outline-variant bg-background overflow-hidden">
+<!-- Top Section: Deep Lineage Trace -->
+<div class="h-1/3 border-b border-outline-variant flex flex-col p-4 overflow-hidden">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">account_tree</span>
+<h2 class="font-mono-label text-mono-label text-on-surface uppercase">Deep Lineage Trace</h2>
+</div>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-error-container text-on-error-container text-[10px] font-bold rounded-sm border border-error uppercase blink-anomaly">Model Drift Detected</span>
+<span class="px-2 py-0.5 bg-surface-container-high text-primary text-[10px] font-bold rounded-sm border border-primary uppercase">Optimal Execution</span>
+</div>
+</div>
+<div class="flex-grow flex items-center justify-between relative px-2 py-4 custom-scrollbar overflow-x-auto">
+<!-- Lineage Nodes -->
+<div class="flex items-center gap-8">
+<!-- Node 1 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Trade ID</span>
+<span class="font-mono-data text-on-surface text-[10px]">#8291-XA</span>
+</div>
+<!-- Node 2 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Signal</span>
+<span class="font-mono-data text-on-surface text-[10px]">MACD_VOL_4</span>
+</div>
+<!-- Node 3 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Model</span>
+<span class="font-mono-data text-on-surface text-[10px]">MORO_LENS_V2</span>
+</div>
+<!-- Node 4 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Promotion</span>
+<span class="font-mono-data text-on-surface text-[10px]">STAGING_03</span>
+</div>
+<!-- Node 5 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Registry</span>
+<span class="font-mono-data text-on-surface text-[10px]">REG_US_01</span>
+</div>
+<!-- Node 6 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-error-container mb-1 border border-error"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Calibration</span>
+<span class="font-mono-data text-error text-[10px]">FAIL-402</span>
+</div>
+<!-- Node 7 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Validation</span>
+<span class="font-mono-data text-on-surface text-[10px]">P_VAL_99</span>
+</div>
+<!-- Node 8 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Experiment</span>
+<span class="font-mono-data text-on-surface text-[10px]">EXP_GAMMA</span>
+</div>
+<!-- Node 9 -->
+<div class="lineage-node relative flex flex-col items-center">
+<div class="w-2 h-2 bg-primary mb-1"></div>
+<span class="font-mono-label text-on-surface-variant uppercase text-[8px]">Dataset</span>
+<span class="font-mono-data text-on-surface text-[10px]">QUOT_TAPE_H2</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Section: Trade Replay Table -->
+<div class="flex-grow flex flex-col overflow-hidden bg-surface-container-lowest">
+<div class="flex items-center justify-between p-2 bg-surface-container-low border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">history</span>
+<span class="font-mono-label text-mono-label text-on-surface uppercase">Execution Replay Logs (ms-precision)</span>
+</div>
+<div class="flex gap-4 font-mono-data text-[10px] text-on-surface-variant">
+<span>TOTAL LATENCY: 1.42ms</span>
+<span class="text-primary">FILL RATE: 99.8%</span>
+</div>
+</div>
+<div class="flex-grow overflow-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-high z-10 border-b border-outline-variant">
+<tr>
+<th class="py-1.5 px-3 font-mono-label text-on-surface-variant border-r border-outline-variant w-32">TIMESTAMP (UTC)</th>
+<th class="py-1.5 px-3 font-mono-label text-on-surface-variant border-r border-outline-variant">EVENT</th>
+<th class="py-1.5 px-3 font-mono-label text-on-surface-variant border-r border-outline-variant">SOURCE</th>
+<th class="py-1.5 px-3 font-mono-label text-on-surface-variant border-r border-outline-variant text-right">VALUE</th>
+<th class="py-1.5 px-3 font-mono-label text-on-surface-variant text-right">STATUS</th>
+</tr>
+</thead>
+<tbody class="font-mono-data text-[11px] text-on-surface divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-1 px-3 border-r border-outline-variant text-on-surface-variant">09:30:00.0012</td>
+<td class="py-1 px-3 border-r border-outline-variant">SIGNAL_TRIGGER</td>
+<td class="py-1 px-3 border-r border-outline-variant">ALPHA_ENGINE</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right">184.22</td>
+<td class="py-1 px-3 text-right text-primary">INITIATED</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-1 px-3 border-r border-outline-variant text-on-surface-variant">09:30:00.0018</td>
+<td class="py-1 px-3 border-r border-outline-variant">RISK_CHECK</td>
+<td class="py-1 px-3 border-r border-outline-variant">CORE_SHIELD</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right">OK</td>
+<td class="py-1 px-3 text-right text-primary">PASSED</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors bg-error-container/10">
+<td class="py-1 px-3 border-r border-outline-variant text-error font-bold">09:30:00.0024</td>
+<td class="py-1 px-3 border-r border-outline-variant text-error">MODEL_SKEW_DETECT</td>
+<td class="py-1 px-3 border-r border-outline-variant">LENS_PROB</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right text-error">+0.041%</td>
+<td class="py-1 px-3 text-right text-error font-bold">ANOMALY</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-1 px-3 border-r border-outline-variant text-on-surface-variant">09:30:00.0035</td>
+<td class="py-1 px-3 border-r border-outline-variant">ORDER_ROUTED</td>
+<td class="py-1 px-3 border-r border-outline-variant">SMART_ROUTE_V1</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right">XNAS_DARK</td>
+<td class="py-1 px-3 text-right text-primary">ROUTED</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-1 px-3 border-r border-outline-variant text-on-surface-variant">09:30:00.0041</td>
+<td class="py-1 px-3 border-r border-outline-variant">ACK_RECEIVED</td>
+<td class="py-1 px-3 border-r border-outline-variant">EXCHANGE_GATEWAY</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right">SEQ_921</td>
+<td class="py-1 px-3 text-right text-primary">PENDING</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-1 px-3 border-r border-outline-variant text-on-surface-variant">09:30:00.0125</td>
+<td class="py-1 px-3 border-r border-outline-variant">FILL_PARTIAL</td>
+<td class="py-1 px-3 border-r border-outline-variant">XNAS</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right">4,500/10k</td>
+<td class="py-1 px-3 text-right text-primary">PARTIAL</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-1 px-3 border-r border-outline-variant text-on-surface-variant">09:30:00.0142</td>
+<td class="py-1 px-3 border-r border-outline-variant">FILL_COMPLETE</td>
+<td class="py-1 px-3 border-r border-outline-variant">XNAS</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right">10,000/10k</td>
+<td class="py-1 px-3 text-right text-primary font-bold">FILLED</td>
+</tr>
+<!-- Fillers for density -->
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-1 px-3 border-r border-outline-variant text-on-surface-variant">09:30:00.0150</td>
+<td class="py-1 px-3 border-r border-outline-variant">POST_TRADE_ALLOC</td>
+<td class="py-1 px-3 border-r border-outline-variant">CLEAR_SYS</td>
+<td class="py-1 px-3 border-r border-outline-variant text-right">ALLOC_7</td>
+<td class="py-1 px-3 text-right text-on-surface-variant">DONE</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Right Inspector Panel -->
+<aside class="w-80 flex flex-col bg-surface border-l border-outline-variant overflow-hidden">
+<div class="p-3 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+<span class="font-mono-label text-mono-label text-on-surface uppercase">Inspector: Trade_ID_8291</span>
+<button class="text-on-surface-variant"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<div class="flex-grow overflow-y-auto custom-scrollbar p-3 space-y-6">
+<!-- Metadata Segment -->
+<section>
+<h3 class="font-mono-label text-[10px] text-outline uppercase mb-2 border-b border-outline-variant pb-1">Metadata</h3>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Strategy ID</span>
+<span class="font-mono-data text-on-surface">QUANT_ARB_HFT</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Account</span>
+<span class="font-mono-data text-on-surface">PROP_DESK_LON</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Asset Class</span>
+<span class="font-mono-data text-on-surface">EQUITY</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Instrument</span>
+<span class="font-mono-data text-on-surface">TSLA.US</span>
+</div>
+</div>
+</section>
+<!-- Fee Breakdown Segment -->
+<section>
+<h3 class="font-mono-label text-[10px] text-outline uppercase mb-2 border-b border-outline-variant pb-1">Fee Breakdown</h3>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Exchange Fee</span>
+<span class="font-mono-data text-on-surface">-$12.40</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Regulatory TAF</span>
+<span class="font-mono-data text-on-surface">-$0.08</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Clearing</span>
+<span class="font-mono-data text-on-surface">-$2.10</span>
+</div>
+<div class="flex justify-between items-center border-t border-outline-variant pt-2 mt-2">
+<span class="font-mono-label text-[10px] text-primary">TOTAL COST</span>
+<span class="font-mono-data text-primary">-$14.58</span>
+</div>
+</div>
+</section>
+<!-- Counterparty Info Segment -->
+<section>
+<h3 class="font-mono-label text-[10px] text-outline uppercase mb-2 border-b border-outline-variant pb-1">Counterparty</h3>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Venue</span>
+<span class="font-mono-data text-on-surface">XNAS (NASDAQ)</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Liquidity Type</span>
+<span class="font-mono-data text-primary">REMOVING</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant text-[10px]">Broker ID</span>
+<span class="font-mono-data text-on-surface">CITI_EXEC_PRIME</span>
+</div>
+</div>
+</section>
+<!-- Heatmap Placeholder (Visual Signal Strength) -->
+<section>
+<h3 class="font-mono-label text-[10px] text-outline uppercase mb-2 border-b border-outline-variant pb-1">Signal Confidence</h3>
+<div class="w-full h-24 bg-surface-container-lowest border border-outline-variant relative overflow-hidden">
+<div class="absolute inset-0 opacity-20">
+
+</div>
+<div class="absolute bottom-2 left-2 right-2">
+<div class="flex justify-between items-end gap-1">
+<div class="bg-primary w-full" style="height: 40%;"></div>
+<div class="bg-primary w-full" style="height: 65%;"></div>
+<div class="bg-primary w-full" style="height: 80%;"></div>
+<div class="bg-primary-container w-full" style="height: 95%;"></div>
+<div class="bg-primary w-full" style="height: 70%;"></div>
+<div class="bg-primary w-full" style="height: 50%;"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<div class="p-3 border-t border-outline-variant bg-surface-container-low mt-auto">
+<button class="w-full py-2 bg-primary text-on-primary font-mono-label uppercase text-[11px] font-bold tracking-widest hover:brightness-110 transition-all">Flag for Review</button>
+</div>
+</aside>
+</div>
+<!-- Footer (Shared Component) -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex items-center justify-between px-3 border-t border-outline-variant bg-black h-6 font-mono-data text-mono-data text-tertiary-container">
+<div class="flex items-center gap-4">
+<span class="text-on-surface">SYSTEM STATUS: NOMINAL</span>
+<span class="opacity-60">|</span>
+<span>GPU: 84%</span>
+<span class="opacity-60">|</span>
+<span>WORKER_ID: 0x92f</span>
+</div>
+<div class="flex gap-4">
+<a class="text-on-surface-variant hover:text-on-surface cursor-default" href="#">Logs</a>
+<a class="text-on-surface-variant hover:text-on-surface cursor-default" href="#">Network</a>
+<a class="text-on-surface-variant hover:text-on-surface cursor-default" href="#">Scheduler</a>
+</div>
+</footer>
+</main>
+<script>
+        // Micro-interaction: Row highlighting and timestamp calculation
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('bg-surface-container-highest'));
+                row.classList.add('bg-surface-container-highest');
+            });
+        });
+
+        // Simulating lineage node focus
+        document.querySelectorAll('.lineage-node').forEach(node => {
+            node.addEventListener('mouseenter', () => {
+                node.querySelector('div').classList.add('scale-150', 'shadow-[0_0_8px_#ffb693]');
+            });
+            node.addEventListener('mouseleave', () => {
+                node.querySelector('div').classList.remove('scale-150', 'shadow-[0_0_8px_#ffb693]');
+            });
+        });
+    </script>
+</body></html>
