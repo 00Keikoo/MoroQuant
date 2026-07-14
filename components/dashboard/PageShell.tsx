@@ -75,7 +75,7 @@ export default function DashboardPageShell({ children }: { children: React.React
           </div>
           <div className="p-4 border-t border-outline-variant bg-surface-container-low">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-sm grayscale border border-outline-variant bg-surface-container"></div>
+              <img className="w-8 h-8 rounded-sm grayscale border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBehrVY3GJoV55SrLHKd7d3VMGxk8Y2Op91_2yaJrmgwukQCQef8iCfnvQn5L6vPlXS1bftRBzvVeL0RiNCkJ83u3BnyK6ZmSGYgBQt_fLFU2dIvt_PN82ur4SUuaVTLbd28KiijQZdWIPI7G2BUg9QPQFDYdUtcwOUZOhBa7l0n6HTT2hnh4zeDzIByjAWJqy_e0XQrLZu_W0BdA-ggyEXBbAt7f1b7hoqlspJ33ITgSYKKZ9-IYxEQ7yMtu3nQZ6oIWRF4QA53p0" alt="A professional high-contrast portrait of a technical system operator profile, rendered in a sharp, minimalist corporate style with dark charcoal backgrounds and subtle orange accent lighting. The image is clean, sharp, and focused, echoing the institucional technical aesthetic of a high-end quantitative trading firm."/>
               <div className="flex flex-col">
                 <span className="font-mono-label text-mono-label text-on-surface">Worker ID 742</span>
                 <span className="text-[9px] text-tertiary">LVL 4 ACCESS</span>
@@ -100,15 +100,71 @@ export default function DashboardPageShell({ children }: { children: React.React
             </div>
             <div className="font-mono-data text-mono-data text-tertiary">ETH-USDT-PERP</div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="h-full bg-surface-container border border-outline-variant flex items-center justify-center">
-              <span className="text-outline font-mono-label text-mono-label">INSPECTOR CONTENT</span>
-            </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <section>
+              <div className="text-[10px] font-mono-label text-outline uppercase mb-3 tracking-widest border-b border-outline-variant/30 pb-1">Position Details</div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-mono-label text-mono-label text-on-surface-variant">ENTRY PRICE</span>
+                  <span className="font-mono-data text-mono-data text-on-surface">3,492.15</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-mono-label text-mono-label text-on-surface-variant">MARK PRICE</span>
+                  <span className="font-mono-data text-mono-data text-on-surface">3,501.10</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-mono-label text-mono-label text-on-surface-variant">LIQ PRICE</span>
+                  <span className="font-mono-data text-mono-data text-error">2,912.45</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-mono-label text-mono-label text-on-surface-variant">LEVERAGE</span>
+                  <span className="font-mono-data text-mono-data text-on-surface">5.0x (ISOLATED)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-mono-label text-mono-label text-on-surface-variant">FUNDING RATE</span>
+                  <span className="font-mono-data text-mono-data text-tertiary">0.01% / 8H</span>
+                </div>
+              </div>
+            </section>
+            <section>
+              <div className="text-[10px] font-mono-label text-outline uppercase mb-3 tracking-widest border-b border-outline-variant/30 pb-1">Order Execution</div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <button className="bg-tertiary text-on-tertiary font-mono-label text-mono-label py-2 rounded-sm font-bold">CLOSE LONG</button>
+                <button className="bg-primary text-on-primary font-mono-label text-mono-label py-2 rounded-sm font-bold">CLOSE SHORT</button>
+              </div>
+              <div className="bg-black border border-outline-variant p-2 space-y-3">
+                <div>
+                  <label className="text-[9px] font-mono-label text-outline uppercase block mb-1">Stop Loss</label>
+                  <div className="flex gap-1">
+                    <input className="flex-1 bg-surface-container border border-outline-variant text-mono-data text-on-surface px-2 py-1 focus:ring-1 focus:ring-primary focus:outline-none" type="text" value="3,410.00"/>
+                    <button className="px-3 border border-outline-variant text-[10px] font-mono-label">SET</button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[9px] font-mono-label text-outline uppercase block mb-1">Take Profit</label>
+                  <div className="flex gap-1">
+                    <input className="flex-1 bg-surface-container border border-outline-variant text-mono-data text-on-surface px-2 py-1 focus:ring-1 focus:ring-primary focus:outline-none" type="text" value="3,850.00"/>
+                    <button className="px-3 border border-outline-variant text-[10px] font-mono-label">SET</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section>
+              <div className="text-[10px] font-mono-label text-outline uppercase mb-3 tracking-widest border-b border-outline-variant/30 pb-1">Visualizer</div>
+              <div className="h-32 bg-black border border-outline-variant relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-mono-label text-outline opacity-30">CANDLE_ENGINE_V2</span>
+                </div>
+                <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-primary/10 to-transparent"></div>
+                <div className="absolute top-1/2 left-0 w-full h-px bg-primary/40 border-t border-dashed border-primary/60"></div>
+                <div className="absolute bottom-1/4 left-0 w-full h-px bg-error/40 border-t border-dashed border-error/60"></div>
+              </div>
+            </section>
           </div>
         </aside>
       </div>
 
-      <footer className="flex items-center justify-between px-4 py-1 bg-surface-container-lowest border-t border-outline-variant h-8 flex-shrink-0">
+      <footer className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-1 bg-surface-container-lowest border-t border-outline-variant h-8 flex-shrink-0">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-tertiary"></div>
