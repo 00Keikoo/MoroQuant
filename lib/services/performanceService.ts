@@ -69,6 +69,17 @@ export interface Position {
   agreement: string;
 }
 
+export interface LivePosition {
+  symbol: string;
+  side: string;
+  entry_price: number;
+  mark_price: number;
+  quantity: number;
+  unrealized_pnl: number;
+  take_profit: number | null;
+  stop_loss: number | null;
+}
+
 export interface RegimeMetrics {
   regime_label: string;
   total_trades: number;
@@ -456,6 +467,43 @@ export async function getClosedTradeEquity(): Promise<EquityPoint[]> {
     const response = await fetchWithRetry(`${base}/analytics/closed-trade-equity`);
     const data: ClosedTradeEquityResponse = await response.json();
     return data.equity_curve || [];
+  } catch {
+    return [];
+  }
+}
+
+export interface SignalHistoryEntry {
+  symbol: string;
+  timeframe: string;
+  timestamp: string;
+  direction: 'long' | 'short' | 'neutral';
+  confidence: number;
+  created_at: string;
+}
+
+export async function getSignalHistory(limit: number = 20): Promise<SignalHistoryEntry[]> {
+  try {
+    const base = getApiBaseUrl();
+    const response = await fetchWithRetry(
+      `${base}/signals/history?limit=${limit}`
+    );
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch live paper trading positions with real-time mark prices.
+ * GET /api/paper/positions/live
+ */
+export async function getLivePositions(): Promise<LivePosition[]> {
+  try {
+    const base = getApiBaseUrl();
+    const response = await fetchWithRetry(`${base}/paper/positions/live`);
+    const data = await response.json();
+    return data.positions || [];
   } catch {
     return [];
   }

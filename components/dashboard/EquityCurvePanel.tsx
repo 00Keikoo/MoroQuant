@@ -1,20 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { getAccountEquityHistory, type EquitySnapshot, type EquityRange } from '@/lib/services/performanceService';
 
-interface EquityCurveData {
-  strategyName: string;
-  timeframe: string;
-  dataPoints: Array<{ timestamp: string; value: number }>;
-  benchmark: Array<{ timestamp: string; value: number }>;
-}
+type TimeframeButton = '7D' | '30D' | 'ALL';
 
-interface EquityCurvePanelProps {
-  data: EquityCurveData;
-}
+const TIMEFRAME_TO_RANGE: Record<TimeframeButton, EquityRange> = {
+  '7D': '7d',
+  '30D': '30d',
+  'ALL': 'all',
+};
 
-export default function EquityCurvePanel({ data }: EquityCurvePanelProps) {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'7D' | '30D' | '90D'>('7D');
+export default function EquityCurvePanel() {
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeButton>('7D');
+  const [equityData, setEquityData] = useState<EquitySnapshot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const range = TIMEFRAME_TO_RANGE[selectedTimeframe];
+      const data = await getAccountEquityHistory(range);
+      setEquityData(data);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load equity data');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedTimeframe]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <div className="bg-surface-container-low border border-outline-variant flex flex-col overflow-hidden">
@@ -43,21 +62,21 @@ export default function EquityCurvePanel({ data }: EquityCurvePanelProps) {
               30D
             </button>
             <button
-              onClick={() => setSelectedTimeframe('90D')}
+              onClick={() => setSelectedTimeframe('ALL')}
               className={`px-2 py-1 text-[10px] font-bold ${
-                selectedTimeframe === '90D'
+                selectedTimeframe === 'ALL'
                   ? 'bg-primary text-on-primary'
                   : 'text-secondary hover:text-on-surface'
               }`}
             >
-              90D
+              ALL
             </button>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary"></div>
-            <span className="text-label-caps text-secondary">{data.strategyName}</span>
+            <span className="text-label-caps text-secondary">ACCOUNT EQUITY</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-secondary"></div>
@@ -72,7 +91,17 @@ export default function EquityCurvePanel({ data }: EquityCurvePanelProps) {
           <div className="w-full h-px bg-outline-variant/30 top-3/4 absolute"></div>
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs text-secondary/50">Chart visualization placeholder</span>
+          {loading ? (
+            <span className="text-xs text-secondary/50">Loading equity data...</span>
+          ) : error ? (
+            <span className="text-xs text-error">{error}</span>
+          ) : equityData.length === 0 ? (
+            <span className="text-xs text-secondary/50">No equity data available</span>
+          ) : (
+            <span className="text-xs text-secondary/50">
+              {equityData.length} data points | Latest: ${equityData[equityData.length - 1]?.equity.toFixed(2) || '0.00'}
+            </span>
+          )}
         </div>
       </div>
     </div>

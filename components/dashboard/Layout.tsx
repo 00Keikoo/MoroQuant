@@ -1,6 +1,53 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { getSignalHistory, SignalHistoryEntry, getLivePositions, LivePosition } from '@/lib/services/performanceService';
+import InspectorPanel from './InspectorPanel';
+
 export default function DashboardLayout() {
+  const [signals, setSignals] = useState<SignalHistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [positions, setPositions] = useState<LivePosition[]>([]);
+  const [selectedPosition, setSelectedPosition] = useState<LivePosition | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [positionsData, signalsData] = await Promise.all([
+          getLivePositions(),
+          getSignalHistory(10)
+        ]);
+        setPositions(positionsData);
+        setSignals(signalsData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  const getSignalColor = (direction: string) => {
+    if (direction === 'long') return 'text-tertiary';
+    if (direction === 'short') return 'text-primary';
+    return 'text-on-surface-variant';
+  };
+
+  const formatSignalMessage = (signal: SignalHistoryEntry) => {
+    const directionLabel = signal.direction.toUpperCase();
+    const confidencePercent = (signal.confidence * 100).toFixed(0);
+    return `SIG_GEN: ${signal.symbol}_${signal.timeframe} (${directionLabel}) -> CONFIDENCE ${signal.confidence.toFixed(2)} [${confidencePercent}%]`;
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-background">
       <div className="flex-1 grid grid-cols-12 gap-px bg-outline-variant overflow-y-auto">
@@ -78,38 +125,42 @@ export default function DashboardLayout() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="hover:bg-surface-container cursor-pointer border-b border-outline-variant/30 group">
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">BTC-USDT-PERP</td>
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-tertiary font-bold border-r border-outline-variant/30">LONG</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">12.50 BTC</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface-variant border-r border-outline-variant/30">62,105.20</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">64,231.12</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-tertiary">+$26,574.00</td>
-                </tr>
-                <tr className="bg-surface-container-high/50 hover:bg-surface-container cursor-pointer border-b border-outline-variant/30 group border-l-2 border-l-primary">
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">ETH-USDT-PERP</td>
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-primary font-bold border-r border-outline-variant/30">SHORT</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">450.00 ETH</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface-variant border-r border-outline-variant/30">3,492.15</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">3,501.10</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-error">-$4,027.50</td>
-                </tr>
-                <tr className="hover:bg-surface-container cursor-pointer border-b border-outline-variant/30 group">
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">SOL-USDT-PERP</td>
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-tertiary font-bold border-r border-outline-variant/30">LONG</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">2,500.00 SOL</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface-variant border-r border-outline-variant/30">145.20</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">152.88</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-tertiary">+$19,200.00</td>
-                </tr>
-                <tr className="hover:bg-surface-container cursor-pointer border-b border-outline-variant/30 group">
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">NVDA-EQUITY</td>
-                  <td className="px-3 py-1.5 font-mono-data text-mono-data text-tertiary font-bold border-r border-outline-variant/30">LONG</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">1,200 SHARES</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface-variant border-r border-outline-variant/30">892.40</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">904.12</td>
-                  <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-tertiary">+$14,064.00</td>
-                </tr>
+                {positions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-4 text-center font-mono-data text-mono-data text-outline">
+                      No open positions
+                    </td>
+                  </tr>
+                ) : (
+                  positions.map((position, idx) => {
+                    const isSelected = selectedPosition?.symbol === position.symbol;
+                    const pnlColor = position.unrealized_pnl >= 0 ? 'text-tertiary' : 'text-error';
+                    return (
+                      <tr
+                        key={idx}
+                        onClick={() => setSelectedPosition(position)}
+                        className={`hover:bg-surface-container cursor-pointer border-b border-outline-variant/30 group ${isSelected ? 'bg-surface-container-high/50 border-l-2 border-l-primary' : ''}`}
+                      >
+                        <td className="px-3 py-1.5 font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">{position.symbol}</td>
+                        <td className={`px-3 py-1.5 font-mono-data text-mono-data font-bold border-r border-outline-variant/30 ${position.side === 'LONG' ? 'text-tertiary' : 'text-primary'}`}>
+                          {position.side}
+                        </td>
+                        <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">
+                          {position.quantity.toFixed(2)}
+                        </td>
+                        <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface-variant border-r border-outline-variant/30">
+                          {position.entry_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">
+                          {position.mark_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className={`px-3 py-1.5 text-right font-mono-data text-mono-data ${pnlColor}`}>
+                          {position.unrealized_pnl >= 0 ? '+' : ''}${position.unrealized_pnl.toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -151,26 +202,24 @@ export default function DashboardLayout() {
             <div className="flex flex-col">
               <div className="font-mono-label text-mono-label uppercase tracking-widest text-outline mb-2">Live Signals Feed</div>
               <div className="flex-1 bg-black border border-outline-variant overflow-y-auto scrollbar-hide font-mono-code text-[11px] leading-relaxed p-2">
-                <div className="flex gap-2 text-tertiary mb-1">
-                  <span>[14:02:11]</span>
-                  <span>SIG_GEN: BTC_MACD_CROSSOVER (BULLISH) -&gt; CONFIDENCE 0.88</span>
-                </div>
-                <div className="flex gap-2 text-on-surface-variant mb-1">
-                  <span>[14:01:45]</span>
-                  <span>EXEC_ORD: SOL_USDT SL_UPDATE -&gt; 148.50</span>
-                </div>
-                <div className="flex gap-2 text-primary mb-1">
-                  <span>[13:58:22]</span>
-                  <span>RISK_ALRT: ETH GAMMA THRESHOLD EXCEEDED (VOL)</span>
-                </div>
-                <div className="flex gap-2 text-on-surface-variant mb-1">
-                  <span>[13:55:01]</span>
-                  <span>HEARTBEAT: BINANCE_WSS_RECONNECT (LATENCY 12ms)</span>
-                </div>
-                <div className="flex gap-2 text-tertiary mb-1">
-                  <span>[13:52:10]</span>
-                  <span>STRAT_MSG: REBALANCING DELTA NEUTRAL ARB_V4</span>
-                </div>
+                {loading ? (
+                  <div className="flex gap-2 text-outline mb-1">
+                    <span>[--:--:--]</span>
+                    <span>LOADING SIGNAL FEED...</span>
+                  </div>
+                ) : signals.length === 0 ? (
+                  <div className="flex gap-2 text-outline mb-1">
+                    <span>[--:--:--]</span>
+                    <span>NO SIGNALS AVAILABLE</span>
+                  </div>
+                ) : (
+                  signals.map((signal, idx) => (
+                    <div key={idx} className={`flex gap-2 mb-1 ${getSignalColor(signal.direction)}`}>
+                      <span>[{formatTimestamp(signal.created_at)}]</span>
+                      <span>{formatSignalMessage(signal)}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
             <div className="flex flex-col">
@@ -209,6 +258,12 @@ export default function DashboardLayout() {
           </div>
         </div>
       </div>
+      {selectedPosition && (
+        <InspectorPanel
+          position={selectedPosition}
+          onClose={() => setSelectedPosition(null)}
+        />
+      )}
     </div>
   );
 }

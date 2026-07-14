@@ -438,3 +438,18 @@ export async function getLivePaperAccount(): Promise<any> {
     throw error;
   }
 }
+
+export async function getModelHealth(symbol: string, timeframe: string): Promise<any> {
+  try {
+    const response = await fetch(`${ML_API_BASE}/models/${symbol}/${timeframe}/drift`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Failed to fetch model health: ${response.statusText}`);
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('ML API is offline.');
+    }
+    throw error;
+  }
+}
