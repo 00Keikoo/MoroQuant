@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Settings, Command } from 'lucide-react';
+import Link from 'next/link';
+import { Settings, Command, ArrowLeft } from 'lucide-react';
 import { MQSearch } from '../mqds/MQSearch';
 import { MQIconButton } from '../mqds/MQIconButton';
 
@@ -30,6 +31,13 @@ export function LabTopBar({ onOpenCommandPalette }: LabTopBarProps) {
 
   return (
     <header className="h-[var(--header-height)] border-b border-[var(--color-mq-border)] bg-[var(--color-mq-bg-secondary)] flex items-center px-4 gap-4">
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-2 text-[var(--color-mq-text-secondary)] hover:text-[var(--color-mq-accent)] transition-colors"
+        title="Back to Dashboard"
+      >
+        <ArrowLeft size={16} />
+      </Link>
       <h1 className="text-[var(--font-size-body)] font-medium text-[var(--color-mq-text-primary)] min-w-[200px]">
         {title}
       </h1>

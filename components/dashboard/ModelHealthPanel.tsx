@@ -28,7 +28,7 @@ const STATUS_STYLE: Record<Status, { dot: string; label: string; text: string }>
   green: { dot: 'bg-mq-long', label: 'Healthy', text: 'text-mq-long' },
   yellow: { dot: 'bg-mq-warning', label: 'Warning', text: 'text-mq-warning' },
   red: { dot: 'bg-mq-short', label: 'Critical', text: 'text-mq-short' },
-  unknown: { dot: 'bg-gray-500', label: 'Unknown', text: 'text-gray-400' },
+  unknown: { dot: 'bg-neutral-500', label: 'Unknown', text: 'text-neutral-500' },
 };
 
 interface ModelHealthPanelProps {
@@ -64,7 +64,6 @@ export default function ModelHealthPanel({ compact = false }: ModelHealthPanelPr
     green: models.filter((m) => m.health_status === 'green').length,
     yellow: models.filter((m) => m.health_status === 'yellow').length,
     red: models.filter((m) => m.health_status === 'red').length,
-    unknown: models.filter((m) => m.health_status === 'unknown').length,
   };
 
   return (
@@ -105,11 +104,6 @@ export default function ModelHealthPanel({ compact = false }: ModelHealthPanelPr
           <span className="flex items-center gap-1 text-[10px] font-semibold text-mq-short">
             <span className="w-1.5 h-1.5 rounded-full bg-mq-short" /> {summary.red} Critical
           </span>
-          {summary.unknown > 0 && (
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-gray-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-500" /> {summary.unknown} Unknown
-            </span>
-          )}
         </div>
       )}
 
@@ -144,9 +138,7 @@ export default function ModelHealthPanel({ compact = false }: ModelHealthPanelPr
                     <span className={`w-2 h-2 rounded-full ${style.dot} shrink-0`} />
                     <span className={`text-[11px] font-semibold ${style.text}`}>{style.label}</span>
                     <span className="text-[10px] text-mq-muted font-mono ml-auto">
-                      {m.overall_score != null
-                        ? `${(m.overall_score * 100).toFixed(0)}%`
-                        : '—'}
+                      {m.overall_score !== null ? (m.overall_score * 100).toFixed(0) : '--'}%
                     </span>
                   </div>
                 </div>

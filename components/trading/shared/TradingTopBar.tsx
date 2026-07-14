@@ -1,4 +1,7 @@
+'use client';
+
 import { ReactNode } from 'react';
+import Link from 'next/link';
 
 interface TradingTopBarProps {
   title?: string;
@@ -18,6 +21,13 @@ export function TradingTopBar({
   return (
     <header className="fixed top-0 left-0 right-0 h-12 w-full border-b border-outline-variant bg-surface-dim flex justify-between items-center px-4 z-50">
       <div className="flex items-center gap-6">
+        <Link
+          href="/dashboard"
+          className="text-on-surface-variant hover:text-primary transition-colors"
+          title="Back to Dashboard"
+        >
+          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+        </Link>
         <span className="font-header-md text-header-md font-black text-primary uppercase tracking-tighter">{title}</span>
         {showSearch && (
           <div className="flex items-center bg-surface-container-low px-2 py-1 rounded-sm border border-outline-variant">

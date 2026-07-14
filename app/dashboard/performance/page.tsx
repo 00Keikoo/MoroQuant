@@ -3,54 +3,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import PerformanceCard, { type CardStatus } from '@/components/performance/PerformanceCard';
-import {
-  TrueEquityCurve,
-  ClosedTradeEquityCurve,
-  RangeSelector,
-} from '@/components/performance/EquityCurveChart';
+import EquityCurveChart from '@/components/performance/EquityCurveChart';
 import StatisticsGrid from '@/components/performance/StatisticsGrid';
 import PerformanceHeader from '@/components/performance/PerformanceHeader';
 import {
   getLivePerformanceReport,
-  getRecentTrades,
   getOpenPositions,
   getRegimePerformance,
   getConfidenceBuckets,
-  getAccountEquity,
-  getAccountEquityHistory,
-  getClosedTradeEquity,
   type LiveMetrics,
   type EquityPoint,
-  type EquitySnapshot,
-  type EquityRange,
-  type RecentTrade,
   type Position,
   type RegimeMetrics,
   type ConfidenceBucket,
-  type AccountEquity,
 } from '@/lib/services/performanceService';
-import { useIsPrivacyMode } from '@/lib/stores/privacyStore';
-import { maskOr, MASK_MONETARY, MASK_PERCENT, MASK_PRICE } from '@/lib/format/privacy';
-import SensitiveValue from '@/components/common/SensitiveValue';
-import TradingModeManager from '@/components/trading/TradingModeManager';
-import PaperPortfolio from '@/components/trading/PaperPortfolio';
-import ResearchSummaryCard from '@/components/trading/ResearchSummaryCard';
-import LiveOpenPositions from '@/components/trading/LiveOpenPositions';
-import { useTradingMode } from '@/lib/hooks/useTradingMode';
-import { getDataProvider } from '@/lib/providers';
 
 const AUTO_REFRESH_MS = 30_000;
 
 export default function PerformanceDashboard() {
-  const privacy = useIsPrivacyMode();
-  const { mode, isPaper } = useTradingMode();
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
-  const [accountEquity, setAccountEquity] = useState<AccountEquity | null>(null);
-  const [equityHistory, setEquityHistory] = useState<EquitySnapshot[]>([]);
-  const [equityRange, setEquityRange] = useState<EquityRange>('7d');
-  const [closedTradeEquity, setClosedTradeEquity] = useState<EquityPoint[]>([]);
-  const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [regimes, setRegimes] = useState<Record<string, RegimeMetrics>>({});
   const [confidence, setConfidence] = useState<Record<string, ConfidenceBucket>>({});
@@ -67,38 +39,21 @@ export default function PerformanceDashboard() {
     }
 
     try {
-      const provider = getDataProvider(mode);
-
-      const [
-        equityData,
-        historyData,
-        metricsData,
-        positionsData,
-        tradesData,
-        regimesData,
-        confidenceData,
-        equityCurveData,
-      ] = await Promise.all([
-        provider.getAccountEquity(),
-        provider.getEquityHistory(equityRange),
-        provider.getMetrics(),
-        provider.getOpenPositions(),
-        provider.getRecentTrades(20),
-        provider.getRegimePerformance(),
-        provider.getConfidenceBuckets(),
-        provider.getEquityCurve(),
+      const [report, positionsData, regimesData, confidenceData] = await Promise.all([
+        getLivePerformanceReport(),
+        getOpenPositions(),
+        getRegimePerformance(),
+        getConfidenceBuckets(),
       ]);
 
-      setAccountEquity(equityData);
-      setEquityHistory(historyData);
-      setMetrics(metricsData);
+      if (report.status === 'success') {
+        setMetrics(report.metrics);
+        setEquityCurve(report.equity_curve || []);
+      }
+
       setPositions(positionsData);
-      setRecentTrades(tradesData);
       setRegimes(regimesData);
       setConfidence(confidenceData);
-      setEquityCurve(equityCurveData);
-      setClosedTradeEquity(equityCurveData);
-
       setError(null);
       setLastUpdated(new Date().toISOString());
     } catch (err) {
@@ -110,30 +65,7 @@ export default function PerformanceDashboard() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [equityRange, isPaper]);
-
-  // Refetch equity history whenever the range selector changes, without
-  // forcing the full loading spinner (only the chart refreshes).
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const provider = getDataProvider(mode);
-        const historyData = await provider.getEquityHistory(equityRange);
-        if (!cancelled) {
-          setEquityHistory(historyData);
-          const equityCurveData = await provider.getEquityCurve();
-          setEquityCurve(equityCurveData);
-          setClosedTradeEquity(equityCurveData);
-        }
-      } catch {
-        // Swallow — keep the previous data.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [equityRange, mode]);
+  }, []);
 
   useEffect(() => {
     fetchAllData(true);
@@ -204,36 +136,13 @@ export default function PerformanceDashboard() {
     });
   };
 
-  // Price formatter: adapts decimals to magnitude (crypto-friendly).
-  const fmtPrice = (value: number | null | undefined): string => {
-    if (value === null || value === undefined) return '—';
-    const abs = Math.abs(value);
-    const digits = abs >= 1000 ? 2 : abs >= 1 ? 4 : 6;
-    return value.toLocaleString(undefined, {
-      minimumFractionDigits: digits,
-      maximumFractionDigits: digits,
-    });
-  };
-
-  // Duration formatter: minutes → "Xh Ym" / "Xd Yh" / "Ym".
-  const fmtDuration = (minutes: number | null | undefined): string => {
-    if (minutes === null || minutes === undefined) return '—';
-    if (minutes < 1) return '<1m';
-    const totalMin = Math.round(minutes);
-    const days = Math.floor(totalMin / 1440);
-    const hours = Math.floor((totalMin % 1440) / 60);
-    const mins = totalMin % 60;
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${mins}m`;
-    return `${mins}m`;
-  };
-
   const pnlStatus = (value: number): CardStatus =>
     value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
 
-  // ─── Recent trades (from backend closed-position schema) ─────
-  // The list is already newest-first from the backend; no re-sort needed.
-  const visibleTrades = recentTrades.slice(0, 20);
+  // ─── Recent trades from equity curve ──────────────────────────
+  const recentTrades = [...equityCurve]
+    .sort((a, b) => b.trade_count - a.trade_count)
+    .slice(0, 20);
 
   return (
     <div className="flex h-screen bg-mq-bg text-white">
@@ -259,132 +168,72 @@ export default function PerformanceDashboard() {
               </div>
             )}
 
-            {/* ─── Trading Mode Manager + Paper Portfolio + Research Summary ─── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              <div className="xl:col-span-1">
-                <TradingModeManager />
-              </div>
-              <div className="xl:col-span-1">
-                <PaperPortfolio />
-              </div>
-              {isPaper && (
-                <div className="xl:col-span-1">
-                  <ResearchSummaryCard />
-                </div>
-              )}
-            </div>
-
             {/* ─── KPI Cards (4x2) ─────────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {/* ─── Account Equity (from Binance) ────────────── */}
-              {accountEquity && accountEquity.source === 'binance' && (
-                <>
-                  <PerformanceCard
-                    label="Account Equity"
-                    value={maskOr(`$${fmtNum(accountEquity.margin_balance)}`, MASK_MONETARY, privacy)}
-                    sublabel={isPaper ? 'Paper broker equity' : 'Binance Futures margin'}
-                    status="neutral"
-                  />
-                  <PerformanceCard
-                    label="Wallet Balance"
-                    value={maskOr(`$${fmtNum(accountEquity.wallet_balance)}`, MASK_MONETARY, privacy)}
-                    sublabel={maskOr(`Unrealized ${fmtUsd(accountEquity.unrealized_pnl)}`, MASK_MONETARY, privacy, 'Unrealized —')}
-                    status={accountEquity.unrealized_pnl !== null ? pnlStatus(accountEquity.unrealized_pnl) : 'neutral'}
-                  />
-                  <PerformanceCard
-                    label="Available Balance"
-                    value={maskOr(`$${fmtNum(accountEquity.available_balance)}`, MASK_MONETARY, privacy)}
-                    sublabel="For new orders"
-                    status={accountEquity.available_balance !== null && accountEquity.available_balance > 0 ? 'positive' : 'negative'}
-                  />
-                </>
-              )}
-              {accountEquity && accountEquity.source === 'unavailable' && (
+            {metrics && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 <PerformanceCard
-                  label="Account Equity"
-                  value="Unavailable"
-                  sublabel="Binance API not reachable"
+                  label="Win Rate"
+                  value={`${fmtNum(metrics.win_rate)}%`}
+                  sublabel={`${metrics.winning_trades}W / ${metrics.losing_trades}L`}
+                  status={metrics.win_rate >= 50 ? 'positive' : 'neutral'}
+                />
+                <PerformanceCard
+                  label="Total Trades"
+                  value={String(metrics.total_trades)}
+                  sublabel="Closed positions"
                   status="neutral"
                 />
-              )}
-              {!accountEquity && (
                 <PerformanceCard
-                  label="Account Equity"
-                  value="—"
-                  sublabel="Loading..."
+                  label="Net PnL"
+                  value={fmtUsd(metrics.total_pnl)}
+                  sublabel={`ROI ${fmtNum(metrics.roi)}%`}
+                  status={pnlStatus(metrics.total_pnl)}
+                />
+                <PerformanceCard
+                  label="Profit Factor"
+                  value={fmtNum(metrics.profit_factor)}
+                  sublabel={metrics.profit_factor >= 1 ? 'Profitable' : 'Unprofitable'}
+                  status={metrics.profit_factor >= 1 ? 'positive' : 'negative'}
+                />
+                <PerformanceCard
+                  label="Expectancy"
+                  value={fmtUsd(metrics.expectancy)}
+                  sublabel="Per trade"
+                  status={pnlStatus(metrics.expectancy)}
+                />
+                <PerformanceCard
+                  label="Sharpe Ratio"
+                  value={metrics.sharpe_ratio !== null ? fmtNum(metrics.sharpe_ratio) : 'N/A'}
+                  sublabel="Risk-adjusted return"
+                  status={metrics.sharpe_ratio !== null && metrics.sharpe_ratio >= 1 ? 'positive' : 'neutral'}
+                />
+                <PerformanceCard
+                  label="Max Drawdown"
+                  value={fmtUsd(metrics.max_drawdown)}
+                  sublabel={`${fmtNum(metrics.max_drawdown_pct)}% peak-to-trough`}
+                  status="negative"
+                />
+                <PerformanceCard
+                  label="Avg Hold Time"
+                  value={metrics.avg_hold_time_hours !== null ? `${fmtNum(metrics.avg_hold_time_hours)}h` : 'N/A'}
+                  sublabel="Per trade"
                   status="neutral"
                 />
-              )}
-              {/* ─── Performance Metrics (rest of grid) ────── */}
-              {metrics && (
-                <>
-                  <PerformanceCard
-                    label="Win Rate"
-                    value={`${fmtNum(metrics.win_rate)}%`}
-                    sublabel={`${metrics.winning_trades}W / ${metrics.losing_trades}L`}
-                    status={metrics.win_rate >= 50 ? 'positive' : 'neutral'}
-                  />
-                  <PerformanceCard
-                    label="Total Trades"
-                    value={String(metrics.total_trades)}
-                    sublabel="Closed positions"
-                    status="neutral"
-                  />
-                  <PerformanceCard
-                    label="Net PnL"
-                    value={maskOr(fmtUsd(metrics.total_pnl), MASK_MONETARY, privacy)}
-                    sublabel={maskOr(`ROI ${fmtNum(metrics.roi)}%`, MASK_PERCENT, privacy)}
-                    status={pnlStatus(metrics.total_pnl)}
-                  />
-                  <PerformanceCard
-                    label="Profit Factor"
-                    value={fmtNum(metrics.profit_factor)}
-                    sublabel={metrics.profit_factor >= 1 ? 'Profitable' : 'Unprofitable'}
-                    status={metrics.profit_factor >= 1 ? 'positive' : 'negative'}
-                  />
-                  <PerformanceCard
-                    label="Expectancy"
-                    value={maskOr(fmtUsd(metrics.expectancy), MASK_MONETARY, privacy)}
-                    sublabel="Per trade"
-                    status={pnlStatus(metrics.expectancy)}
-                  />
-                  <PerformanceCard
-                    label="Sharpe Ratio"
-                    value={(metrics.sharpe_ratio !== null && metrics.sharpe_ratio !== undefined) ? fmtNum(metrics.sharpe_ratio) : 'Calculating...'}
-                    sublabel="Risk-adjusted return"
-                    status={(metrics.sharpe_ratio !== null && metrics.sharpe_ratio !== undefined && metrics.sharpe_ratio >= 1) ? 'positive' : 'neutral'}
-                  />
-                  <PerformanceCard
-                    label="Max Drawdown"
-                    value={maskOr(fmtUsd(metrics.max_drawdown), MASK_MONETARY, privacy)}
-                    sublabel={maskOr(`${fmtNum(metrics.max_drawdown_pct)}% peak-to-trough`, MASK_PERCENT, privacy)}
-                    status="negative"
-                  />
-                  <PerformanceCard
-                    label="Avg Hold Time"
-                    value={metrics.avg_hold_time_hours !== null ? `${fmtNum(metrics.avg_hold_time_hours)}h` : 'N/A'}
-                    sublabel="Per trade"
-                    status="neutral"
-                  />
-                </>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* ─── True Account Equity Curve (Binance) ─────────── */}
+            {/* ─── Equity Curve + Confidence (70/30) ──────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
               <section className="lg:col-span-7 glass-card p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                      {isPaper ? 'Paper Account Equity Curve' : 'True Account Equity Curve'}
-                    </h3>
-                    <span className="text-[10px] text-neutral-500 font-mono">
-                      {isPaper ? 'Paper broker' : 'Binance'} · {equityHistory.length} snapshots
-                    </span>
-                  </div>
-                  <RangeSelector selected={equityRange} onSelect={setEquityRange} />
+                <div className="flex items-baseline justify-between mb-4">
+                  <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                    Equity Curve
+                  </h3>
+                  <span className="text-[10px] text-neutral-500 font-mono">
+                    Cumulative PnL · {equityCurve.length} trades
+                  </span>
                 </div>
-                <TrueEquityCurve data={equityHistory} height={360} privacy={privacy} />
+                <EquityCurveChart data={equityCurve} height={360} />
               </section>
 
               {/* ─── Confidence Analysis ──────────────────────────── */}
@@ -424,7 +273,7 @@ export default function PerformanceDashboard() {
                               <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{bucket.total_trades}</td>
                               <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">{fmtNum(bucket.win_rate)}%</td>
                               <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${profitable ? 'text-mq-long' : 'text-mq-short'}`}>
-                                <SensitiveValue value={bucket.total_pnl} formatter={(v) => fmtUsd(Number(v))} />
+                                {fmtUsd(bucket.total_pnl)}
                               </td>
                             </tr>
                           );
@@ -495,7 +344,7 @@ export default function PerformanceDashboard() {
                                 {regime.profit_factor}
                               </td>
                               <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${regime.expectancy >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
-                                <SensitiveValue value={regime.expectancy} formatter={(v) => fmtUsd(Number(v))} />
+                                {fmtUsd(regime.expectancy)}
                               </td>
                             </tr>
                           );
@@ -511,31 +360,8 @@ export default function PerformanceDashboard() {
               )}
             </div>
 
-            {/* ─── Closed Trade Equity Curve (legacy/strategy) ──── */}
-            {closedTradeEquity.length > 0 && (
-              <section className="glass-card p-5">
-                <div className="flex items-baseline justify-between mb-4">
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-sm font-bold text-white tracking-wider uppercase">
-                      Closed Trade Curve
-                    </h3>
-                    <span className="text-[10px] text-neutral-500 font-mono">
-                      Realized PnL only · {closedTradeEquity.length} trades
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-neutral-600 font-mono">
-                    starting_balance + Σ net realized PnL
-                  </span>
-                </div>
-                <ClosedTradeEquityCurve data={closedTradeEquity} height={260} privacy={privacy} />
-              </section>
-            )}
-
-            {/* ─── Live Open Positions (Paper Mode Real-time) ───────── */}
-            {isPaper && <LiveOpenPositions />}
-
-            {/* ─── Open Positions (Live Mode Static) ───────────────── */}
-            {!isPaper && positions.length > 0 && (
+            {/* ─── Open Positions ───────────────────────────────── */}
+            {positions.length > 0 && (
               <section className="glass-card overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
                   <div className="flex items-baseline gap-2">
@@ -570,20 +396,10 @@ export default function PerformanceDashboard() {
                             {pos.side}
                           </span>
                           <div className="text-xs text-neutral-400 font-mono">
-                            <span className="text-neutral-600">Entry:</span>{' '}
-                            <SensitiveValue
-                              value={pos.entry_price}
-                              mask={MASK_PRICE}
-                              formatter={(v) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 4 })}`}
-                            />
+                            <span className="text-neutral-600">Entry:</span> ${pos.entry_price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                           </div>
                           <div className="text-xs text-neutral-400 font-mono">
-                            <span className="text-neutral-600">Mark:</span>{' '}
-                            <SensitiveValue
-                              value={pos.mark_price}
-                              mask={MASK_PRICE}
-                              formatter={(v) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 4 })}`}
-                            />
+                            <span className="text-neutral-600">Mark:</span> ${pos.mark_price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -603,11 +419,7 @@ export default function PerformanceDashboard() {
                           <div
                             className={`text-sm font-bold font-mono ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}
                           >
-                            <SensitiveValue
-                              value={pos.unrealized_pnl}
-                              mask={MASK_MONETARY}
-                              formatter={(v) => `${pnlPositive ? '+' : ''}$${Number(v).toFixed(2)}`}
-                            />
+                            {pnlPositive ? '+' : ''}${pos.unrealized_pnl.toFixed(2)}
                           </div>
                         </div>
                       </div>
@@ -618,7 +430,7 @@ export default function PerformanceDashboard() {
             )}
 
             {/* ─── Recent Trades ────────────────────────────────── */}
-            {visibleTrades.length > 0 && (
+            {recentTrades.length > 0 && (
               <section className="glass-card overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-mq-panel-border bg-black/40">
                   <div className="flex items-baseline gap-2">
@@ -626,7 +438,7 @@ export default function PerformanceDashboard() {
                       Recent Trades
                     </h3>
                     <span className="text-[10px] text-neutral-500 font-mono">
-                      Last {visibleTrades.length} closed positions
+                      Last {recentTrades.length} closed positions
                     </span>
                   </div>
                 </div>
@@ -634,63 +446,47 @@ export default function PerformanceDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-mq-panel-border">
-                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Symbol</th>
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Time</th>
+                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">#</th>
                         <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Side</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Entry</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Exit</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Duration</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Net PnL</th>
-                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fees</th>
-                        <th className="text-left px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Regime</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Trade PnL</th>
+                        <th className="text-right px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Cumulative</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {visibleTrades.map((trade, idx) => {
-                        const isLong = trade.direction === 'long';
-                        const pnlPositive = trade.net_pnl >= 0;
-                        const exitTime = new Date(trade.exit_time);
+                      {recentTrades.map((trade) => {
+                        const pnlPositive = trade.trade_pnl >= 0;
+                        const date = new Date(trade.timestamp);
                         return (
                           <tr
-                            key={`${trade.symbol}-${trade.exit_time}-${idx}`}
+                            key={trade.trade_count}
                             className="border-b border-mq-panel-border last:border-0 hover:bg-white/[0.02] transition-colors"
                           >
-                            <td className="px-4 py-3 font-bold text-white text-xs">{trade.symbol}</td>
+                            <td className="px-4 py-3 font-mono text-xs text-neutral-400">
+                              {date.toLocaleString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-neutral-500">#{trade.trade_count}</td>
                             <td className="px-4 py-3">
                               <span
                                 className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                  isLong
+                                  pnlPositive
                                     ? 'bg-mq-long-dim/10 text-mq-long'
                                     : 'bg-mq-short-dim/10 text-mq-short'
                                 }`}
                               >
-                                {isLong ? 'Long' : 'Short'}
+                                {pnlPositive ? 'Win' : 'Loss'}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">
-                              <SensitiveValue value={trade.entry_price} mask={MASK_PRICE} formatter={(v) => fmtPrice(Number(v))} />
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}>
+                              {pnlPositive ? '+' : ''}${trade.trade_pnl.toFixed(2)}
                             </td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-300 text-xs">
-                              {trade.exit_price !== null ? (
-                                <SensitiveValue value={trade.exit_price} mask={MASK_PRICE} formatter={(v) => fmtPrice(Number(v))} />
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-400 text-xs">
-                              {fmtDuration(trade.duration_minutes)}
-                            </td>
-                            <td className={`px-4 py-3 text-right font-mono font-semibold text-xs ${pnlPositive ? 'text-mq-long' : 'text-mq-short'}`}>
-                              <SensitiveValue
-                                value={trade.net_pnl}
-                                mask={MASK_MONETARY}
-                                formatter={(v) => `${pnlPositive ? '+' : ''}${Number(v).toFixed(2)}`}
-                              />
-                            </td>
-                            <td className="px-4 py-3 text-right font-mono text-neutral-500 text-xs">
-                              <SensitiveValue value={trade.commission} mask={MASK_PRICE} formatter={(v) => Number(v).toFixed(4)} />
-                            </td>
-                            <td className="px-4 py-3 text-neutral-400 text-xs capitalize">
-                              {trade.regime || '—'}
+                            <td className={`px-4 py-3 text-right font-mono font-semibold ${trade.cumulative_pnl >= 0 ? 'text-mq-long' : 'text-mq-short'}`}>
+                              ${trade.cumulative_pnl.toFixed(2)}
                             </td>
                           </tr>
                         );

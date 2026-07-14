@@ -977,7 +977,7 @@ def reconcile(no_live: bool):
 @click.option("--status", "action", flag_value="status", help="Show scheduler status")
 def scheduler(action: str):
     """Manage the auto-retrain scheduler."""
-    from scheduler import start_scheduler, get_scheduler_status
+    from ml_service.scheduler import start_scheduler, get_scheduler_status
     import json
 
     if action == "start":
@@ -992,7 +992,7 @@ def scheduler(action: str):
                 time.sleep(1)
         except KeyboardInterrupt:
             click.echo("\n\nStopping scheduler...")
-            from scheduler import stop_scheduler
+            from ml_service.scheduler import stop_scheduler
             stop_scheduler()
             click.echo("✓ Scheduler stopped")
 
