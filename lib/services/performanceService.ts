@@ -65,6 +65,9 @@ export interface Position {
   entry_price: number;
   mark_price: number;
   unrealized_pnl: number;
+  quantity: number;
+  take_profit: number | null;
+  stop_loss: number | null;
   signal?: {
     direction: string;
     confidence: number;
@@ -72,16 +75,8 @@ export interface Position {
   agreement: string;
 }
 
-export interface LivePosition {
-  symbol: string;
-  side: string;
-  entry_price: number;
-  mark_price: number;
-  quantity: number;
-  unrealized_pnl: number;
-  take_profit: number | null;
-  stop_loss: number | null;
-}
+export type LivePosition = Position;
+
 
 export interface RegimeMetrics {
   regime_label: string;
@@ -334,7 +329,32 @@ export async function getOpenPositions(mode: TradingMode): Promise<Position[]> {
 
   const response = await fetchWithRetry(endpoint);
   const data = await response.json();
-  return data.positions || [];
+  const rawPositions = data.positions || [];
+
+  return rawPositions.map((pos: any) => {
+    const side = (pos.side || pos.direction || '').toLowerCase();
+    const unrealized_pnl = Number(pos.unrealized_pnl !== undefined ? pos.unrealized_pnl : pos.floating_pnl) || 0;
+    const quantity = Number(pos.position_amt || pos.qty || pos.quantity) || 0;
+    
+    return {
+      symbol: pos.symbol || '',
+      side,
+      entry_price: Number(pos.entry_price) || 0,
+      mark_price: Number(pos.mark_price) || 0,
+      unrealized_pnl,
+      quantity,
+      take_profit: pos.take_profit !== undefined ? pos.take_profit : null,
+      stop_loss: pos.stop_loss !== undefined ? pos.stop_loss : null,
+      signal: pos.signal ? {
+        direction: String(pos.signal.direction || '').toLowerCase(),
+        confidence: Number(pos.signal.confidence) || 0,
+      } : (pos.direction && pos.confidence ? {
+        direction: String(pos.direction).toLowerCase(),
+        confidence: Number(pos.confidence) || 0,
+      } : undefined),
+      agreement: pos.agreement || 'match',
+    };
+  });
 }
 
 export async function getRegimePerformance(mode: TradingMode): Promise<Record<string, RegimeMetrics>> {
@@ -621,16 +641,5 @@ export async function getSignalHistory(limit: number, mode: TradingMode): Promis
  * GET /api/paper/positions/live
  */
 export async function getLivePositions(mode: TradingMode): Promise<LivePosition[]> {
-  if (mode === 'OFF') {
-    return [];
-  }
-
-  try {
-    const base = getApiBaseUrl();
-    const response = await fetchWithRetry(`${base}/paper/positions/live`);
-    const data = await response.json();
-    return data.positions || [];
-  } catch {
-    return [];
-  }
+  return getOpenPositions(mode);
 }

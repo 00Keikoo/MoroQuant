@@ -35,6 +35,8 @@ export default function KpiCards() {
   const [modelHealth, setModelHealth] = useState<{ status: string; drift: number; timestamp: string } | null>(null);
 
   const load = useCallback(async () => {
+    if (mode === null) return;
+
     if (mode === 'OFF') {
       setDailyPnl({ value: 0, pct: 0 });
       setGrossExposure(0);
@@ -46,7 +48,7 @@ export default function KpiCards() {
     }
     setLoading(true);
     try {
-      const tradingMode = mode || 'LIVE';
+      const tradingMode = mode;
       const [perfReport, positions, healthData] = await Promise.all([
         getLivePerformanceReport(tradingMode),
         getOpenPositions(tradingMode),

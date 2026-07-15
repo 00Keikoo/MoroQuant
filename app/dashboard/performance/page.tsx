@@ -34,6 +34,8 @@ export default function PerformanceDashboard() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const fetchAllData = useCallback(async (initial = false) => {
+    if (mode === null) return;
+
     if (initial) {
       setLoading(true);
     } else {
@@ -41,7 +43,7 @@ export default function PerformanceDashboard() {
     }
 
     try {
-      const tradingMode = mode || 'LIVE';
+      const tradingMode = mode;
       const [report, positionsData, regimesData, confidenceData] = await Promise.all([
         getLivePerformanceReport(tradingMode),
         getOpenPositions(tradingMode),

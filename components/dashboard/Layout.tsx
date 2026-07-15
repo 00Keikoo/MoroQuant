@@ -14,8 +14,9 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (mode === null) return;
       try {
-        const tradingMode = mode || 'LIVE';
+        const tradingMode = mode;
         const [positionsData, signalsData] = await Promise.all([
           getLivePositions(tradingMode),
           getSignalHistory(10, tradingMode)
@@ -145,8 +146,8 @@ export default function DashboardLayout() {
                         className={`hover:bg-surface-container cursor-pointer border-b border-outline-variant/30 group ${isSelected ? 'bg-surface-container-high/50 border-l-2 border-l-primary' : ''}`}
                       >
                         <td className="px-3 py-1.5 font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">{position.symbol}</td>
-                        <td className={`px-3 py-1.5 font-mono-data text-mono-data font-bold border-r border-outline-variant/30 ${position.side === 'LONG' ? 'text-tertiary' : 'text-primary'}`}>
-                          {position.side}
+                        <td className={`px-3 py-1.5 font-mono-data text-mono-data font-bold border-r border-outline-variant/30 ${position.side?.toUpperCase() === 'LONG' ? 'text-tertiary' : 'text-primary'}`}>
+                          {position.side?.toUpperCase()}
                         </td>
                         <td className="px-3 py-1.5 text-right font-mono-data text-mono-data text-on-surface border-r border-outline-variant/30">
                           {position.quantity.toFixed(2)}

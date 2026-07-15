@@ -60,6 +60,9 @@ export class PaperProvider implements TradingDataProvider {
       entry_price: p.entry_price,
       mark_price: p.current_price ?? p.entry_price,
       unrealized_pnl: 0,
+      quantity: (p as any).qty || (p as any).quantity || 0,
+      take_profit: (p as any).take_profit ?? null,
+      stop_loss: (p as any).stop_loss ?? null,
       agreement: 'match' as const,
     }));
   }
