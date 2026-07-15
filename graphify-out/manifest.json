@@ -5,9 +5,9 @@
     "semantic_hash": "005ee62cbc2d0731b7b51b51e888de03"
   },
   ".claude/settings.local.json": {
-    "mtime": 1784024647.45305,
-    "ast_hash": "caf182c3b5d748bc8d3049a5118da2ae",
-    "semantic_hash": "caf182c3b5d748bc8d3049a5118da2ae"
+    "mtime": 1784107845.5314991,
+    "ast_hash": "5a96225ff4edb15eb5b64a14b63009af",
+    "semantic_hash": ""
   },
   "app/api/ai/analyze-market/route.ts": {
     "mtime": 1780207525.646001,
@@ -120,9 +120,9 @@
     "semantic_hash": "06fc0a68f0fa03d6140903a26dc10087"
   },
   "app/layout.tsx": {
-    "mtime": 1783935913.2367265,
-    "ast_hash": "82c6a44f836a0aa1f35c64de4b322548",
-    "semantic_hash": "82c6a44f836a0aa1f35c64de4b322548"
+    "mtime": 1784097068.9837863,
+    "ast_hash": "e5cde587febead494b590c76ecfd827f",
+    "semantic_hash": ""
   },
   "app/operations/logs/page.tsx": {
     "mtime": 1783933513.7832918,
@@ -210,8 +210,8 @@
     "semantic_hash": "b73388975bebb141d7a58926a2b3b4ca"
   },
   "components/dashboard/EquityCurvePanel.tsx": {
-    "mtime": 1784090218.5902805,
-    "ast_hash": "57ac1964a16fcfeaac841d54413d647e",
+    "mtime": 1784105573.057461,
+    "ast_hash": "bec2cb611f9a800b9c11e6a69548cb7c",
     "semantic_hash": ""
   },
   "components/dashboard/InspectorPanel.tsx": {
@@ -220,23 +220,23 @@
     "semantic_hash": ""
   },
   "components/dashboard/Layout.tsx": {
-    "mtime": 1784091126.455109,
-    "ast_hash": "1731859f600448e873f666e1d918782c",
+    "mtime": 1784096780.4814434,
+    "ast_hash": "22ff1f6ce4fd5e8395fa3336ffb5c889",
     "semantic_hash": ""
   },
   "components/dashboard/MarketRegimesPanel.tsx": {
-    "mtime": 1784090212.2434034,
-    "ast_hash": "010cea783e3ee1cac3ed60e04dfbd979",
+    "mtime": 1784105572.7224379,
+    "ast_hash": "064ac5051a2cf2b87317bc3f6805cff2",
     "semantic_hash": ""
   },
   "components/dashboard/ModelHealthPanel.tsx": {
-    "mtime": 1784090215.1873462,
-    "ast_hash": "8b93f98e9693db098a8c9b698d34ccf1",
+    "mtime": 1784105572.8624475,
+    "ast_hash": "1d00293dffbcca69299199f92c36aa1c",
     "semantic_hash": ""
   },
   "components/dashboard/OpenPositionsPanel.tsx": {
-    "mtime": 1784090209.6114552,
-    "ast_hash": "074042c59672b94ac7db61e05cf0820c",
+    "mtime": 1784105572.970455,
+    "ast_hash": "6731dfedb501c313dc328e3ae6d46f98",
     "semantic_hash": ""
   },
   "components/dashboard/PageShell.tsx": {
@@ -805,8 +805,8 @@
     "semantic_hash": "4d6dd945f211595f977766b345aad99c"
   },
   "lib/services/performanceService.ts": {
-    "mtime": 1784091245.390597,
-    "ast_hash": "5fe430df57348e8cf8efd6d62dfb0eed",
+    "mtime": 1784100868.4828384,
+    "ast_hash": "9f62760c78640ea1ba52bf85ea0ea7ca",
     "semantic_hash": ""
   },
   "lib/stores/analysisStore.ts": {
@@ -2330,9 +2330,9 @@
     "semantic_hash": "9b77af189a21a7a64e4bd7a426f64176"
   },
   "package.json": {
-    "mtime": 1782545663.1958466,
-    "ast_hash": "4b875e39dc2e21103062c1cf2d92017f",
-    "semantic_hash": "4b875e39dc2e21103062c1cf2d92017f"
+    "mtime": 1784095978.1663592,
+    "ast_hash": "ad329b694ae4df7e8ab5774309874e13",
+    "semantic_hash": ""
   },
   "postcss.config.mjs": {
     "mtime": 1780128135.2061036,
@@ -4085,8 +4085,8 @@
     "semantic_hash": "a2760511c65806022ad20adf74370ff3"
   },
   "components/dashboard/KpiCards.tsx": {
-    "mtime": 1784091119.1190827,
-    "ast_hash": "07582253c723d67b056b1c14a7782444",
+    "mtime": 1784105645.4062133,
+    "ast_hash": "f062873737613d1c3096e72edc9f2524",
     "semantic_hash": ""
   },
   "design/audit/dashboard/audit.md": {
@@ -4097,6 +4097,86 @@
   "docs/audits/ml/paper_trading_mode_audit.md": {
     "mtime": 1784081227.7341444,
     "ast_hash": "21acf24a244d2078546f72730fcf6cc6",
+    "semantic_hash": ""
+  },
+  "components/common/OfflineIndicator.tsx": {
+    "mtime": 1784097014.9156528,
+    "ast_hash": "2673d5b4180ba8e139e110c1b10b77fd",
+    "semantic_hash": ""
+  },
+  "components/shared/widgets/SkeletonCard.tsx": {
+    "mtime": 1784102520.717002,
+    "ast_hash": "52278714529c76ad456f9dcc96a3fe5d",
+    "semantic_hash": ""
+  },
+  "components/shared/widgets/SkeletonChart.tsx": {
+    "mtime": 1784102524.0900342,
+    "ast_hash": "82231c407da6dfea518b7d477179a528",
+    "semantic_hash": ""
+  },
+  "components/shared/widgets/SkeletonTable.tsx": {
+    "mtime": 1784102526.7110593,
+    "ast_hash": "6267a1197f9d3c26064fa96e289ef22c",
+    "semantic_hash": ""
+  },
+  "components/shared/widgets/WidgetContainer.tsx": {
+    "mtime": 1784105573.173469,
+    "ast_hash": "2f1d840cd6dfacaade4433c59378bcad",
+    "semantic_hash": ""
+  },
+  "components/shared/widgets/WidgetEmpty.tsx": {
+    "mtime": 1784102533.2481225,
+    "ast_hash": "8ad209dd624fa28456ebc50357974587",
+    "semantic_hash": ""
+  },
+  "components/shared/widgets/WidgetError.tsx": {
+    "mtime": 1784102530.1420925,
+    "ast_hash": "fd011256ae9c8e40b4e44cd18a88742a",
+    "semantic_hash": ""
+  },
+  "lib/config/dashboard.ts": {
+    "mtime": 1784102559.4623797,
+    "ast_hash": "d53e26224fbaa1573824c94101079215",
+    "semantic_hash": ""
+  },
+  "lib/hooks/useGlobalRefresh.ts": {
+    "mtime": 1784101212.2073815,
+    "ast_hash": "2753f739fc90f87c92c9f041966433de",
+    "semantic_hash": ""
+  },
+  "lib/hooks/useNetworkStatus.ts": {
+    "mtime": 1784096940.6318474,
+    "ast_hash": "1dd06110b4eefa01331e9f7c3efa4817",
+    "semantic_hash": ""
+  },
+  "lib/hooks/usePerformanceData.ts": {
+    "mtime": 1784102772.625695,
+    "ast_hash": "83a182927feab4efad77ce22824a3fc4",
+    "semantic_hash": ""
+  },
+  "lib/providers/QueryProvider.tsx": {
+    "mtime": 1784098122.024331,
+    "ast_hash": "2772d681fb6402be03cf12a3e691dc1f",
+    "semantic_hash": ""
+  },
+  "lib/query/dashboardKeys.ts": {
+    "mtime": 1784102566.8734536,
+    "ast_hash": "a5e46750cc4f7ef1a186b980bc78042b",
+    "semantic_hash": ""
+  },
+  "lib/utils/errorNormalization.ts": {
+    "mtime": 1784100903.354723,
+    "ast_hash": "ccec6dc569fd3f92c00395174769dedd",
+    "semantic_hash": ""
+  },
+  "docs/sprints/DASHBOARD_AUDIT_REPORT.md": {
+    "mtime": 1784096447.810969,
+    "ast_hash": "7a8b177f6a7b33d2eddcf4aed3eea780",
+    "semantic_hash": ""
+  },
+  "docs/sprints/TASK-003_NORMALIZATION_REPORT.md": {
+    "mtime": 1784095121.3464394,
+    "ast_hash": "283d6df00e2215fc903679fd895e0c89",
     "semantic_hash": ""
   }
 }

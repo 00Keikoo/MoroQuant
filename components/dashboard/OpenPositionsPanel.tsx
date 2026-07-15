@@ -10,11 +10,12 @@
  * never overflows on small screens. PnL is colored green/red.
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { getOpenPositions, type Position } from '@/lib/services/performanceService';
+import { useOpenPositions } from '@/lib/hooks/usePerformanceData';
 import { useTradingMode } from '@/lib/hooks/useTradingMode';
-
-const REFRESH_INTERVAL_MS = 30_000;
+import SkeletonTable from '@/components/shared/widgets/SkeletonTable';
+import WidgetEmpty from '@/components/shared/widgets/WidgetEmpty';
+import WidgetError from '@/components/shared/widgets/WidgetError';
+import type { Position } from '@/lib/services/performanceService';
 
 function formatPrice(v: number): string {
   if (!Number.isFinite(v)) return '-';
@@ -22,12 +23,9 @@ function formatPrice(v: number): string {
 }
 
 function pnlPct(p: Position): number | null {
-  // The backend may not return pnl_pct directly; derive it from entry/mark
-  // when possible. Falls back to null when inputs are unusable.
   if (!Number.isFinite(p.entry_price) || !Number.isFinite(p.mark_price) || p.entry_price === 0) {
     return null;
   }
-  // Direction-aware: a long profits when mark > entry; short the inverse.
   const dir = (p.side || '').toLowerCase();
   const raw = (p.mark_price - p.entry_price) / p.entry_price;
   const signed = dir === 'short' ? -raw : raw;
@@ -36,39 +34,10 @@ function pnlPct(p: Position): number | null {
 
 export default function OpenPositionsPanel() {
   const { mode } = useTradingMode();
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [totalPnl, setTotalPnl] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const { data: positions = [], isLoading, error, dataUpdatedAt, refetch } = useOpenPositions();
 
-  const load = useCallback(async () => {
-    if (mode === 'OFF') {
-      setPositions([]);
-      setTotalPnl(0);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-    try {
-      const tradingMode = mode || 'LIVE';
-      const data = await getOpenPositions(tradingMode);
-      setPositions(data);
-      setTotalPnl(data.reduce((sum, p) => sum + (Number.isFinite(p.unrealized_pnl) ? p.unrealized_pnl : 0), 0));
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load positions');
-    } finally {
-      setLoading(false);
-      setLastUpdated(new Date().toLocaleTimeString());
-    }
-  }, [mode]);
-
-  useEffect(() => {
-    load();
-    const id = setInterval(load, REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [load]);
+  const totalPnl = positions.reduce((sum, p) => sum + (Number.isFinite(p.unrealized_pnl) ? p.unrealized_pnl : 0), 0);
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : null;
 
   return (
     <section className="glass-card overflow-hidden">
@@ -108,20 +77,15 @@ export default function OpenPositionsPanel() {
 
       {/* Body */}
       <div className="p-4">
-        {loading ? (
-          <div className="space-y-2">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-10 rounded-md bg-white/[0.03] animate-pulse" />
-            ))}
-          </div>
+        {isLoading ? (
+          <SkeletonTable rows={3} columns={6} />
         ) : error ? (
-          <p className="text-xs text-mq-warning py-6 text-center">
-            {error}. Retrying automatically…
-          </p>
+          <WidgetError error={error} onRetry={refetch} />
         ) : positions.length === 0 ? (
-          <p className="text-xs text-mq-muted py-6 text-center">
-            No open positions. Synced from Binance Futures every 30s.
-          </p>
+          <WidgetEmpty
+            message="No open positions"
+            description="Synced from Binance Futures every 30s"
+          />
         ) : (
           <>
             {/* Desktop / tablet table */}

@@ -1,39 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getSignalHistory, SignalHistoryEntry, getLivePositions, LivePosition } from '@/lib/services/performanceService';
+import { useState } from 'react';
+import { useOpenPositions, useSignalHistory } from '@/lib/hooks/usePerformanceData';
+import type { Position, SignalHistoryEntry } from '@/lib/services/performanceService';
 import InspectorPanel from './InspectorPanel';
-import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 export default function DashboardLayout() {
-  const { mode } = useTradingMode();
-  const [signals, setSignals] = useState<SignalHistoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [positions, setPositions] = useState<LivePosition[]>([]);
-  const [selectedPosition, setSelectedPosition] = useState<LivePosition | null>(null);
+  const { data: positions = [], isLoading: loadingPositions } = useOpenPositions();
+  const { data: signals = [], isLoading: loadingSignals } = useSignalHistory(10);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (mode === null) return;
-      try {
-        const tradingMode = mode;
-        const [positionsData, signalsData] = await Promise.all([
-          getLivePositions(tradingMode),
-          getSignalHistory(10, tradingMode)
-        ]);
-        setPositions(positionsData);
-        setSignals(signalsData);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [mode]);
+  const loading = loadingPositions || loadingSignals;
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);

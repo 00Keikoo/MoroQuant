@@ -8,6 +8,9 @@
 
 import type { TradingMode } from '@/lib/types/ml';
 
+// Re-export TradingMode for hooks
+export type { TradingMode } from '@/lib/types/ml';
+
 // ─── Types ───────────────────────────────────────────────────────
 
 export interface LiveMetrics {
@@ -198,6 +201,28 @@ function getApiBaseUrl(): string {
   return 'http://localhost:8000/api';
 }
 
+async function fetchWithTimeout(
+  url: string,
+  timeoutMs = 8000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      const timeoutError = new Error('Request timed out');
+      timeoutError.name = 'TimeoutError';
+      throw timeoutError;
+    }
+    throw err;
+  }
+}
+
 async function fetchWithRetry(
   url: string,
   retries = 3,
@@ -207,7 +232,7 @@ async function fetchWithRetry(
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      const response = await fetchWithTimeout(url);
 
       if (response.ok) return response;
 
@@ -218,8 +243,8 @@ async function fetchWithRetry(
 
       lastError = new Error(`Server error: ${response.status} ${response.statusText}`);
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'TimeoutError') {
-        lastError = new Error('Request timed out');
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        lastError = err;
       } else if (err instanceof Error) {
         lastError = err;
       } else {
@@ -234,6 +259,239 @@ async function fetchWithRetry(
   }
 
   throw lastError || new Error('Request failed after retries');
+}
+
+// ─── Normalization Layer ─────────────────────────────────────────
+
+/**
+ * Normalize paper analytics response to canonical LiveMetrics.
+ * Backend: /api/paper/analytics
+ * Fields: total_trades, win_rate, total_realized_pnl, avg_trade_pnl,
+ *         profit_factor, expectancy, avg_hold_hours, sharpe_ratio
+ */
+function normalizePaperAnalytics(
+  backend: any,
+  positions: any[],
+): LiveMetrics {
+  const wins = positions.filter((p: any) => (Number(p.realized_pnl) || 0) > 0);
+  const losses = positions.filter((p: any) => (Number(p.realized_pnl) || 0) <= 0);
+
+  const gross_profit = wins.reduce((sum: number, p: any) => sum + (Number(p.realized_pnl) || 0), 0);
+  const gross_loss = Math.abs(losses.reduce((sum: number, p: any) => sum + (Number(p.realized_pnl) || 0), 0));
+
+  const avg_win = wins.length > 0 ? gross_profit / wins.length : 0;
+  const avg_loss = losses.length > 0 ? gross_loss / losses.length : 0;
+
+  const starting_balance = 10000;
+  const roi = (backend.total_realized_pnl / starting_balance) * 100;
+
+  return {
+    total_trades: Number(backend.total_trades) || 0,
+    winning_trades: wins.length,
+    losing_trades: losses.length,
+    win_rate: Number(backend.win_rate) || 0,
+    total_pnl: Number(backend.total_realized_pnl) || 0,
+    avg_pnl: Number(backend.avg_trade_pnl) || 0,
+    avg_win: Number(avg_win.toFixed(2)),
+    avg_loss: Number(avg_loss.toFixed(2)),
+    profit_factor: Number(backend.profit_factor) || 0,
+    expectancy: Number(backend.expectancy) || 0,
+    roi: Number(roi.toFixed(4)),
+    gross_profit: Number(gross_profit.toFixed(2)),
+    gross_loss: Number(gross_loss.toFixed(2)),
+    sharpe_ratio: backend.sharpe_ratio !== null ? Number(backend.sharpe_ratio) : null,
+    max_drawdown: 0,
+    max_drawdown_pct: 0,
+    avg_hold_time_hours: backend.avg_hold_hours !== null ? Number(backend.avg_hold_hours) : null,
+  };
+}
+
+/**
+ * Compute max drawdown from equity curve.
+ */
+function computeMaxDrawdown(equityCurve: EquityPoint[], startingBalance: number): {
+  max_drawdown: number;
+  max_drawdown_pct: number;
+} {
+  if (equityCurve.length === 0) {
+    return { max_drawdown: 0, max_drawdown_pct: 0 };
+  }
+
+  let runningMax = 0;
+  let maxDd = 0;
+  let maxDdPct = 0;
+
+  equityCurve.forEach((pt: any) => {
+    if (pt.cumulative_pnl > runningMax) {
+      runningMax = pt.cumulative_pnl;
+    }
+    const dd = runningMax - pt.cumulative_pnl;
+    if (dd > maxDd) {
+      maxDd = dd;
+    }
+
+    const peakVal = startingBalance + runningMax;
+    const ddPct = (dd / peakVal) * 100;
+    if (ddPct > maxDdPct) {
+      maxDdPct = ddPct;
+    }
+  });
+
+  return {
+    max_drawdown: maxDd,
+    max_drawdown_pct: maxDdPct,
+  };
+}
+
+/**
+ * Normalize paper closed position to canonical RecentTrade.
+ * Backend: /api/paper/positions/closed
+ * Fields: id, symbol, direction, entry_price, current_price, realized_pnl,
+ *         opened_at, closed_at, confidence, regime, qty, duration_minutes, signal_id
+ */
+function normalizePaperPosition(pos: any): RecentTrade {
+  let entryTs = Date.now();
+  let exitTs = Date.now();
+
+  if (pos.opened_at) {
+    let dateStr = pos.opened_at;
+    if (!dateStr.includes('T') && dateStr.includes(' ')) dateStr = dateStr.replace(' ', 'T');
+    if (!dateStr.endsWith('Z') && !dateStr.includes('+')) dateStr += 'Z';
+    entryTs = new Date(dateStr).getTime();
+  }
+
+  if (pos.closed_at) {
+    let dateStr = pos.closed_at;
+    if (!dateStr.includes('T') && dateStr.includes(' ')) dateStr = dateStr.replace(' ', 'T');
+    if (!dateStr.endsWith('Z') && !dateStr.includes('+')) dateStr += 'Z';
+    exitTs = new Date(dateStr).getTime();
+  }
+
+  const pnl = Number(pos.realized_pnl) || 0;
+
+  return {
+    symbol: pos.symbol || '',
+    side: (pos.direction || '').toUpperCase(),
+    direction: (pos.direction || '').toUpperCase(),
+    entry_time: entryTs,
+    exit_time: exitTs,
+    duration_minutes: Number(pos.duration_minutes) || 0,
+    entry_price: Number(pos.entry_price) || 0,
+    exit_price: Number(pos.current_price || pos.exit_price) || 0,
+    quantity: Number(pos.qty) || 0,
+    gross_pnl: pnl,
+    commission: 0,
+    net_pnl: pnl,
+    regime: pos.regime || 'unknown',
+    confidence: pos.confidence !== undefined ? Number(pos.confidence) : null,
+    outcome: pnl > 0 ? ('win' as const) : ('loss' as const),
+    matched_signal_id: pos.signal_id || null,
+    fill_count: 1,
+  };
+}
+
+/**
+ * Normalize paper open position to canonical Position.
+ * Backend: /api/paper/positions/live
+ * Fields: id, symbol, direction, entry_price, mark_price, qty, floating_pnl,
+ *         confidence, regime, stop_loss, take_profit
+ */
+function normalizePaperOpenPosition(pos: any): Position {
+  const side = (pos.direction || '').toLowerCase();
+  const unrealized_pnl = Number(pos.floating_pnl !== undefined ? pos.floating_pnl : pos.unrealized_pnl) || 0;
+  const quantity = Number(pos.qty || pos.quantity) || 0;
+
+  return {
+    symbol: pos.symbol || '',
+    side,
+    entry_price: Number(pos.entry_price) || 0,
+    mark_price: Number(pos.mark_price) || 0,
+    unrealized_pnl,
+    quantity,
+    take_profit: pos.take_profit !== undefined ? pos.take_profit : null,
+    stop_loss: pos.stop_loss !== undefined ? pos.stop_loss : null,
+    signal: pos.confidence !== undefined ? {
+      direction: side,
+      confidence: Number(pos.confidence) || 0,
+    } : undefined,
+    agreement: 'match',
+  };
+}
+
+/**
+ * Normalize live open position to canonical Position.
+ * Backend: /api/positions/open
+ * Fields: symbol, side, position_amt, entry_price, mark_price, unrealized_pnl,
+ *         take_profit, stop_loss, signal
+ */
+function normalizeLiveOpenPosition(pos: any): Position {
+  const side = (pos.side || pos.direction || '').toLowerCase();
+  const unrealized_pnl = Number(pos.unrealized_pnl !== undefined ? pos.unrealized_pnl : pos.floating_pnl) || 0;
+  const quantity = Number(pos.position_amt || pos.qty || pos.quantity) || 0;
+
+  return {
+    symbol: pos.symbol || '',
+    side,
+    entry_price: Number(pos.entry_price) || 0,
+    mark_price: Number(pos.mark_price) || 0,
+    unrealized_pnl,
+    quantity,
+    take_profit: pos.take_profit !== undefined ? pos.take_profit : null,
+    stop_loss: pos.stop_loss !== undefined ? pos.stop_loss : null,
+    signal: pos.signal ? {
+      direction: String(pos.signal.direction || '').toLowerCase(),
+      confidence: Number(pos.signal.confidence) || 0,
+    } : (pos.direction && pos.confidence ? {
+      direction: String(pos.direction).toLowerCase(),
+      confidence: Number(pos.confidence) || 0,
+    } : undefined),
+    agreement: pos.agreement || 'match',
+  };
+}
+
+/**
+ * Normalize confidence bucket to canonical ConfidenceBucket.
+ * Backend: /api/paper/analytics/confidence
+ * Fields: bucket, total_trades, win_rate, total_pnl, avg_pnl, profit_factor
+ */
+function normalizeConfidenceBucket(bucket: any): ConfidenceBucket {
+  return {
+    bucket: bucket.bucket || '',
+    total_trades: Number(bucket.total_trades) || 0,
+    win_rate: Number(bucket.win_rate) || 0,
+    expectancy: Number(bucket.avg_pnl) || 0,
+    total_pnl: Number(bucket.total_pnl) || 0,
+  };
+}
+
+/**
+ * Normalize regime metrics to canonical RegimeMetrics.
+ * Backend: /api/paper/analytics/regime
+ * Fields: regime, total_trades, win_rate, total_pnl, avg_pnl
+ */
+function normalizeRegimeMetrics(regime: any): RegimeMetrics {
+  const totalPnl = Number(regime.total_pnl) || 0;
+  const totalTrades = Number(regime.total_trades) || 0;
+  const winRate = Number(regime.win_rate) || 0;
+  const expectancy = Number(regime.avg_pnl) || 0;
+
+  // Estimate profit factor from win rate and expectancy
+  let profitFactor: number | string = 0;
+  if (totalTrades > 0 && winRate > 0 && winRate < 100) {
+    const avgWin = expectancy > 0 ? expectancy / (winRate / 100) : 0;
+    const avgLoss = expectancy < 0 ? Math.abs(expectancy / (1 - winRate / 100)) : 0;
+    if (avgLoss > 0) {
+      profitFactor = (avgWin * winRate) / (avgLoss * (100 - winRate));
+    }
+  }
+
+  return {
+    regime_label: regime.regime || 'unknown',
+    total_trades: totalTrades,
+    win_rate: winRate,
+    profit_factor: typeof profitFactor === 'number' ? profitFactor : 0,
+    expectancy,
+  };
 }
 
 // ─── API Functions ────────────────────────────────────────────────
@@ -271,10 +529,101 @@ export async function getLivePerformanceReport(mode: TradingMode): Promise<LiveP
 
   const base = getApiBaseUrl();
 
-  // Route based on Trading Mode
-  const endpoint = mode === 'PAPER'
-    ? `${base}/paper/analytics`
-    : `${base}/analytics/live-performance`;
+  if (mode === 'PAPER') {
+    // Fetch paper analytics and closed positions
+    const analyticsResponse = await fetchWithRetry(`${base}/paper/analytics`);
+    const paperAnalytics = await analyticsResponse.json();
+
+    if (paperAnalytics.status !== 'success' && paperAnalytics.status !== 'no_data') {
+      throw new Error(`Unexpected status: ${paperAnalytics.status}`);
+    }
+
+    if (paperAnalytics.status === 'no_data') {
+      return {
+        status: 'no_data',
+        symbol: 'all',
+        period_days: 'all_time',
+        metrics: {
+          total_trades: 0,
+          winning_trades: 0,
+          losing_trades: 0,
+          win_rate: 0,
+          total_pnl: 0,
+          avg_pnl: 0,
+          avg_win: 0,
+          avg_loss: 0,
+          profit_factor: 0,
+          expectancy: 0,
+          roi: 0,
+          gross_profit: 0,
+          gross_loss: 0,
+          sharpe_ratio: null,
+          max_drawdown: 0,
+          max_drawdown_pct: 0,
+          avg_hold_time_hours: null,
+        },
+        timestamp: paperAnalytics.timestamp || new Date().toISOString(),
+        equity_curve: [],
+        recent_trades: [],
+      };
+    }
+
+    const closedPositionsResponse = await fetchWithRetry(`${base}/paper/positions/closed?limit=1000`);
+    const closedData = await closedPositionsResponse.json();
+    const positions = (closedData.positions || []).slice().reverse();
+
+    // Build equity curve
+    let cumulative_pnl = 0;
+    const equity_curve = positions.map((pos: any, idx: number) => {
+      const pnl = Number(pos.realized_pnl) || 0;
+      cumulative_pnl += pnl;
+
+      let ts = Date.now();
+      if (pos.closed_at) {
+        let dateStr = pos.closed_at;
+        if (!dateStr.includes('T') && dateStr.includes(' ')) {
+          dateStr = dateStr.replace(' ', 'T');
+        }
+        if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
+          dateStr += 'Z';
+        }
+        ts = new Date(dateStr).getTime();
+      }
+
+      return {
+        timestamp: ts,
+        cumulative_pnl: Number(cumulative_pnl.toFixed(2)),
+        trade_count: idx + 1,
+        trade_pnl: Number(pnl.toFixed(2)),
+        equity: Number((10000 + cumulative_pnl).toFixed(2)),
+      };
+    });
+
+    // Normalize metrics using normalization layer
+    const metrics = normalizePaperAnalytics(paperAnalytics, positions);
+    const drawdown = computeMaxDrawdown(equity_curve, 10000);
+    metrics.max_drawdown = Number(drawdown.max_drawdown.toFixed(2));
+    metrics.max_drawdown_pct = Number(drawdown.max_drawdown_pct.toFixed(2));
+
+    // Normalize recent trades
+    const recent_trades = positions
+      .slice().reverse()
+      .slice(0, 20)
+      .map(normalizePaperPosition);
+
+    return {
+      status: 'success',
+      symbol: 'all',
+      period_days: 'all_time',
+      metrics,
+      timestamp: paperAnalytics.timestamp || new Date().toISOString(),
+      equity_curve,
+      recent_trades,
+    };
+  }
+
+  // Route based on Trading Mode (LIVE / Default)
+  const endpoint = `${base}/analytics/live-performance`;
 
   const response = await fetchWithRetry(endpoint);
   const data: LivePerformanceReport = await response.json();
@@ -305,14 +654,40 @@ export async function getRecentTrades(
   if (opts?.daysBack !== undefined) params.set('days_back', String(opts.daysBack));
   const qs = params.toString();
 
-  // Route based on Trading Mode
   const endpoint = mode === 'PAPER'
     ? `${base}/paper/positions/closed${qs ? `?${qs}` : ''}`
     : `${base}/analytics/recent-trades${qs ? `?${qs}` : ''}`;
 
   const response = await fetchWithRetry(endpoint);
   const data = await response.json();
-  return data.trades || data.positions || [];
+  const rawTrades = data.trades || data.positions || [];
+
+  // Normalize trades based on mode
+  if (mode === 'PAPER') {
+    return rawTrades.map(normalizePaperPosition);
+  } else {
+    // LIVE mode trades should already be in canonical format from backend
+    // but we still map to ensure consistency
+    return rawTrades.map((trade: any) => ({
+      symbol: trade.symbol || '',
+      side: (trade.side || trade.direction || '').toUpperCase(),
+      direction: (trade.direction || trade.side || '').toUpperCase(),
+      entry_time: trade.entry_time || Date.now(),
+      exit_time: trade.exit_time || Date.now(),
+      duration_minutes: Number(trade.duration_minutes) || 0,
+      entry_price: Number(trade.entry_price) || 0,
+      exit_price: Number(trade.exit_price) || 0,
+      quantity: Number(trade.quantity) || 0,
+      gross_pnl: Number(trade.gross_pnl) || 0,
+      commission: Number(trade.commission) || 0,
+      net_pnl: Number(trade.net_pnl) || 0,
+      regime: trade.regime || 'unknown',
+      confidence: trade.confidence !== undefined ? Number(trade.confidence) : null,
+      outcome: trade.outcome || ((Number(trade.net_pnl) || 0) > 0 ? 'win' : 'loss') as 'win' | 'loss' | 'breakeven',
+      matched_signal_id: trade.matched_signal_id || null,
+      fill_count: Number(trade.fill_count) || 1,
+    }));
+  }
 }
 
 export async function getOpenPositions(mode: TradingMode): Promise<Position[]> {
@@ -322,7 +697,6 @@ export async function getOpenPositions(mode: TradingMode): Promise<Position[]> {
 
   const base = getApiBaseUrl();
 
-  // Route based on Trading Mode
   const endpoint = mode === 'PAPER'
     ? `${base}/paper/positions/live`
     : `${base}/positions/open`;
@@ -331,30 +705,12 @@ export async function getOpenPositions(mode: TradingMode): Promise<Position[]> {
   const data = await response.json();
   const rawPositions = data.positions || [];
 
-  return rawPositions.map((pos: any) => {
-    const side = (pos.side || pos.direction || '').toLowerCase();
-    const unrealized_pnl = Number(pos.unrealized_pnl !== undefined ? pos.unrealized_pnl : pos.floating_pnl) || 0;
-    const quantity = Number(pos.position_amt || pos.qty || pos.quantity) || 0;
-    
-    return {
-      symbol: pos.symbol || '',
-      side,
-      entry_price: Number(pos.entry_price) || 0,
-      mark_price: Number(pos.mark_price) || 0,
-      unrealized_pnl,
-      quantity,
-      take_profit: pos.take_profit !== undefined ? pos.take_profit : null,
-      stop_loss: pos.stop_loss !== undefined ? pos.stop_loss : null,
-      signal: pos.signal ? {
-        direction: String(pos.signal.direction || '').toLowerCase(),
-        confidence: Number(pos.signal.confidence) || 0,
-      } : (pos.direction && pos.confidence ? {
-        direction: String(pos.direction).toLowerCase(),
-        confidence: Number(pos.confidence) || 0,
-      } : undefined),
-      agreement: pos.agreement || 'match',
-    };
-  });
+  // Normalize positions based on mode
+  if (mode === 'PAPER') {
+    return rawPositions.map(normalizePaperOpenPosition);
+  } else {
+    return rawPositions.map(normalizeLiveOpenPosition);
+  }
 }
 
 export async function getRegimePerformance(mode: TradingMode): Promise<Record<string, RegimeMetrics>> {
@@ -364,7 +720,6 @@ export async function getRegimePerformance(mode: TradingMode): Promise<Record<st
 
   const base = getApiBaseUrl();
 
-  // Route based on Trading Mode
   const endpoint = mode === 'PAPER'
     ? `${base}/paper/analytics/regime`
     : `${base}/analytics/regimes`;
@@ -373,7 +728,15 @@ export async function getRegimePerformance(mode: TradingMode): Promise<Record<st
   const data = await response.json();
 
   if (data.status !== 'success') return {};
-  return data.regimes || {};
+
+  const regimes = data.regimes || {};
+  const normalized: Record<string, RegimeMetrics> = {};
+
+  for (const [key, value] of Object.entries(regimes)) {
+    normalized[key] = normalizeRegimeMetrics(value);
+  }
+
+  return normalized;
 }
 
 export async function getConfidenceBuckets(mode: TradingMode): Promise<Record<string, ConfidenceBucket>> {
@@ -383,7 +746,6 @@ export async function getConfidenceBuckets(mode: TradingMode): Promise<Record<st
 
   const base = getApiBaseUrl();
 
-  // Route based on Trading Mode
   const endpoint = mode === 'PAPER'
     ? `${base}/paper/analytics/confidence`
     : `${base}/analytics/confidence`;
@@ -392,7 +754,15 @@ export async function getConfidenceBuckets(mode: TradingMode): Promise<Record<st
   const data = await response.json();
 
   if (data.status !== 'success') return {};
-  return data.confidence_buckets || {};
+
+  const buckets = data.confidence_buckets || {};
+  const normalized: Record<string, ConfidenceBucket> = {};
+
+  for (const [key, value] of Object.entries(buckets)) {
+    normalized[key] = normalizeConfidenceBucket(value);
+  }
+
+  return normalized;
 }
 
 // ─── Model drift & current-regime fetchers ──────────────────────────

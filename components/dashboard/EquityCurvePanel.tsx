@@ -1,8 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { getAccountEquityHistory, type EquitySnapshot, type EquityRange } from '@/lib/services/performanceService';
-import { useTradingMode } from '@/lib/hooks/useTradingMode';
+import { useState } from 'react';
+import { useEquityHistory } from '@/lib/hooks/usePerformanceData';
+import SkeletonChart from '@/components/shared/widgets/SkeletonChart';
+import WidgetEmpty from '@/components/shared/widgets/WidgetEmpty';
+import WidgetError from '@/components/shared/widgets/WidgetError';
+import type { EquityRange } from '@/lib/services/performanceService';
 
 type TimeframeButton = '7D' | '30D' | 'ALL';
 
@@ -13,36 +16,9 @@ const TIMEFRAME_TO_RANGE: Record<TimeframeButton, EquityRange> = {
 };
 
 export default function EquityCurvePanel() {
-  const { mode } = useTradingMode();
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeButton>('7D');
-  const [equityData, setEquityData] = useState<EquitySnapshot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (mode === 'OFF') {
-      setEquityData([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const range = TIMEFRAME_TO_RANGE[selectedTimeframe];
-      const tradingMode = mode || 'LIVE';
-      const data = await getAccountEquityHistory(range, tradingMode);
-      setEquityData(data);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load equity data');
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedTimeframe, mode]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const range = TIMEFRAME_TO_RANGE[selectedTimeframe];
+  const { data: equityData = [], isLoading, error, refetch, isFetching } = useEquityHistory(range);
 
   return (
     <div className="bg-surface-container-low border border-outline-variant flex flex-col overflow-hidden">
@@ -94,24 +70,33 @@ export default function EquityCurvePanel() {
         </div>
       </div>
       <div className="flex-1 relative bg-surface-container-lowest">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-full h-px bg-outline-variant/30 top-1/4 absolute"></div>
-          <div className="w-full h-px bg-outline-variant/30 top-2/4 absolute"></div>
-          <div className="w-full h-px bg-outline-variant/30 top-3/4 absolute"></div>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          {loading ? (
-            <span className="text-xs text-secondary/50">Loading equity data...</span>
-          ) : error ? (
-            <span className="text-xs text-error">{error}</span>
-          ) : equityData.length === 0 ? (
-            <span className="text-xs text-secondary/50">No equity data available</span>
-          ) : (
-            <span className="text-xs text-secondary/50">
-              {equityData.length} data points | Latest: ${equityData[equityData.length - 1]?.equity.toFixed(2) || '0.00'}
-            </span>
-          )}
-        </div>
+        {isLoading || isFetching ? (
+          <SkeletonChart message="Loading equity data..." />
+        ) : error ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <WidgetError error={error} onRetry={refetch} />
+          </div>
+        ) : equityData.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <WidgetEmpty
+              message="No equity data available"
+              description="Data will appear once trades are executed"
+            />
+          </div>
+        ) : (
+          <>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-full h-px bg-outline-variant/30 top-1/4 absolute"></div>
+              <div className="w-full h-px bg-outline-variant/30 top-2/4 absolute"></div>
+              <div className="w-full h-px bg-outline-variant/30 top-3/4 absolute"></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs text-secondary/50">
+                {equityData.length} data points | Latest: ${equityData[equityData.length - 1]?.equity.toFixed(2) || '0.00'}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

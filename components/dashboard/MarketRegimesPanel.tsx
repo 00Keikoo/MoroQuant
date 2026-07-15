@@ -13,15 +13,11 @@
  *   Range    → blue    (text-mq-accent)
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import {
-  ACTIVE_PAIRS,
-  getCurrentRegimes,
-  type CurrentRegime,
-} from '@/lib/services/performanceService';
-import { useTradingMode } from '@/lib/hooks/useTradingMode';
-
-const REFRESH_INTERVAL_MS = 5 * 60_000;
+import { useCurrentRegimes } from '@/lib/hooks/usePerformanceData';
+import SkeletonCard from '@/components/shared/widgets/SkeletonCard';
+import WidgetEmpty from '@/components/shared/widgets/WidgetEmpty';
+import WidgetError from '@/components/shared/widgets/WidgetError';
+import { ACTIVE_PAIRS } from '@/lib/services/performanceService';
 
 type RegimeKind = 'trending' | 'choppy' | 'volatile' | 'range' | 'unknown';
 
@@ -45,35 +41,7 @@ function classifyRegime(raw: string): { kind: RegimeKind; label: string } {
 }
 
 export default function MarketRegimesPanel() {
-  const { mode } = useTradingMode();
-  const [regimes, setRegimes] = useState<CurrentRegime[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (mode === 'OFF') {
-      setRegimes([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-    try {
-      const tradingMode = mode || 'LIVE';
-      const data = await getCurrentRegimes(ACTIVE_PAIRS, tradingMode);
-      setRegimes(data);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load regimes');
-    } finally {
-      setLoading(false);
-    }
-  }, [mode]);
-
-  useEffect(() => {
-    load();
-    const id = setInterval(load, REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [load]);
+  const { data: regimes = [], isLoading, error, refetch } = useCurrentRegimes();
 
   return (
     <section className="glass-card overflow-hidden flex flex-col">
@@ -87,16 +55,16 @@ export default function MarketRegimesPanel() {
 
       {/* Body */}
       <div className="p-4 flex-1">
-        {loading ? (
-          <div className="space-y-2">
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {ACTIVE_PAIRS.map((_, i) => (
-              <div key={i} className="h-9 rounded-md bg-white/[0.03] animate-pulse" />
+              <SkeletonCard key={i} height="h-9" />
             ))}
           </div>
         ) : error ? (
-          <p className="text-xs text-mq-warning py-6 text-center">{error}</p>
+          <WidgetError error={error} onRetry={refetch} />
         ) : regimes.length === 0 ? (
-          <p className="text-xs text-mq-muted py-6 text-center">No regime data available.</p>
+          <WidgetEmpty message="No regime data available" />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {regimes.map((r) => {

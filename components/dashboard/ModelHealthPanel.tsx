@@ -16,12 +16,11 @@
  *   score ≥ 0.4          → red
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import {
-  getModelDriftForActiveModels,
-  type ModelDriftSummary,
-} from '@/lib/services/performanceService';
-import { useTradingMode } from '@/lib/hooks/useTradingMode';
+import { useModelHealth } from '@/lib/hooks/usePerformanceData';
+import SkeletonCard from '@/components/shared/widgets/SkeletonCard';
+import WidgetEmpty from '@/components/shared/widgets/WidgetEmpty';
+import WidgetError from '@/components/shared/widgets/WidgetError';
+import type { ModelDriftSummary } from '@/lib/services/performanceService';
 
 type Status = ModelDriftSummary['health_status'];
 
@@ -38,37 +37,7 @@ interface ModelHealthPanelProps {
 }
 
 export default function ModelHealthPanel({ compact = false }: ModelHealthPanelProps) {
-  const { mode } = useTradingMode();
-  const [models, setModels] = useState<ModelDriftSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (mode === 'OFF') {
-      setModels([]);
-      setError(null);
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-    setRefreshing(true);
-    try {
-      const tradingMode = mode || 'LIVE';
-      const data = await getModelDriftForActiveModels(tradingMode);
-      setModels(data);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load model drift');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [mode]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data: models = [], isLoading, isFetching, error, refetch } = useModelHealth();
 
   const summary = {
     green: models.filter((m) => m.health_status === 'green').length,
@@ -85,12 +54,12 @@ export default function ModelHealthPanel({ compact = false }: ModelHealthPanelPr
         </h2>
         <button
           type="button"
-          onClick={load}
-          disabled={refreshing}
+          onClick={() => refetch()}
+          disabled={isFetching}
           className="text-[10px] font-semibold text-mq-muted hover:text-white transition-colors disabled:opacity-50 flex items-center gap-1 cursor-pointer"
         >
           <svg
-            className={`w-3 h-3 ${refreshing ? 'animate-spin text-mq-accent' : ''}`}
+            className={`w-3 h-3 ${isFetching ? 'animate-spin text-mq-accent' : ''}`}
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -98,12 +67,12 @@ export default function ModelHealthPanel({ compact = false }: ModelHealthPanelPr
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          {refreshing ? 'Scanning' : 'Refresh'}
+          {isFetching ? 'Scanning' : 'Refresh'}
         </button>
       </div>
 
       {/* Summary chips */}
-      {!compact && !loading && !error && models.length > 0 && (
+      {!compact && !isLoading && !error && models.length > 0 && (
         <div className="flex items-center gap-3 px-4 py-2 border-b border-mq-panel-border">
           <span className="flex items-center gap-1 text-[10px] font-semibold text-mq-long">
             <span className="w-1.5 h-1.5 rounded-full bg-mq-long" /> {summary.green} Healthy
@@ -119,18 +88,19 @@ export default function ModelHealthPanel({ compact = false }: ModelHealthPanelPr
 
       {/* Body */}
       <div className="p-4 flex-1">
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[0, 1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-16 rounded-md bg-white/[0.03] animate-pulse" />
+              <SkeletonCard key={i} height="h-16" />
             ))}
           </div>
         ) : error ? (
-          <p className="text-xs text-mq-warning py-6 text-center">{error}</p>
+          <WidgetError error={error} onRetry={refetch} />
         ) : models.length === 0 ? (
-          <p className="text-xs text-mq-muted py-6 text-center">
-            No model drift data available. Ensure the ML service is running.
-          </p>
+          <WidgetEmpty
+            message="No model drift data available"
+            description="Ensure the ML service is running"
+          />
         ) : (
           <div className={`grid gap-2 ${compact ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'}`}>
             {models.map((m) => {

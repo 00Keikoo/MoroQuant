@@ -615,8 +615,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_operations_logs_page",
-      "community": 287,
-      "community_name": "TradingSidebarx (pagex)",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "page.tsx"
     },
     {
@@ -626,8 +626,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_operations_logs_page_logspage",
-      "community": 287,
-      "community_name": "TradingSidebarx (pagex)",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "logspage()"
     },
     {
@@ -681,8 +681,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_operations_settings_page",
-      "community": 120,
-      "community_name": "pagex (pagex)",
+      "community": 287,
+      "community_name": "TradingSidebarx (pagex)",
       "norm_label": "page.tsx"
     },
     {
@@ -692,8 +692,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_operations_settings_page_settingspage",
-      "community": 120,
-      "community_name": "pagex (pagex)",
+      "community": 287,
+      "community_name": "TradingSidebarx (pagex)",
       "norm_label": "settingspage()"
     },
     {
@@ -703,8 +703,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_operations_workers_page",
-      "community": 631,
-      "community_name": "page.tsx",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "page.tsx"
     },
     {
@@ -714,8 +714,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_operations_workers_page_workerspage",
-      "community": 631,
-      "community_name": "page.tsx",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "workerspage()"
     },
     {
@@ -5345,8 +5345,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_mock_data_logs",
-      "community": 287,
-      "community_name": "TradingSidebarx (pagex)",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "logs.ts"
     },
     {
@@ -5356,8 +5356,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_mock_data_logs_logentry",
-      "community": 287,
-      "community_name": "TradingSidebarx (pagex)",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "logentry"
     },
     {
@@ -5367,8 +5367,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "lib_mock_data_logs_logsdata",
-      "community": 287,
-      "community_name": "TradingSidebarx (pagex)",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "logsdata"
     },
     {
@@ -5664,8 +5664,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_mock_data_settings",
-      "community": 120,
-      "community_name": "pagex (pagex)",
+      "community": 287,
+      "community_name": "TradingSidebarx (pagex)",
       "norm_label": "settings.ts"
     },
     {
@@ -5675,8 +5675,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_mock_data_settings_systemsetting",
-      "community": 120,
-      "community_name": "pagex (pagex)",
+      "community": 287,
+      "community_name": "TradingSidebarx (pagex)",
       "norm_label": "systemsetting"
     },
     {
@@ -5686,8 +5686,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "lib_mock_data_settings_settingsdata",
-      "community": 120,
-      "community_name": "pagex (pagex)",
+      "community": 287,
+      "community_name": "TradingSidebarx (pagex)",
       "norm_label": "settingsdata"
     },
     {
@@ -5807,8 +5807,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_mock_data_workers",
-      "community": 631,
-      "community_name": "page.tsx",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "workers.ts"
     },
     {
@@ -5818,8 +5818,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_mock_data_workers_workernode",
-      "community": 631,
-      "community_name": "page.tsx",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "workernode"
     },
     {
@@ -5829,8 +5829,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "lib_mock_data_workers_clustermetrics",
-      "community": 631,
-      "community_name": "page.tsx",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "clustermetrics"
     },
     {
@@ -5840,8 +5840,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "lib_mock_data_workers_workersdata",
-      "community": 631,
-      "community_name": "page.tsx",
+      "community": 120,
+      "community_name": "pagex (pagex)",
       "norm_label": "workersdata"
     },
     {
@@ -6046,7 +6046,7 @@
       "label": ".getRecentTrades()",
       "file_type": "code",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L67",
+      "source_location": "L70",
       "_origin": "ast",
       "id": "lib_providers_paperprovider_paperprovider_getrecenttrades",
       "community": 11,
@@ -6057,7 +6057,7 @@
       "label": ".getRegimePerformance()",
       "file_type": "code",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L95",
+      "source_location": "L98",
       "_origin": "ast",
       "id": "lib_providers_paperprovider_paperprovider_getregimeperformance",
       "community": 23,
@@ -6068,7 +6068,7 @@
       "label": ".getConfidenceBuckets()",
       "file_type": "code",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L112",
+      "source_location": "L115",
       "_origin": "ast",
       "id": "lib_providers_paperprovider_paperprovider_getconfidencebuckets",
       "community": 23,
@@ -6079,7 +6079,7 @@
       "label": ".getEquityCurve()",
       "file_type": "code",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L129",
+      "source_location": "L132",
       "_origin": "ast",
       "id": "lib_providers_paperprovider_paperprovider_getequitycurve",
       "community": 11,
@@ -6255,7 +6255,7 @@
       "label": "LivePosition",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L75",
+      "source_location": "L78",
       "_origin": "ast",
       "id": "lib_services_performanceservice_liveposition",
       "community": 307,
@@ -6266,7 +6266,7 @@
       "label": "RegimeMetrics",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L86",
+      "source_location": "L81",
       "_origin": "ast",
       "id": "lib_services_performanceservice_regimemetrics",
       "community": 11,
@@ -6277,7 +6277,7 @@
       "label": "ConfidenceBucket",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L94",
+      "source_location": "L89",
       "_origin": "ast",
       "id": "lib_services_performanceservice_confidencebucket",
       "community": 11,
@@ -6288,7 +6288,7 @@
       "label": "LivePerformanceReport",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L102",
+      "source_location": "L97",
       "_origin": "ast",
       "id": "lib_services_performanceservice_liveperformancereport",
       "community": 307,
@@ -6299,7 +6299,7 @@
       "label": "AccountEquity",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L116",
+      "source_location": "L111",
       "_origin": "ast",
       "id": "lib_services_performanceservice_accountequity",
       "community": 11,
@@ -6310,7 +6310,7 @@
       "label": "EquitySnapshot",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L126",
+      "source_location": "L121",
       "_origin": "ast",
       "id": "lib_services_performanceservice_equitysnapshot",
       "community": 11,
@@ -6321,7 +6321,7 @@
       "label": "EquityRange",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L136",
+      "source_location": "L131",
       "_origin": "ast",
       "id": "lib_services_performanceservice_equityrange",
       "community": 11,
@@ -6332,7 +6332,7 @@
       "label": "ClosedTradeEquityResponse",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L139",
+      "source_location": "L134",
       "_origin": "ast",
       "id": "lib_services_performanceservice_closedtradeequityresponse",
       "community": 307,
@@ -6343,7 +6343,7 @@
       "label": "ModelDriftReport",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L152",
+      "source_location": "L147",
       "_origin": "ast",
       "id": "lib_services_performanceservice_modeldriftreport",
       "community": 307,
@@ -6354,7 +6354,7 @@
       "label": "ModelDriftSummary",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L166",
+      "source_location": "L161",
       "_origin": "ast",
       "id": "lib_services_performanceservice_modeldriftsummary",
       "community": 307,
@@ -6365,7 +6365,7 @@
       "label": "CurrentRegime",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L175",
+      "source_location": "L170",
       "_origin": "ast",
       "id": "lib_services_performanceservice_currentregime",
       "community": 307,
@@ -6376,7 +6376,7 @@
       "label": "ACTIVE_PAIRS",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L181",
+      "source_location": "L176",
       "_origin": "ast",
       "id": "lib_services_performanceservice_active_pairs",
       "community": 307,
@@ -6387,7 +6387,7 @@
       "label": "ACTIVE_TIMEFRAMES",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L190",
+      "source_location": "L185",
       "_origin": "ast",
       "id": "lib_services_performanceservice_active_timeframes",
       "community": 307,
@@ -6398,7 +6398,7 @@
       "label": "getApiBaseUrl()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L199",
+      "source_location": "L194",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getapibaseurl",
       "community": 307,
@@ -6409,7 +6409,7 @@
       "label": "fetchWithRetry()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L206",
+      "source_location": "L201",
       "_origin": "ast",
       "id": "lib_services_performanceservice_fetchwithretry",
       "community": 307,
@@ -6420,7 +6420,7 @@
       "label": "getLivePerformanceReport()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L246",
+      "source_location": "L241",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getliveperformancereport",
       "community": 307,
@@ -6431,7 +6431,7 @@
       "label": "getRecentTrades()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L298",
+      "source_location": "L471",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getrecenttrades",
       "community": 307,
@@ -6442,7 +6442,7 @@
       "label": "getOpenPositions()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L323",
+      "source_location": "L496",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getopenpositions",
       "community": 307,
@@ -6453,7 +6453,7 @@
       "label": "getRegimePerformance()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L340",
+      "source_location": "L538",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getregimeperformance",
       "community": 307,
@@ -6464,7 +6464,7 @@
       "label": "getConfidenceBuckets()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L359",
+      "source_location": "L557",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getconfidencebuckets",
       "community": 307,
@@ -6475,7 +6475,7 @@
       "label": "getModelDrift()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L384",
+      "source_location": "L582",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getmodeldrift",
       "community": 307,
@@ -6486,7 +6486,7 @@
       "label": "normalizeHealthStatus()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L407",
+      "source_location": "L605",
       "_origin": "ast",
       "id": "lib_services_performanceservice_normalizehealthstatus",
       "community": 307,
@@ -6497,7 +6497,7 @@
       "label": "getModelDriftForActiveModels()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L435",
+      "source_location": "L633",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getmodeldriftforactivemodels",
       "community": 307,
@@ -6508,7 +6508,7 @@
       "label": "getCurrentRegimes()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L481",
+      "source_location": "L679",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getcurrentregimes",
       "community": 307,
@@ -6519,7 +6519,7 @@
       "label": "getAccountEquity()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L516",
+      "source_location": "L714",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getaccountequity",
       "community": 307,
@@ -6530,7 +6530,7 @@
       "label": "getAccountEquityHistory()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L550",
+      "source_location": "L748",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getaccountequityhistory",
       "community": 307,
@@ -6541,7 +6541,7 @@
       "label": "getClosedTradeEquity()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L578",
+      "source_location": "L776",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getclosedtradeequity",
       "community": 307,
@@ -6552,7 +6552,7 @@
       "label": "SignalHistoryEntry",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L593",
+      "source_location": "L791",
       "_origin": "ast",
       "id": "lib_services_performanceservice_signalhistoryentry",
       "community": 307,
@@ -6563,7 +6563,7 @@
       "label": "getSignalHistory()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L602",
+      "source_location": "L800",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getsignalhistory",
       "community": 307,
@@ -6574,7 +6574,7 @@
       "label": "getLivePositions()",
       "file_type": "code",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L623",
+      "source_location": "L821",
       "_origin": "ast",
       "id": "lib_services_performanceservice_getlivepositions",
       "community": 307,
@@ -7809,8 +7809,8 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "ml_service_analytics_drift_monitor_get_latest_drift_snapshot",
-      "community": 7,
-      "community_name": "Research Integrity Layer",
+      "community": 3,
+      "community_name": "Calibration & Confidence Metrics",
       "norm_label": "get_latest_drift_snapshot()"
     },
     {
@@ -7919,8 +7919,8 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "ml_service_analytics_drift_monitor_rationale_169",
-      "community": 7,
-      "community_name": "Research Integrity Layer",
+      "community": 3,
+      "community_name": "Calibration & Confidence Metrics",
       "norm_label": "retrieve the most recent drift snapshot from the db cache.      returns the full"
     },
     {
@@ -10977,8 +10977,8 @@
       "source_location": "L830",
       "_origin": "ast",
       "id": "ml_service_api_routes_get_model_drift",
-      "community": 7,
-      "community_name": "Research Integrity Layer",
+      "community": 3,
+      "community_name": "Calibration & Confidence Metrics",
       "norm_label": "get_model_drift()"
     },
     {
@@ -11461,8 +11461,8 @@
       "source_location": "L831",
       "_origin": "ast",
       "id": "ml_service_api_routes_rationale_831",
-      "community": 7,
-      "community_name": "Research Integrity Layer",
+      "community": 3,
+      "community_name": "Calibration & Confidence Metrics",
       "norm_label": "get drift analysis for a model \u2014 served from the pre-computed cache.      the ex"
     },
     {
@@ -97636,7 +97636,7 @@
       "community": 639,
       "norm_label": "claude.md",
       "community_name": "CLAUDE.md",
-      "id": "claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
     },
     {
       "label": "graphify",
@@ -97650,7 +97650,7 @@
       "community": 510,
       "norm_label": "graphify",
       "community_name": "Module 510",
-      "id": "claude_claude_claude_claude_claude_claude_claude_graphify"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify"
     },
     {
       "label": "DESIGN.md",
@@ -97664,7 +97664,7 @@
       "community": 201,
       "norm_label": "design.md",
       "community_name": "Module 201",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
     },
     {
       "label": "Brand & Style",
@@ -97678,7 +97678,7 @@
       "community": 640,
       "norm_label": "brand & style",
       "community_name": "Brand & Style",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
     },
     {
       "label": "Colors",
@@ -97692,7 +97692,7 @@
       "community": 641,
       "norm_label": "colors",
       "community_name": "Colors",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
     },
     {
       "label": "Typography",
@@ -97706,7 +97706,7 @@
       "community": 646,
       "norm_label": "typography",
       "community_name": "Typography",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -97720,7 +97720,7 @@
       "community": 644,
       "norm_label": "layout & spacing",
       "community_name": "Layout & Spacing",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -97734,7 +97734,7 @@
       "community": 643,
       "norm_label": "elevation & depth",
       "community_name": "Elevation & Depth",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -97748,7 +97748,7 @@
       "community": 645,
       "norm_label": "shapes",
       "community_name": "Shapes",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
     },
     {
       "label": "Components",
@@ -97762,7 +97762,7 @@
       "community": 642,
       "norm_label": "components",
       "community_name": "Components",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
     },
     {
       "label": "DESIGN.md",
@@ -97776,7 +97776,7 @@
       "community": 308,
       "norm_label": "design.md",
       "community_name": "Module 308",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
     },
     {
       "label": "Brand & Style",
@@ -97790,7 +97790,7 @@
       "community": 647,
       "norm_label": "brand & style",
       "community_name": "Brand & Style",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
     },
     {
       "label": "Colors",
@@ -97804,7 +97804,7 @@
       "community": 648,
       "norm_label": "colors",
       "community_name": "Colors",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
     },
     {
       "label": "Typography",
@@ -97818,7 +97818,7 @@
       "community": 653,
       "norm_label": "typography",
       "community_name": "Typography",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -97832,7 +97832,7 @@
       "community": 651,
       "norm_label": "layout & spacing",
       "community_name": "Layout & Spacing",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -97846,7 +97846,7 @@
       "community": 650,
       "norm_label": "elevation & depth",
       "community_name": "Elevation & Depth",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -97860,7 +97860,7 @@
       "community": 652,
       "norm_label": "shapes",
       "community_name": "Shapes",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
     },
     {
       "label": "Components",
@@ -97874,7 +97874,7 @@
       "community": 649,
       "norm_label": "components",
       "community_name": "Components",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
     },
     {
       "label": "CLAUDE.md",
@@ -97888,7 +97888,7 @@
       "community": 556,
       "norm_label": "claude.md",
       "community_name": "Module 556",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
     },
     {
       "label": "graphify",
@@ -97902,7 +97902,7 @@
       "community": 555,
       "norm_label": "graphify",
       "community_name": "Module 555",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify"
     },
     {
       "label": "DESIGN.md",
@@ -97916,7 +97916,7 @@
       "community": 561,
       "norm_label": "design.md",
       "community_name": "Module 561",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
     },
     {
       "label": "Brand & Style",
@@ -97930,7 +97930,7 @@
       "community": 562,
       "norm_label": "brand & style",
       "community_name": "Module 562",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
     },
     {
       "label": "Colors",
@@ -97944,7 +97944,7 @@
       "community": 563,
       "norm_label": "colors",
       "community_name": "Module 563",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
     },
     {
       "label": "Typography",
@@ -97958,7 +97958,7 @@
       "community": 569,
       "norm_label": "typography",
       "community_name": "Module 569",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -97972,7 +97972,7 @@
       "community": 566,
       "norm_label": "layout & spacing",
       "community_name": "Module 566",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -97986,7 +97986,7 @@
       "community": 565,
       "norm_label": "elevation & depth",
       "community_name": "Module 565",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -98000,7 +98000,7 @@
       "community": 567,
       "norm_label": "shapes",
       "community_name": "Module 567",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
     },
     {
       "label": "Components",
@@ -98014,7 +98014,7 @@
       "community": 564,
       "norm_label": "components",
       "community_name": "Module 564",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
     },
     {
       "label": "DESIGN.md",
@@ -98028,7 +98028,7 @@
       "community": 574,
       "norm_label": "design.md",
       "community_name": "Module 574",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
     },
     {
       "label": "Brand & Style",
@@ -98042,7 +98042,7 @@
       "community": 575,
       "norm_label": "brand & style",
       "community_name": "Module 575",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
     },
     {
       "label": "Colors",
@@ -98056,7 +98056,7 @@
       "community": 576,
       "norm_label": "colors",
       "community_name": "Module 576",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
     },
     {
       "label": "Typography",
@@ -98070,7 +98070,7 @@
       "community": 582,
       "norm_label": "typography",
       "community_name": "Module 582",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -98084,7 +98084,7 @@
       "community": 579,
       "norm_label": "layout & spacing",
       "community_name": "Module 579",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -98098,7 +98098,7 @@
       "community": 578,
       "norm_label": "elevation & depth",
       "community_name": "Module 578",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -98112,7 +98112,7 @@
       "community": 580,
       "norm_label": "shapes",
       "community_name": "Module 580",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
     },
     {
       "label": "Components",
@@ -98126,7 +98126,7 @@
       "community": 577,
       "norm_label": "components",
       "community_name": "Module 577",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
     },
     {
       "label": "Graphify",
@@ -98168,7 +98168,7 @@
       "community": 554,
       "norm_label": "claude",
       "community_name": "Module 554",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude"
     },
     {
       "label": "Skill",
@@ -98378,7 +98378,7 @@
       "community": 568,
       "norm_label": "design",
       "community_name": "Module 568",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
     },
     {
       "label": "Code",
@@ -98420,7 +98420,7 @@
       "community": 581,
       "norm_label": "design",
       "community_name": "Module 581",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
     },
     {
       "label": "Code",
@@ -100011,7 +100011,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/dashboard/performance/page.tsx",
-      "source_location": "L179",
+      "source_location": "L181",
       "weight": 1.0,
       "source": "app_dashboard_performance_page_performancedashboard",
       "target": "components_performance_statisticsgrid_fmtnum"
@@ -100022,7 +100022,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/dashboard/performance/page.tsx",
-      "source_location": "L191",
+      "source_location": "L193",
       "weight": 1.0,
       "source": "app_dashboard_performance_page_performancedashboard",
       "target": "components_performance_statisticsgrid_fmtusd"
@@ -100044,7 +100044,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/dashboard/performance/page.tsx",
-      "source_location": "L49",
+      "source_location": "L51",
       "weight": 1.0,
       "source": "app_dashboard_performance_page_performancedashboard",
       "target": "lib_services_performanceservice_getconfidencebuckets"
@@ -100055,7 +100055,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/dashboard/performance/page.tsx",
-      "source_location": "L46",
+      "source_location": "L48",
       "weight": 1.0,
       "source": "app_dashboard_performance_page_performancedashboard",
       "target": "lib_services_performanceservice_getliveperformancereport"
@@ -100066,7 +100066,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/dashboard/performance/page.tsx",
-      "source_location": "L47",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "app_dashboard_performance_page_performancedashboard",
       "target": "lib_services_performanceservice_getopenpositions"
@@ -100077,7 +100077,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "app/dashboard/performance/page.tsx",
-      "source_location": "L48",
+      "source_location": "L50",
       "weight": 1.0,
       "source": "app_dashboard_performance_page_performancedashboard",
       "target": "lib_services_performanceservice_getregimeperformance"
@@ -103516,7 +103516,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "components/dashboard/KpiCards.tsx",
-      "source_location": "L53",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "components_dashboard_kpicards_kpicards",
       "target": "lib_api_ml_trading_getmodelhealth"
@@ -103538,7 +103538,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "components/dashboard/KpiCards.tsx",
-      "source_location": "L51",
+      "source_location": "L53",
       "weight": 1.0,
       "source": "components_dashboard_kpicards_kpicards",
       "target": "lib_services_performanceservice_getliveperformancereport"
@@ -103549,7 +103549,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "components/dashboard/KpiCards.tsx",
-      "source_location": "L52",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "components_dashboard_kpicards_kpicards",
       "target": "lib_services_performanceservice_getopenpositions"
@@ -103658,7 +103658,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "components/dashboard/Layout.tsx",
-      "source_location": "L20",
+      "source_location": "L21",
       "weight": 1.0,
       "source": "components_dashboard_layout_dashboardlayout",
       "target": "lib_services_performanceservice_getlivepositions"
@@ -103669,7 +103669,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "components/dashboard/Layout.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "components_dashboard_layout_dashboardlayout",
       "target": "lib_services_performanceservice_getsignalhistory"
@@ -109496,7 +109496,7 @@
       "deferred": true,
       "confidence": "EXTRACTED",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L113",
+      "source_location": "L116",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider_getconfidencebuckets",
       "target": "lib_api_ml_trading",
@@ -109508,7 +109508,7 @@
       "deferred": true,
       "confidence": "EXTRACTED",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L96",
+      "source_location": "L99",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider_getregimeperformance",
       "target": "lib_api_ml_trading",
@@ -109575,7 +109575,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L131",
+      "source_location": "L134",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider_getequitycurve",
       "target": "lib_api_ml_trading_getpaperaccount"
@@ -109619,7 +109619,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L68",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider_getrecenttrades",
       "target": "lib_api_ml_trading_getpapertrades"
@@ -109641,7 +109641,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L130",
+      "source_location": "L133",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider_getequitycurve",
       "target": "lib_api_ml_trading_getpaperequityhistory"
@@ -109685,7 +109685,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L114",
+      "source_location": "L117",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider_getconfidencebuckets",
       "target": "lib_api_ml_trading_getpaperconfidenceanalytics"
@@ -109696,7 +109696,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L97",
+      "source_location": "L100",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider_getregimeperformance",
       "target": "lib_api_ml_trading_getpaperregimeanalytics"
@@ -110995,7 +110995,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L112",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider",
       "target": "lib_providers_paperprovider_paperprovider_getconfidencebuckets",
@@ -111005,7 +111005,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L129",
+      "source_location": "L132",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider",
       "target": "lib_providers_paperprovider_paperprovider_getequitycurve",
@@ -111045,7 +111045,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L67",
+      "source_location": "L70",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider",
       "target": "lib_providers_paperprovider_paperprovider_getrecenttrades",
@@ -111055,7 +111055,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "lib/providers/paperProvider.ts",
-      "source_location": "L95",
+      "source_location": "L98",
       "weight": 1.0,
       "source": "lib_providers_paperprovider_paperprovider",
       "target": "lib_providers_paperprovider_paperprovider_getregimeperformance",
@@ -111386,7 +111386,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L116",
+      "source_location": "L111",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_accountequity",
@@ -111396,7 +111396,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L181",
+      "source_location": "L176",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_active_pairs",
@@ -111406,7 +111406,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L190",
+      "source_location": "L185",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_active_timeframes",
@@ -111416,7 +111416,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L139",
+      "source_location": "L134",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_closedtradeequityresponse",
@@ -111426,7 +111426,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L94",
+      "source_location": "L89",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_confidencebucket",
@@ -111436,7 +111436,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L175",
+      "source_location": "L170",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_currentregime",
@@ -111456,7 +111456,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L136",
+      "source_location": "L131",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_equityrange",
@@ -111466,7 +111466,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L126",
+      "source_location": "L121",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_equitysnapshot",
@@ -111476,7 +111476,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L206",
+      "source_location": "L201",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111486,7 +111486,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L516",
+      "source_location": "L714",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getaccountequity",
@@ -111496,7 +111496,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L550",
+      "source_location": "L748",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getaccountequityhistory",
@@ -111506,7 +111506,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L199",
+      "source_location": "L194",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111516,7 +111516,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L578",
+      "source_location": "L776",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getclosedtradeequity",
@@ -111526,7 +111526,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L359",
+      "source_location": "L557",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getconfidencebuckets",
@@ -111536,7 +111536,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L481",
+      "source_location": "L679",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getcurrentregimes",
@@ -111546,7 +111546,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L246",
+      "source_location": "L241",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getliveperformancereport",
@@ -111556,7 +111556,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L623",
+      "source_location": "L821",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getlivepositions",
@@ -111566,7 +111566,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L384",
+      "source_location": "L582",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getmodeldrift",
@@ -111576,7 +111576,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L435",
+      "source_location": "L633",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getmodeldriftforactivemodels",
@@ -111586,7 +111586,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L323",
+      "source_location": "L496",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getopenpositions",
@@ -111596,7 +111596,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L298",
+      "source_location": "L471",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getrecenttrades",
@@ -111606,7 +111606,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L340",
+      "source_location": "L538",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getregimeperformance",
@@ -111616,7 +111616,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L602",
+      "source_location": "L800",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_getsignalhistory",
@@ -111636,7 +111636,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L102",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_liveperformancereport",
@@ -111646,7 +111646,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L75",
+      "source_location": "L78",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_liveposition",
@@ -111656,7 +111656,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L152",
+      "source_location": "L147",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_modeldriftreport",
@@ -111666,7 +111666,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L166",
+      "source_location": "L161",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_modeldriftsummary",
@@ -111676,7 +111676,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L407",
+      "source_location": "L605",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_normalizehealthstatus",
@@ -111706,7 +111706,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L86",
+      "source_location": "L81",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_regimemetrics",
@@ -111716,7 +111716,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L593",
+      "source_location": "L791",
       "weight": 1.0,
       "source": "lib_services_performanceservice",
       "target": "lib_services_performanceservice_signalhistoryentry",
@@ -111749,7 +111749,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L529",
+      "source_location": "L727",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getaccountequity",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111760,7 +111760,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L559",
+      "source_location": "L757",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getaccountequityhistory",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111771,7 +111771,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L584",
+      "source_location": "L782",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getclosedtradeequity",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111782,7 +111782,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L364",
+      "source_location": "L562",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getconfidencebuckets",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111793,7 +111793,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L489",
+      "source_location": "L687",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getcurrentregimes",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111804,7 +111804,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L277",
+      "source_location": "L272",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getliveperformancereport",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111815,18 +111815,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L629",
-      "weight": 1.0,
-      "source": "lib_services_performanceservice_getlivepositions",
-      "target": "lib_services_performanceservice_getapibaseurl",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/services/performanceService.ts",
-      "source_location": "L400",
+      "source_location": "L598",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getmodeldrift",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111837,7 +111826,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L328",
+      "source_location": "L501",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getopenpositions",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111848,7 +111837,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L306",
+      "source_location": "L479",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getrecenttrades",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111859,7 +111848,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L345",
+      "source_location": "L543",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getregimeperformance",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111870,7 +111859,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L608",
+      "source_location": "L806",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getsignalhistory",
       "target": "lib_services_performanceservice_getapibaseurl",
@@ -111881,7 +111870,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L530",
+      "source_location": "L728",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getaccountequity",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111892,7 +111881,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L563",
+      "source_location": "L761",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getaccountequityhistory",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111903,7 +111892,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L585",
+      "source_location": "L783",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getclosedtradeequity",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111914,7 +111903,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L371",
+      "source_location": "L569",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getconfidencebuckets",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111925,7 +111914,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L493",
+      "source_location": "L691",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getcurrentregimes",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111936,7 +111925,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L284",
+      "source_location": "L276",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getliveperformancereport",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111947,18 +111936,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L630",
-      "weight": 1.0,
-      "source": "lib_services_performanceservice_getlivepositions",
-      "target": "lib_services_performanceservice_fetchwithretry",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "lib/services/performanceService.ts",
-      "source_location": "L401",
+      "source_location": "L599",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getmodeldrift",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111969,7 +111947,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L335",
+      "source_location": "L508",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getopenpositions",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111980,7 +111958,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L318",
+      "source_location": "L491",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getrecenttrades",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -111991,7 +111969,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L352",
+      "source_location": "L550",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getregimeperformance",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -112002,7 +111980,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L609",
+      "source_location": "L807",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getsignalhistory",
       "target": "lib_services_performanceservice_fetchwithretry",
@@ -112013,7 +111991,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L447",
+      "source_location": "L822",
+      "weight": 1.0,
+      "source": "lib_services_performanceservice_getlivepositions",
+      "target": "lib_services_performanceservice_getopenpositions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/services/performanceService.ts",
+      "source_location": "L645",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getmodeldriftforactivemodels",
       "target": "lib_services_performanceservice_getmodeldrift",
@@ -112024,7 +112013,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "lib/services/performanceService.ts",
-      "source_location": "L456",
+      "source_location": "L654",
       "weight": 1.0,
       "source": "lib_services_performanceservice_getmodeldriftforactivemodels",
       "target": "lib_services_performanceservice_normalizehealthstatus",
@@ -240265,5 +240254,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "49fc91926e387ae6373dbad0472b91490832cb66"
+  "built_at_commit": "582375bfe1f799f3c030ef5d741b90d98d7a46a1"
 }
