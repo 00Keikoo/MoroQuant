@@ -17,10 +17,12 @@ import {
   type RegimeMetrics,
   type ConfidenceBucket,
 } from '@/lib/services/performanceService';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 const AUTO_REFRESH_MS = 30_000;
 
 export default function PerformanceDashboard() {
+  const { mode } = useTradingMode();
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [equityCurve, setEquityCurve] = useState<EquityPoint[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -39,11 +41,12 @@ export default function PerformanceDashboard() {
     }
 
     try {
+      const tradingMode = mode || 'LIVE';
       const [report, positionsData, regimesData, confidenceData] = await Promise.all([
-        getLivePerformanceReport(),
-        getOpenPositions(),
-        getRegimePerformance(),
-        getConfidenceBuckets(),
+        getLivePerformanceReport(tradingMode),
+        getOpenPositions(tradingMode),
+        getRegimePerformance(tradingMode),
+        getConfidenceBuckets(tradingMode),
       ]);
 
       if (report.status === 'success') {
@@ -65,7 +68,7 @@ export default function PerformanceDashboard() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     fetchAllData(true);

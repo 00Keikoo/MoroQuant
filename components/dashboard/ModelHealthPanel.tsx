@@ -21,6 +21,7 @@ import {
   getModelDriftForActiveModels,
   type ModelDriftSummary,
 } from '@/lib/services/performanceService';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 type Status = ModelDriftSummary['health_status'];
 
@@ -37,15 +38,24 @@ interface ModelHealthPanelProps {
 }
 
 export default function ModelHealthPanel({ compact = false }: ModelHealthPanelProps) {
+  const { mode } = useTradingMode();
   const [models, setModels] = useState<ModelDriftSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (mode === 'OFF') {
+      setModels([]);
+      setError(null);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     setRefreshing(true);
     try {
-      const data = await getModelDriftForActiveModels();
+      const tradingMode = mode || 'LIVE';
+      const data = await getModelDriftForActiveModels(tradingMode);
       setModels(data);
       setError(null);
     } catch (e) {
@@ -54,7 +64,7 @@ export default function ModelHealthPanel({ compact = false }: ModelHealthPanelPr
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     load();

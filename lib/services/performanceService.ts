@@ -1,9 +1,12 @@
 /**
  * Performance Analytics Service
  *
- * Fetches live trading performance data from the ML backend.
+ * Fetches trading performance data from the ML backend.
+ * Routes requests based on Trading Mode (OFF/PAPER/LIVE).
  * Includes retry logic, proper typing, and error handling.
  */
+
+import type { TradingMode } from '@/lib/types/ml';
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -240,10 +243,45 @@ async function fetchWithRetry(
 
 // ─── API Functions ────────────────────────────────────────────────
 
-export async function getLivePerformanceReport(): Promise<LivePerformanceReport> {
-  const base = getApiBaseUrl();
-  const response = await fetchWithRetry(`${base}/analytics/live-performance`);
+export async function getLivePerformanceReport(mode: TradingMode): Promise<LivePerformanceReport> {
+  if (mode === 'OFF') {
+    return {
+      status: 'no_data',
+      symbol: '',
+      period_days: '',
+      metrics: {
+        total_trades: 0,
+        winning_trades: 0,
+        losing_trades: 0,
+        win_rate: 0,
+        total_pnl: 0,
+        avg_pnl: 0,
+        avg_win: 0,
+        avg_loss: 0,
+        profit_factor: 0,
+        expectancy: 0,
+        roi: 0,
+        gross_profit: 0,
+        gross_loss: 0,
+        sharpe_ratio: null,
+        max_drawdown: 0,
+        max_drawdown_pct: 0,
+        avg_hold_time_hours: null,
+      },
+      timestamp: new Date().toISOString(),
+      equity_curve: [],
+      recent_trades: [],
+    };
+  }
 
+  const base = getApiBaseUrl();
+
+  // Route based on Trading Mode
+  const endpoint = mode === 'PAPER'
+    ? `${base}/paper/analytics`
+    : `${base}/analytics/live-performance`;
+
+  const response = await fetchWithRetry(endpoint);
   const data: LivePerformanceReport = await response.json();
 
   if (data.status !== 'success' && data.status !== 'no_data') {
@@ -255,44 +293,82 @@ export async function getLivePerformanceReport(): Promise<LivePerformanceReport>
 
 /**
  * Fetch recent CLOSED POSITIONS (completed round trips), newest first.
- * GET /api/analytics/recent-trades
+ * GET /api/analytics/recent-trades (LIVE) or /api/paper/positions/closed (PAPER)
  */
 export async function getRecentTrades(
-  optsOrLimit?: number | { limit?: number; symbol?: string; daysBack?: number },
+  mode: TradingMode,
+  opts?: { limit?: number; symbol?: string; daysBack?: number },
 ): Promise<RecentTrade[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   const base = getApiBaseUrl();
-  const opts = typeof optsOrLimit === 'number' ? { limit: optsOrLimit } : (optsOrLimit ?? {});
   const params = new URLSearchParams();
-  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
-  if (opts.symbol) params.set('symbol', opts.symbol);
-  if (opts.daysBack !== undefined) params.set('days_back', String(opts.daysBack));
+  if (opts?.limit !== undefined) params.set('limit', String(opts.limit));
+  if (opts?.symbol) params.set('symbol', opts.symbol);
+  if (opts?.daysBack !== undefined) params.set('days_back', String(opts.daysBack));
   const qs = params.toString();
-  const response = await fetchWithRetry(
-    `${base}/analytics/recent-trades${qs ? `?${qs}` : ''}`,
-  );
+
+  // Route based on Trading Mode
+  const endpoint = mode === 'PAPER'
+    ? `${base}/paper/positions/closed${qs ? `?${qs}` : ''}`
+    : `${base}/analytics/recent-trades${qs ? `?${qs}` : ''}`;
+
+  const response = await fetchWithRetry(endpoint);
   const data = await response.json();
-  return data.trades || [];
+  return data.trades || data.positions || [];
 }
 
-export async function getOpenPositions(): Promise<Position[]> {
+export async function getOpenPositions(mode: TradingMode): Promise<Position[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   const base = getApiBaseUrl();
-  const response = await fetchWithRetry(`${base}/positions/open`);
+
+  // Route based on Trading Mode
+  const endpoint = mode === 'PAPER'
+    ? `${base}/paper/positions/live`
+    : `${base}/positions/open`;
+
+  const response = await fetchWithRetry(endpoint);
   const data = await response.json();
   return data.positions || [];
 }
 
-export async function getRegimePerformance(): Promise<Record<string, RegimeMetrics>> {
+export async function getRegimePerformance(mode: TradingMode): Promise<Record<string, RegimeMetrics>> {
+  if (mode === 'OFF') {
+    return {};
+  }
+
   const base = getApiBaseUrl();
-  const response = await fetchWithRetry(`${base}/analytics/regimes`);
+
+  // Route based on Trading Mode
+  const endpoint = mode === 'PAPER'
+    ? `${base}/paper/analytics/regime`
+    : `${base}/analytics/regimes`;
+
+  const response = await fetchWithRetry(endpoint);
   const data = await response.json();
 
   if (data.status !== 'success') return {};
   return data.regimes || {};
 }
 
-export async function getConfidenceBuckets(): Promise<Record<string, ConfidenceBucket>> {
+export async function getConfidenceBuckets(mode: TradingMode): Promise<Record<string, ConfidenceBucket>> {
+  if (mode === 'OFF') {
+    return {};
+  }
+
   const base = getApiBaseUrl();
-  const response = await fetchWithRetry(`${base}/analytics/confidence`);
+
+  // Route based on Trading Mode
+  const endpoint = mode === 'PAPER'
+    ? `${base}/paper/analytics/confidence`
+    : `${base}/analytics/confidence`;
+
+  const response = await fetchWithRetry(endpoint);
   const data = await response.json();
 
   if (data.status !== 'success') return {};
@@ -308,7 +384,19 @@ export async function getConfidenceBuckets(): Promise<Record<string, ConfidenceB
 export async function getModelDrift(
   symbol: string,
   timeframe: string,
+  mode: TradingMode,
 ): Promise<ModelDriftReport> {
+  if (mode === 'OFF') {
+    return {
+      symbol,
+      timeframe,
+      health_status: 'unknown',
+      overall_score: 0,
+      retrain_required: false,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   const base = getApiBaseUrl();
   const response = await fetchWithRetry(
     `${base}/models/${encodeURIComponent(symbol)}/${encodeURIComponent(timeframe)}/drift`,
@@ -344,7 +432,11 @@ function normalizeHealthStatus(
  * ACTIVE_PAIRS × ACTIVE_TIMEFRAMES grid. Each model is fetched independently;
  * a failure on one model is logged and dropped so the panel never blanks.
  */
-export async function getModelDriftForActiveModels(): Promise<ModelDriftSummary[]> {
+export async function getModelDriftForActiveModels(mode: TradingMode): Promise<ModelDriftSummary[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   const tasks: Promise<ModelDriftSummary | null>[] = [];
 
   for (const symbol of ACTIVE_PAIRS) {
@@ -352,7 +444,7 @@ export async function getModelDriftForActiveModels(): Promise<ModelDriftSummary[
       tasks.push(
         (async () => {
           try {
-            const report = await getModelDrift(symbol, timeframe);
+            const report = await getModelDrift(symbol, timeframe, mode);
             // Skip models that have no data at all (no score, no status).
             if (report.overall_score == null && !report.health_status) {
               return null;
@@ -388,7 +480,12 @@ export async function getModelDriftForActiveModels(): Promise<ModelDriftSummary[
  */
 export async function getCurrentRegimes(
   symbols: readonly string[] = ACTIVE_PAIRS,
+  mode: TradingMode = 'LIVE',
 ): Promise<CurrentRegime[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   const base = getApiBaseUrl();
 
   const tasks = symbols.map(async (symbol): Promise<CurrentRegime> => {
@@ -416,7 +513,18 @@ export async function getCurrentRegimes(
  * Returns null balances with source='unavailable' if Binance is
  * unreachable — never throws.
  */
-export async function getAccountEquity(): Promise<AccountEquity> {
+export async function getAccountEquity(mode: TradingMode): Promise<AccountEquity> {
+  if (mode === 'OFF') {
+    return {
+      wallet_balance: null,
+      unrealized_pnl: null,
+      margin_balance: null,
+      available_balance: null,
+      source: 'unavailable',
+      reason: 'mode_off',
+    };
+  }
+
   try {
     const base = getApiBaseUrl();
     const response = await fetchWithRetry(`${base}/account/equity`);
@@ -440,13 +548,19 @@ export async function getAccountEquity(): Promise<AccountEquity> {
  * Returns an empty list if no snapshots exist. Never throws.
  */
 export async function getAccountEquityHistory(
-  range: EquityRange = '7d',
+  range: EquityRange,
+  mode: TradingMode,
 ): Promise<EquitySnapshot[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   try {
     const base = getApiBaseUrl();
-    const response = await fetchWithRetry(
-      `${base}/account/equity-history?range=${range}`,
-    );
+    const endpoint = mode === 'PAPER'
+      ? `${base}/paper/equity-history?range=${range}`
+      : `${base}/account/equity-history?range=${range}`;
+    const response = await fetchWithRetry(endpoint);
     const data = await response.json();
     return Array.isArray(data) ? (data as EquitySnapshot[]) : [];
   } catch {
@@ -461,7 +575,11 @@ export async function getAccountEquityHistory(
  * equity[n] = starting_balance + cumulative_net_realized_pnl[n].
  * Never throws — returns empty list on failure.
  */
-export async function getClosedTradeEquity(): Promise<EquityPoint[]> {
+export async function getClosedTradeEquity(mode: TradingMode): Promise<EquityPoint[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   try {
     const base = getApiBaseUrl();
     const response = await fetchWithRetry(`${base}/analytics/closed-trade-equity`);
@@ -481,7 +599,11 @@ export interface SignalHistoryEntry {
   created_at: string;
 }
 
-export async function getSignalHistory(limit: number = 20): Promise<SignalHistoryEntry[]> {
+export async function getSignalHistory(limit: number, mode: TradingMode): Promise<SignalHistoryEntry[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   try {
     const base = getApiBaseUrl();
     const response = await fetchWithRetry(
@@ -498,7 +620,11 @@ export async function getSignalHistory(limit: number = 20): Promise<SignalHistor
  * Fetch live paper trading positions with real-time mark prices.
  * GET /api/paper/positions/live
  */
-export async function getLivePositions(): Promise<LivePosition[]> {
+export async function getLivePositions(mode: TradingMode): Promise<LivePosition[]> {
+  if (mode === 'OFF') {
+    return [];
+  }
+
   try {
     const base = getApiBaseUrl();
     const response = await fetchWithRetry(`${base}/paper/positions/live`);

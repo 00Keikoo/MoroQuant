@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getLivePerformanceReport, getOpenPositions } from '@/lib/services/performanceService';
 import { getModelHealth } from '@/lib/api/ml-trading';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 interface KpiCardProps {
   label: string;
@@ -25,6 +26,7 @@ function KpiCard({ label, value, subValue, valueColor = 'text-on-surface', subVa
 }
 
 export default function KpiCards() {
+  const { mode } = useTradingMode();
   const [loading, setLoading] = useState(true);
   const [dailyPnl, setDailyPnl] = useState<{ value: number; pct: number } | null>(null);
   const [grossExposure, setGrossExposure] = useState<number | null>(null);
@@ -33,11 +35,21 @@ export default function KpiCards() {
   const [modelHealth, setModelHealth] = useState<{ status: string; drift: number; timestamp: string } | null>(null);
 
   const load = useCallback(async () => {
+    if (mode === 'OFF') {
+      setDailyPnl({ value: 0, pct: 0 });
+      setGrossExposure(0);
+      setNetDelta(0);
+      setSharpe(null);
+      setModelHealth(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
+      const tradingMode = mode || 'LIVE';
       const [perfReport, positions, healthData] = await Promise.all([
-        getLivePerformanceReport(),
-        getOpenPositions(),
+        getLivePerformanceReport(tradingMode),
+        getOpenPositions(tradingMode),
         getModelHealth('ES_proxy', '1h').catch(() => null),
       ]);
 
@@ -89,7 +101,7 @@ export default function KpiCards() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     load();

@@ -12,15 +12,15 @@ import {
 
 export class LiveProvider implements TradingDataProvider {
   async getAccountEquity() {
-    return getAccountEquity();
+    return getAccountEquity('LIVE');
   }
 
   async getEquityHistory(range: EquityRange = '7d') {
-    return getAccountEquityHistory(range);
+    return getAccountEquityHistory(range, 'LIVE');
   }
 
   async getMetrics() {
-    const report = await getLivePerformanceReport();
+    const report = await getLivePerformanceReport('LIVE');
     if (report.status === 'success') {
       return report.metrics;
     }
@@ -28,22 +28,22 @@ export class LiveProvider implements TradingDataProvider {
   }
 
   async getOpenPositions() {
-    return getOpenPositions();
+    return getOpenPositions('LIVE');
   }
 
   async getRecentTrades(limit = 20) {
-    return getRecentTrades(limit);
+    return getRecentTrades('LIVE', { limit });
   }
 
   async getRegimePerformance() {
-    return getRegimePerformance();
+    return getRegimePerformance('LIVE');
   }
 
   async getConfidenceBuckets() {
-    return getConfidenceBuckets();
+    return getConfidenceBuckets('LIVE');
   }
 
   async getEquityCurve() {
-    return getClosedTradeEquity();
+    return getClosedTradeEquity('LIVE');
   }
 }

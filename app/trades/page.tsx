@@ -14,6 +14,7 @@ import {
   MASK_PRICE,
 } from '@/lib/format/privacy';
 import SensitiveValue from '@/components/common/SensitiveValue';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 // ─── Formatters (same conventions as performance page) ─────────────
 
@@ -119,6 +120,7 @@ function pnlStatus(value: number | null | undefined): 'positive' | 'negative' | 
 
 export default function TradesPage() {
   const privacy = useIsPrivacyMode();
+  const { mode } = useTradingMode();
   const [trades, setTrades] = useState<RecentTrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,8 +132,9 @@ export default function TradesPage() {
     setLoading(true);
     setError(null);
 
+    const tradingMode = mode || 'LIVE';
     const opts = symbolFilter === 'ALL' ? { limit: 200 } : { limit: 200, symbol: symbolFilter };
-    getRecentTrades(opts)
+    getRecentTrades(tradingMode, opts)
       .then((data) => {
         if (!cancelled) setTrades(data);
       })
@@ -145,7 +148,7 @@ export default function TradesPage() {
     return () => {
       cancelled = true;
     };
-  }, [symbolFilter]);
+  }, [symbolFilter, mode]);
 
   const stats = useMemo(() => computeStats(trades), [trades]);
 

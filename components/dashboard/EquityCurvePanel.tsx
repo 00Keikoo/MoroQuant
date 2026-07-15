@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getAccountEquityHistory, type EquitySnapshot, type EquityRange } from '@/lib/services/performanceService';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 type TimeframeButton = '7D' | '30D' | 'ALL';
 
@@ -12,16 +13,24 @@ const TIMEFRAME_TO_RANGE: Record<TimeframeButton, EquityRange> = {
 };
 
 export default function EquityCurvePanel() {
+  const { mode } = useTradingMode();
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeButton>('7D');
   const [equityData, setEquityData] = useState<EquitySnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (mode === 'OFF') {
+      setEquityData([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const range = TIMEFRAME_TO_RANGE[selectedTimeframe];
-      const data = await getAccountEquityHistory(range);
+      const tradingMode = mode || 'LIVE';
+      const data = await getAccountEquityHistory(range, tradingMode);
       setEquityData(data);
       setError(null);
     } catch (e) {
@@ -29,7 +38,7 @@ export default function EquityCurvePanel() {
     } finally {
       setLoading(false);
     }
-  }, [selectedTimeframe]);
+  }, [selectedTimeframe, mode]);
 
   useEffect(() => {
     load();

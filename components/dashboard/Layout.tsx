@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { getSignalHistory, SignalHistoryEntry, getLivePositions, LivePosition } from '@/lib/services/performanceService';
 import InspectorPanel from './InspectorPanel';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 export default function DashboardLayout() {
+  const { mode } = useTradingMode();
   const [signals, setSignals] = useState<SignalHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [positions, setPositions] = useState<LivePosition[]>([]);
@@ -13,9 +15,10 @@ export default function DashboardLayout() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const tradingMode = mode || 'LIVE';
         const [positionsData, signalsData] = await Promise.all([
-          getLivePositions(),
-          getSignalHistory(10)
+          getLivePositions(tradingMode),
+          getSignalHistory(10, tradingMode)
         ]);
         setPositions(positionsData);
         setSignals(signalsData);
@@ -29,7 +32,7 @@ export default function DashboardLayout() {
     fetchData();
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [mode]);
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);

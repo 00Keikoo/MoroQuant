@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getOpenPositions, type Position } from '@/lib/services/performanceService';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 const REFRESH_INTERVAL_MS = 30_000;
 
@@ -34,6 +35,7 @@ function pnlPct(p: Position): number | null {
 }
 
 export default function OpenPositionsPanel() {
+  const { mode } = useTradingMode();
   const [positions, setPositions] = useState<Position[]>([]);
   const [totalPnl, setTotalPnl] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -41,8 +43,16 @@ export default function OpenPositionsPanel() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (mode === 'OFF') {
+      setPositions([]);
+      setTotalPnl(0);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     try {
-      const data = await getOpenPositions();
+      const tradingMode = mode || 'LIVE';
+      const data = await getOpenPositions(tradingMode);
       setPositions(data);
       setTotalPnl(data.reduce((sum, p) => sum + (Number.isFinite(p.unrealized_pnl) ? p.unrealized_pnl : 0), 0));
       setError(null);
@@ -52,7 +62,7 @@ export default function OpenPositionsPanel() {
       setLoading(false);
       setLastUpdated(new Date().toLocaleTimeString());
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     load();
@@ -68,9 +78,13 @@ export default function OpenPositionsPanel() {
           <h2 className="text-sm font-bold tracking-wider text-white uppercase">
             Live Open Positions
           </h2>
-          <span className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-mq-long">
-            <span className="w-1.5 h-1.5 rounded-full bg-mq-long animate-pulse-slow" />
-            LIVE
+          <span className={`flex items-center gap-1 text-[10px] font-bold tracking-wider ${
+            mode === 'PAPER' ? 'text-mq-warning' : mode === 'LIVE' ? 'text-mq-long' : 'text-mq-muted'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              mode === 'PAPER' ? 'bg-mq-warning animate-pulse-slow' : mode === 'LIVE' ? 'bg-mq-long animate-pulse-slow' : 'bg-mq-muted'
+            }`} />
+            {mode || 'OFF'}
           </span>
         </div>
         <div className="flex items-center gap-3">

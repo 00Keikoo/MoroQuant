@@ -19,6 +19,7 @@ import {
   getCurrentRegimes,
   type CurrentRegime,
 } from '@/lib/services/performanceService';
+import { useTradingMode } from '@/lib/hooks/useTradingMode';
 
 const REFRESH_INTERVAL_MS = 5 * 60_000;
 
@@ -44,13 +45,21 @@ function classifyRegime(raw: string): { kind: RegimeKind; label: string } {
 }
 
 export default function MarketRegimesPanel() {
+  const { mode } = useTradingMode();
   const [regimes, setRegimes] = useState<CurrentRegime[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (mode === 'OFF') {
+      setRegimes([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     try {
-      const data = await getCurrentRegimes(ACTIVE_PAIRS);
+      const tradingMode = mode || 'LIVE';
+      const data = await getCurrentRegimes(ACTIVE_PAIRS, tradingMode);
       setRegimes(data);
       setError(null);
     } catch (e) {
@@ -58,7 +67,7 @@ export default function MarketRegimesPanel() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     load();

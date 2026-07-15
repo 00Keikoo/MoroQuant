@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "app/dashboard/performance/page.tsx": {
-    "mtime": 1784090204.9485476,
-    "ast_hash": "4f12ec588b424e435506dc8378ec1db1",
+    "mtime": 1784088225.734772,
+    "ast_hash": "0898e727ea67655fc78f5d812c0937f3",
     "semantic_hash": ""
   },
   "app/lab/calibration/page.tsx": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "app/trades/page.tsx": {
-    "mtime": 1784090221.75822,
-    "ast_hash": "c4667f3c7fff22d27bb4ab9c95183e6c",
+    "mtime": 1784088246.4694445,
+    "ast_hash": "36ff0e10b7f4ce897ac6230b0fb307df",
     "semantic_hash": ""
   },
   "app/trading/analytics/page.tsx": {
@@ -210,8 +210,8 @@
     "semantic_hash": "b73388975bebb141d7a58926a2b3b4ca"
   },
   "components/dashboard/EquityCurvePanel.tsx": {
-    "mtime": 1784090218.5902805,
-    "ast_hash": "57ac1964a16fcfeaac841d54413d647e",
+    "mtime": 1784088244.1743708,
+    "ast_hash": "422f91929a560d17d6a8c1d5fec9b797",
     "semantic_hash": ""
   },
   "components/dashboard/InspectorPanel.tsx": {
@@ -220,23 +220,23 @@
     "semantic_hash": ""
   },
   "components/dashboard/Layout.tsx": {
-    "mtime": 1784090254.6016226,
-    "ast_hash": "2df92f8e1a358f4865342426e477ed74",
+    "mtime": 1784046237.5327406,
+    "ast_hash": "bf2170de6c44981b1712711b8670358f",
     "semantic_hash": ""
   },
   "components/dashboard/MarketRegimesPanel.tsx": {
-    "mtime": 1784090212.2434034,
-    "ast_hash": "010cea783e3ee1cac3ed60e04dfbd979",
+    "mtime": 1784088237.33115,
+    "ast_hash": "2050a653354f52525784a18be6c9fbe6",
     "semantic_hash": ""
   },
   "components/dashboard/ModelHealthPanel.tsx": {
-    "mtime": 1784090215.1873462,
-    "ast_hash": "8b93f98e9693db098a8c9b698d34ccf1",
+    "mtime": 1784088239.8772323,
+    "ast_hash": "a3b588d5c4a96d8eb7af26aebd982748",
     "semantic_hash": ""
   },
   "components/dashboard/OpenPositionsPanel.tsx": {
-    "mtime": 1784090209.6114552,
-    "ast_hash": "074042c59672b94ac7db61e05cf0820c",
+    "mtime": 1784088233.8440368,
+    "ast_hash": "7e89a5c22922c496e760462f09dc3e8b",
     "semantic_hash": ""
   },
   "components/dashboard/PageShell.tsx": {
@@ -790,9 +790,9 @@
     "semantic_hash": "44609697bc906ca69eaff536f92b1bff"
   },
   "lib/providers/liveProvider.ts": {
-    "mtime": 1784090293.8599794,
-    "ast_hash": "4f1fa18c931118c0e461cf9885fd2d08",
-    "semantic_hash": ""
+    "mtime": 1782911766.4802048,
+    "ast_hash": "764400f3bc0a2c8c3da960cb303a01d3",
+    "semantic_hash": "764400f3bc0a2c8c3da960cb303a01d3"
   },
   "lib/providers/paperProvider.ts": {
     "mtime": 1782965404.6577935,
@@ -805,8 +805,8 @@
     "semantic_hash": "4d6dd945f211595f977766b345aad99c"
   },
   "lib/services/performanceService.ts": {
-    "mtime": 1784090202.4245982,
-    "ast_hash": "62f106dacd090ebbd3da6c2d60431ecb",
+    "mtime": 1784088222.4866652,
+    "ast_hash": "39cf00879707f2699f5463a9717b2c0f",
     "semantic_hash": ""
   },
   "lib/stores/analysisStore.ts": {
@@ -4085,8 +4085,8 @@
     "semantic_hash": "a2760511c65806022ad20adf74370ff3"
   },
   "components/dashboard/KpiCards.tsx": {
-    "mtime": 1784090207.690493,
-    "ast_hash": "e26d29761a0bd4c8acd0ca38334b2f54",
+    "mtime": 1784088229.9329093,
+    "ast_hash": "ba70c025eca11987c1536d02b10c5800",
     "semantic_hash": ""
   },
   "design/audit/dashboard/audit.md": {
