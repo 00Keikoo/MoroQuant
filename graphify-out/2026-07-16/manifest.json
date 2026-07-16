@@ -4185,8 +4185,8 @@
     "semantic_hash": ""
   },
   "components/terminal/EmergencyStopButton.tsx": {
-    "mtime": 1784184746.0158925,
-    "ast_hash": "1e589a33898890d329c75ae3930edda2",
+    "mtime": 1784181835.0465076,
+    "ast_hash": "5fa76a648cdb445e787517158833084a",
     "semantic_hash": ""
   },
   "components/terminal/EquityCurve.tsx": {
@@ -4225,8 +4225,8 @@
     "semantic_hash": ""
   },
   "components/terminal/StatusBar.tsx": {
-    "mtime": 1784185601.4849594,
-    "ast_hash": "6eb50097ef0836f853809fdacd40174f",
+    "mtime": 1784181898.6939528,
+    "ast_hash": "6f8da7cf64aa4f15354d6f42cc021768",
     "semantic_hash": ""
   },
   "components/terminal/TradingModeSwitch.tsx": {
@@ -4262,21 +4262,6 @@
   "frontend_backend_contract_audit.md": {
     "mtime": 1784183070.4642615,
     "ast_hash": "4ca0897e0cb87b0ca7076a69396707bc",
-    "semantic_hash": ""
-  },
-  "lib/api/system-status.ts": {
-    "mtime": 1784185236.5444908,
-    "ast_hash": "a9cd652c882f1149736275a44f279c7e",
-    "semantic_hash": ""
-  },
-  "lib/types/system-status.ts": {
-    "mtime": 1784185233.276555,
-    "ast_hash": "7c7ed5cc0acb658070b2dfdd1f16f87d",
-    "semantic_hash": ""
-  },
-  "lib/utils/toast.ts": {
-    "mtime": 1784184745.8398905,
-    "ast_hash": "b5ccf19079e6e82423ecc94f00d89d42",
     "semantic_hash": ""
   }
 }
