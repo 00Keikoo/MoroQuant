@@ -74,13 +74,14 @@ def _ensure_account(conn: sqlite3.Connection):
             balance REAL NOT NULL DEFAULT 10000.0,
             equity REAL NOT NULL DEFAULT 10000.0,
             unrealized_pnl REAL NOT NULL DEFAULT 0.0,
+            initial_balance REAL DEFAULT 10000.0,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.execute(
-        "INSERT OR IGNORE INTO paper_account (id, balance, equity, unrealized_pnl) "
-        "VALUES (1, ?, ?, 0.0)",
-        (STARTING_BALANCE, STARTING_BALANCE),
+        "INSERT OR IGNORE INTO paper_account (id, balance, equity, unrealized_pnl, initial_balance) "
+        "VALUES (1, ?, ?, 0.0, ?)",
+        (STARTING_BALANCE, STARTING_BALANCE, STARTING_BALANCE),
     )
     conn.commit()
 

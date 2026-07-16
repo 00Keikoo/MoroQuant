@@ -272,6 +272,7 @@ async function fetchWithRetry(
 function normalizePaperAnalytics(
   backend: any,
   positions: any[],
+  initialBalance: number,
 ): LiveMetrics {
   const wins = positions.filter((p: any) => (Number(p.realized_pnl) || 0) > 0);
   const losses = positions.filter((p: any) => (Number(p.realized_pnl) || 0) <= 0);
@@ -282,8 +283,7 @@ function normalizePaperAnalytics(
   const avg_win = wins.length > 0 ? gross_profit / wins.length : 0;
   const avg_loss = losses.length > 0 ? gross_loss / losses.length : 0;
 
-  const starting_balance = 10000;
-  const roi = (backend.total_realized_pnl / starting_balance) * 100;
+  const roi = (backend.total_realized_pnl / initialBalance) * 100;
 
   return {
     total_trades: Number(backend.total_trades) || 0,
@@ -530,6 +530,16 @@ export async function getLivePerformanceReport(mode: TradingMode): Promise<LiveP
   const base = getApiBaseUrl();
 
   if (mode === 'PAPER') {
+    // Fetch account to get initial_balance
+    const accountResponse = await fetchWithRetry(`${base}/paper/account/live`);
+    const accountData = await accountResponse.json();
+
+    // Validate initial_balance - required for financial integrity
+    const initialBalance = Number(accountData.initial_balance);
+    if (!initialBalance || isNaN(initialBalance) || initialBalance <= 0) {
+      throw new Error('Portfolio unavailable: initial_balance missing or invalid');
+    }
+
     // Fetch paper analytics and closed positions
     const analyticsResponse = await fetchWithRetry(`${base}/paper/analytics`);
     const paperAnalytics = await analyticsResponse.json();
@@ -595,13 +605,13 @@ export async function getLivePerformanceReport(mode: TradingMode): Promise<LiveP
         cumulative_pnl: Number(cumulative_pnl.toFixed(2)),
         trade_count: idx + 1,
         trade_pnl: Number(pnl.toFixed(2)),
-        equity: Number((10000 + cumulative_pnl).toFixed(2)),
+        equity: Number((initialBalance + cumulative_pnl).toFixed(2)),
       };
     });
 
     // Normalize metrics using normalization layer
-    const metrics = normalizePaperAnalytics(paperAnalytics, positions);
-    const drawdown = computeMaxDrawdown(equity_curve, 10000);
+    const metrics = normalizePaperAnalytics(paperAnalytics, positions, initialBalance);
+    const drawdown = computeMaxDrawdown(equity_curve, initialBalance);
     metrics.max_drawdown = Number(drawdown.max_drawdown.toFixed(2));
     metrics.max_drawdown_pct = Number(drawdown.max_drawdown_pct.toFixed(2));
 

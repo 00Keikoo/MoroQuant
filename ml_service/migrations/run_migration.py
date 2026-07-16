@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import sqlite3
+import importlib.util
 from ml_service.data.database import get_database
 from ml_service.utils.logger import get_logger
 
@@ -88,7 +89,7 @@ def strip_sql_comments(sql: str) -> str:
     return ''.join(result)
 
 
-def apply_migration(migration_file: Path) -> bool:
+def apply_sql_migration(migration_file: Path) -> bool:
     """
     Apply a SQL migration file to the database.
 
@@ -100,7 +101,7 @@ def apply_migration(migration_file: Path) -> bool:
     """
     db = get_database()
 
-    logger.info(f"Applying migration: {migration_file.name}")
+    logger.info(f"Applying SQL migration: {migration_file.name}")
 
     try:
         with open(migration_file, 'r') as f:
@@ -144,10 +145,71 @@ def apply_migration(migration_file: Path) -> bool:
         return False
 
 
+def apply_python_migration(migration_file: Path) -> bool:
+    """
+    Apply a Python migration file to the database.
+
+    Args:
+        migration_file: Path to .py migration file
+
+    Returns:
+        True if successful, False otherwise
+    """
+    db = get_database()
+
+    logger.info(f"Applying Python migration: {migration_file.name}")
+
+    try:
+        # Load the Python module
+        spec = importlib.util.spec_from_file_location(migration_file.stem, migration_file)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load migration module: {migration_file.name}")
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        if not hasattr(module, 'upgrade'):
+            raise AttributeError(f"Migration {migration_file.name} missing upgrade() function")
+
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("BEGIN")
+
+            try:
+                # Execute the upgrade function
+                module.upgrade(conn)
+
+                # Record migration in the SAME transaction
+                cursor.execute(
+                    "INSERT INTO schema_migrations (migration_name, applied_at) VALUES (?, CURRENT_TIMESTAMP)",
+                    (migration_file.name,)
+                )
+
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+
+        logger.info(f"✓ Migration applied: {migration_file.name}")
+        return True
+
+    except Exception as e:
+        logger.error(f"✗ Migration failed: {e}")
+        return False
+
+
 def main():
     migrations_dir = Path(__file__).parent
 
-    migration_files = sorted(migrations_dir.glob("*.sql"))
+    # Collect both SQL and Python migrations
+    sql_files = list(migrations_dir.glob("*.sql"))
+    python_files = [
+        f for f in migrations_dir.glob("*.py")
+        if f.name not in ["__init__.py", "run_migration.py", "repair_schema_migrations.py"]
+    ]
+
+    migration_files = sorted(sql_files + python_files)
 
     if not migration_files:
         logger.warning("No migration files found")
@@ -167,7 +229,14 @@ def main():
     logger.info(f"Pending: {len(pending_migrations)} migration(s)")
 
     for migration_file in pending_migrations:
-        success = apply_migration(migration_file)
+        if migration_file.suffix == ".sql":
+            success = apply_sql_migration(migration_file)
+        elif migration_file.suffix == ".py":
+            success = apply_python_migration(migration_file)
+        else:
+            logger.error(f"Unknown migration type: {migration_file.name}")
+            sys.exit(1)
+
         if not success:
             logger.error(f"Migration failed, stopping at: {migration_file.name}")
             sys.exit(1)

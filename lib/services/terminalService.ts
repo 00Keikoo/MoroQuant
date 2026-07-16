@@ -92,13 +92,21 @@ async function fetchWithRetry(
  * Frontend Canonical: Account interface
  */
 function normalizeAccountResponse(backend: any): Account {
+  // Backend now provides ALL computed metrics - just pass through
   const equity = Number(backend.equity || backend.account?.equity) || 0;
-  const balance = Number(backend.balance || backend.account?.balance) || 0;
+  const balance = Number(backend.wallet_balance || backend.balance || backend.account?.balance) || 0;
   const unrealized_pnl = Number(backend.unrealized_pnl || backend.account?.unrealized_pnl) || 0;
   const available_balance = Number(backend.available_balance || backend.account?.available_balance) || 0;
 
-  const margin_used = equity > 0 ? equity - available_balance : 0;
-  const free_margin = available_balance;
+  // Backend computes these - no frontend calculation
+  const margin_used = Number(backend.margin_used) || 0;
+  const free_margin = Number(backend.free_margin || available_balance) || 0;
+  const realized_pnl = Number(backend.realized_pnl) || 0;
+  const daily_pnl = Number(backend.daily_pnl) || 0;
+  const exposure = Number(backend.exposure) || 0;
+
+  // Pass through initial_balance if provided by backend
+  const initial_balance = backend.initial_balance !== undefined ? Number(backend.initial_balance) : undefined;
 
   return {
     equity,
@@ -106,11 +114,16 @@ function normalizeAccountResponse(backend: any): Account {
     available_balance,
     margin_used,
     free_margin,
-    realized_pnl: 0,
+    realized_pnl,
     unrealized_pnl,
-    daily_pnl: Number(backend.daily_pnl) || 0,
-    exposure: Math.abs(unrealized_pnl),
-    last_updated: backend.timestamp || new Date().toISOString(),
+    daily_pnl,
+    exposure,
+    last_updated: backend.timestamp || backend.last_updated || new Date().toISOString(),
+    initial_balance,
+    wallet_balance: backend.wallet_balance !== undefined ? Number(backend.wallet_balance) : undefined,
+    margin_ratio: backend.margin_ratio !== undefined ? Number(backend.margin_ratio) : undefined,
+    account_health: backend.account_health !== undefined ? Number(backend.account_health) : undefined,
+    total_return_pct: backend.total_return_pct !== undefined ? Number(backend.total_return_pct) : undefined,
   };
 }
 
@@ -304,7 +317,7 @@ export async function getAccount(mode: TradingMode): Promise<Account> {
 
   const endpoint = mode === 'PAPER'
     ? `${API_BASE}/paper/account/live`
-    : `${API_BASE}/account`;
+    : `${API_BASE}/account/equity`;
 
   const response = await fetchWithRetry(endpoint);
   const data = await response.json();

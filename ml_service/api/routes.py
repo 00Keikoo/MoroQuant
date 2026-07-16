@@ -438,19 +438,25 @@ async def get_open_positions() -> Dict:
 
 @router.get("/account/equity")
 async def get_account_equity_endpoint() -> Dict:
-    """Fetch real account equity from Binance Futures.
+    """Fetch real account equity from Binance with ALL computed metrics.
 
-    Returns wallet_balance, unrealized_pnl, margin_balance, and
-    available_balance directly from Binance — no hardcoded starting
-    balance involved.
+    Returns complete normalized account with:
+        - Core balances (initial, wallet, equity, available)
+        - PnL metrics (unrealized, realized, daily)
+        - Derived metrics (margin_ratio, account_health, total_return_pct)
 
     On any failure (missing credentials, network error, timeout)
     returns HTTP 200 with ``source: "unavailable"`` and null balances.
     Never crashes the API.
     """
     from ml_service.data.exchange_sync import get_account_equity
+    from ml_service.services.portfolio_service import compute_live_account_metrics
 
-    return get_account_equity()
+    # Fetch raw Binance data
+    binance_account = get_account_equity()
+
+    # Compute all derived metrics
+    return compute_live_account_metrics(binance_account)
 
 
 @router.get("/account/equity-history")
@@ -1077,10 +1083,18 @@ async def get_paper_live_positions_endpoint() -> Dict:
 
 @router.get("/paper/account/live")
 async def get_paper_live_account_endpoint() -> Dict:
-    """Return paper account with live unrealized PnL from mark prices."""
-    from ml_service.services.market_state_service import get_live_account_equity
+    """Return paper account with ALL computed metrics (single source of truth).
 
-    account = get_live_account_equity()
+    Returns complete normalized account with:
+        - Core balances (initial, wallet, equity, available)
+        - PnL metrics (unrealized, realized, daily)
+        - Derived metrics (margin_ratio, account_health, total_return_pct)
+
+    Frontend must not compute any financial metrics.
+    """
+    from ml_service.services.portfolio_service import compute_paper_account_metrics
+
+    account = compute_paper_account_metrics()
     account["status"] = "success"
     account["timestamp"] = datetime.now().isoformat()
     return account

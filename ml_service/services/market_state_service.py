@@ -58,7 +58,9 @@ def _compute_floating_pnl(entry_price: float, current_price: float,
 
 
 def get_live_open_positions() -> List[Dict]:
-    """Get open positions with live mark prices and floating PnL."""
+    """Get open positions with live mark prices, floating PnL, and risk/reward metrics."""
+    from ml_service.services.portfolio_service import compute_position_risk_reward
+
     conn = _get_connection()
     try:
         rows = conn.execute(
@@ -86,6 +88,14 @@ def get_live_open_positions() -> List[Dict]:
         opened_at = datetime.strptime(row["opened_at"].replace("Z", ""), "%Y-%m-%d %H:%M:%S")
         duration_hours = (datetime.now() - opened_at).total_seconds() / 3600.0
 
+        # Compute risk/reward metrics
+        rr_metrics = compute_position_risk_reward(
+            entry_price=entry_price,
+            stop_loss=row["stop_loss"],
+            take_profit=row["take_profit"],
+            direction=direction
+        )
+
         positions.append({
             "id": row["id"],
             "symbol": symbol,
@@ -101,6 +111,9 @@ def get_live_open_positions() -> List[Dict]:
             "regime": row["regime"],
             "stop_loss": row["stop_loss"],
             "take_profit": row["take_profit"],
+            "risk": rr_metrics["risk"],
+            "reward": rr_metrics["reward"],
+            "risk_reward": rr_metrics["risk_reward"],
             "opened_at": row["opened_at"],
         })
 

@@ -32,6 +32,16 @@ export default function RecentTradesPanel() {
     });
   };
 
+  const formatDuration = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours < 24) return `${hours}h ${mins}m`;
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return `${days}d ${remainingHours}h`;
+  };
+
   if (isLoading) {
     return (
       <div className="bg-[#141414] border border-[#262626] rounded-sm p-4">
@@ -66,10 +76,12 @@ export default function RecentTradesPanel() {
               <th className="text-left text-[#666666] font-bold tracking-wider py-2 px-2">SIDE</th>
               <th className="text-right text-[#666666] font-bold tracking-wider py-2 px-2">ENTRY</th>
               <th className="text-right text-[#666666] font-bold tracking-wider py-2 px-2">EXIT</th>
+              <th className="text-right text-[#666666] font-bold tracking-wider py-2 px-2">DURATION</th>
               <th className="text-right text-[#666666] font-bold tracking-wider py-2 px-2">PNL</th>
               <th className="text-right text-[#666666] font-bold tracking-wider py-2 px-2">ROI%</th>
               <th className="text-right text-[#666666] font-bold tracking-wider py-2 px-2">CONF</th>
               <th className="text-center text-[#666666] font-bold tracking-wider py-2 px-2">EXIT REASON</th>
+              <th className="text-center text-[#666666] font-bold tracking-wider py-2 px-2">EXEC CLASS</th>
             </tr>
           </thead>
           <tbody>
@@ -90,6 +102,9 @@ export default function RecentTradesPanel() {
                   </td>
                   <td className="py-2 px-2 text-right text-[#A1A1A1]">${trade.entry_price.toFixed(2)}</td>
                   <td className="py-2 px-2 text-right text-white">${trade.exit_price.toFixed(2)}</td>
+                  <td className="py-2 px-2 text-right text-[#A1A1A1]">
+                    {formatDuration(trade.duration_minutes)}
+                  </td>
                   <td className={`py-2 px-2 text-right font-bold ${trade.net_pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                     {formatCurrency(trade.net_pnl)}
                   </td>
@@ -100,8 +115,13 @@ export default function RecentTradesPanel() {
                     {trade.confidence ? `${(trade.confidence * 100).toFixed(0)}%` : '-'}
                   </td>
                   <td className="py-2 px-2 text-center">
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[#1C1C1C] border border-[#262626] rounded">
-                      {trade.outcome.toUpperCase()}
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[#1C1C1C] border border-[#262626] rounded text-[#666666]">
+                      N/A
+                    </span>
+                  </td>
+                  <td className="py-2 px-2 text-center">
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[#1C1C1C] border border-[#262626] rounded text-[#666666]">
+                      N/A
                     </span>
                   </td>
                 </tr>

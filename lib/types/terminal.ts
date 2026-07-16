@@ -21,6 +21,10 @@ export interface Position {
   confidence: number | null;
   duration_hours: number | null;
   status: string | null;
+  // Risk/reward metrics from backend
+  risk?: number | null;
+  reward?: number | null;
+  risk_reward?: number | null;
 }
 
 export interface Account {
@@ -34,6 +38,12 @@ export interface Account {
   daily_pnl: number;
   exposure: number;
   last_updated: string;
+  // Extended fields from backend normalization
+  initial_balance?: number;
+  wallet_balance?: number;
+  margin_ratio?: number;
+  account_health?: number;
+  total_return_pct?: number;
 }
 
 export interface Performance {

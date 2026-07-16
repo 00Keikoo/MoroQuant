@@ -14,10 +14,15 @@ export default function PortfolioOverview() {
     refetchInterval: 2000,
   });
 
+  // Backend now provides ALL computed metrics - no frontend calculations
+  const equity = account?.equity || 0;
+  const balance = account?.wallet_balance || account?.balance || 0;
   const marginUsed = account?.margin_used || 0;
   const freeMargin = account?.free_margin || 0;
   const totalExposure = account?.exposure || 0;
-  const accountHealth = account?.equity ? Math.min(100, (freeMargin / account.equity) * 100) : 0;
+  const marginRatio = account?.margin_ratio || 0;
+  const accountHealth = account?.account_health || 0;
+  const totalReturn = account?.total_return_pct || 0;
 
   const formatCurrency = (value: number) => {
     return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -44,13 +49,28 @@ export default function PortfolioOverview() {
       <div className="space-y-2.5">
         <div className="flex justify-between items-center">
           <span className="text-xs text-[#666666]">Current Equity</span>
-          <span className="text-sm font-mono font-bold text-white">{formatCurrency(account?.equity || 0)}</span>
+          <span className="text-sm font-mono font-bold text-white">{formatCurrency(equity)}</span>
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-xs text-[#666666]">Daily PnL</span>
-          <span className={`text-sm font-mono font-bold ${(account?.daily_pnl || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {formatPnL(account?.daily_pnl || 0)}
+          <span className="text-xs text-[#666666]">Wallet Balance</span>
+          <span className="text-sm font-mono text-[#A1A1A1]">{formatCurrency(balance)}</span>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-[#666666]">Available Balance</span>
+          <span className="text-sm font-mono text-[#A1A1A1]">{formatCurrency(account?.available_balance || 0)}</span>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-[#666666]">Margin Used</span>
+          <span className="text-sm font-mono text-[#A1A1A1]">{formatCurrency(marginUsed)}</span>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-[#666666]">Margin Ratio</span>
+          <span className={`text-sm font-mono ${marginRatio > 80 ? 'text-red-500' : marginRatio > 60 ? 'text-yellow-500' : 'text-[#A1A1A1]'}`}>
+            {marginRatio.toFixed(1)}%
           </span>
         </div>
 
@@ -62,18 +82,24 @@ export default function PortfolioOverview() {
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-xs text-[#666666]">Margin Used</span>
-          <span className="text-sm font-mono text-[#A1A1A1]">{formatCurrency(marginUsed)}</span>
+          <span className="text-xs text-[#666666]">Realized PnL</span>
+          <span className={`text-sm font-mono font-bold ${(account?.realized_pnl || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {formatPnL(account?.realized_pnl || 0)}
+          </span>
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-xs text-[#666666]">Free Margin</span>
-          <span className="text-sm font-mono text-[#A1A1A1]">{formatCurrency(freeMargin)}</span>
+          <span className="text-xs text-[#666666]">Daily PnL</span>
+          <span className={`text-sm font-mono font-bold ${(account?.daily_pnl || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {formatPnL(account?.daily_pnl || 0)}
+          </span>
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-xs text-[#666666]">Total Exposure</span>
-          <span className="text-sm font-mono text-[#A1A1A1]">{formatCurrency(totalExposure)}</span>
+          <span className="text-xs text-[#666666]">Total Return</span>
+          <span className={`text-sm font-mono font-bold ${totalReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(2)}%
+          </span>
         </div>
 
         <div className="pt-2 border-t border-[#262626]">
