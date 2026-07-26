@@ -3945,9 +3945,9 @@
     "semantic_hash": "af43b36535b0dcf3d52d662b4f498ab2"
   },
   "ml_service/requirements.txt": {
-    "mtime": 1784810132.0608196,
-    "ast_hash": "3f8ac55a4ec268be2cf57033fd0fd1c7",
-    "semantic_hash": ""
+    "mtime": 1783524495.194025,
+    "ast_hash": "844f80b7bd2176bdfdad040642e31a01",
+    "semantic_hash": "844f80b7bd2176bdfdad040642e31a01"
   },
   "ml_service/validation/README.md": {
     "mtime": 1782973287.7195637,
@@ -4320,98 +4320,18 @@
     "semantic_hash": ""
   },
   "docs/adr/ADR-022-Model-Diagnostics-Explainability-Framework.md": {
-    "mtime": 1785037875.8353198,
-    "ast_hash": "e911a55ee1271208baf01dc656f91d78",
+    "mtime": 1784793024.3143618,
+    "ast_hash": "e370117c1e77b82483e2d9cefd718f09",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-R1A-Explainability-Foundation.md": {
-    "mtime": 1785037893.7468524,
-    "ast_hash": "df7ea58802638b17557cbfbdba218322",
+    "mtime": 1784793932.499048,
+    "ast_hash": "3c46050b6eb340eab86d9c85ac610737",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-R1A-Implementation-Plan.md": {
-    "mtime": 1785037905.064981,
-    "ast_hash": "f44cde12baca0027fef516ad83a9197c",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/__init__.py": {
-    "mtime": 1784810458.0167313,
-    "ast_hash": "c4b3245f21eae6c261a162a39fe73adf",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/providers/__init__.py": {
-    "mtime": 1784810338.7700303,
-    "ast_hash": "04671126aa08fbf1e402407e0cca64bd",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/providers/base.py": {
-    "mtime": 1784810165.841017,
-    "ast_hash": "cfade28b1b589e000b38ccdc6bff0046",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/providers/correlation.py": {
-    "mtime": 1785040375.331088,
-    "ast_hash": "dd30e7aed6c5170e03ca282e7508ddde",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/providers/permutation.py": {
-    "mtime": 1784810314.547888,
-    "ast_hash": "7ff6a26efc7213373760721c257a9859",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/providers/shap.py": {
-    "mtime": 1784810290.4657466,
-    "ast_hash": "06f2be9ed037c4f5f0ba606db504ef4e",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/providers/stability.py": {
-    "mtime": 1784810325.1429503,
-    "ast_hash": "7a3f322b30f4cf73b380cac62d01d1bc",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/report.py": {
-    "mtime": 1784810406.4254277,
-    "ast_hash": "7f8a8878067c36f72db624f1dbb58316",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/service.py": {
-    "mtime": 1785040058.6098495,
-    "ast_hash": "6c4dcb7145168e85a3a51a44258d82dc",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/types.py": {
-    "mtime": 1784811596.0424628,
-    "ast_hash": "d2ed28a3e9df46c00071a462860efea9",
-    "semantic_hash": ""
-  },
-  "ml_service/research/explainability/writer.py": {
-    "mtime": 1784810188.6691504,
-    "ast_hash": "540fa339c444130f849109eabbe1ad68",
-    "semantic_hash": ""
-  },
-  "ml_service/tests/services/explainability/__init__.py": {
-    "mtime": 1784810202.2102296,
-    "ast_hash": "3edeedfcd0bd5400dae911814c727b6b",
-    "semantic_hash": ""
-  },
-  "ml_service/tests/services/explainability/test_integration.py": {
-    "mtime": 1785040238.9027183,
-    "ast_hash": "be29e76d2f23e9b7c4e6c108fd5bba7d",
-    "semantic_hash": ""
-  },
-  "ml_service/tests/services/explainability/test_providers.py": {
-    "mtime": 1784811700.7597291,
-    "ast_hash": "9cedd5fd5d771b7ac408239261124d67",
-    "semantic_hash": ""
-  },
-  "ml_service/tests/services/explainability/test_writer.py": {
-    "mtime": 1784810219.698332,
-    "ast_hash": "64acdb3e14bb5015348a452edf4110e5",
-    "semantic_hash": ""
-  },
-  "docs/sprints/Sprint-R1A-Quality-Gate-Decision.md": {
-    "mtime": 1784811663.4025812,
-    "ast_hash": "c4ba986a453c313e5d6e5f22ec4f6a8d",
+    "mtime": 1784809313.2399175,
+    "ast_hash": "620274f1229bc451bfafe8589b51bb72",
     "semantic_hash": ""
   }
 }

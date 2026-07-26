@@ -34,3 +34,6 @@ pandas-ta
 
 # Hyperparameter Tuning
 optuna
+
+# Explainability
+shap

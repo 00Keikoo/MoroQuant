@@ -720,7 +720,9 @@
   "718": "client",
   "719": "mock_service",
   "720": ".test_get_trades_limit_validation",
+  "721": ".test_get_trades_offset_validation",
   "722": ".test_get_trade_detail_not_found",
+  "723": ".test_all_endpoints_registered",
   "742": "__init__.py",
   "755": "mock_no_network_prices"
 }
