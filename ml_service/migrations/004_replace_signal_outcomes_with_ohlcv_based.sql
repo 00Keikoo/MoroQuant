@@ -8,13 +8,11 @@ DROP INDEX IF EXISTS idx_signal_outcomes_signal_id;
 DROP INDEX IF EXISTS idx_signal_outcomes_symbol_time;
 DROP INDEX IF EXISTS idx_signal_outcomes_confidence;
 
--- Preserve existing trade-based outcomes by renaming table (only if exists)
--- Note: SQLite doesn't support IF EXISTS on ALTER TABLE, so we drop the legacy table first
+-- Preserve existing trade-based outcomes by renaming table
 DROP TABLE IF EXISTS signal_outcomes_trade_legacy;
+ALTER TABLE signal_outcomes RENAME TO signal_outcomes_trade_legacy;
 
 -- Create new signal_outcomes table for OHLCV-based ground truth tracking
--- If old table exists, it will be dropped. If not, this is idempotent.
-DROP TABLE IF EXISTS signal_outcomes;
 CREATE TABLE signal_outcomes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     signal_id INTEGER NOT NULL UNIQUE,

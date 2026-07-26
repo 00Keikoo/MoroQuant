@@ -15,6 +15,22 @@ from ml_service.utils.logger import get_logger
 logger = get_logger()
 
 
+def ensure_schema_migrations_table():
+    """Create schema_migrations table if it doesn't exist."""
+    db = get_database()
+
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                migration_name TEXT NOT NULL UNIQUE,
+                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+
+
 def get_applied_migrations() -> set:
     """
     Query schema_migrations table to get list of already-applied migrations.
@@ -22,17 +38,15 @@ def get_applied_migrations() -> set:
     Returns:
         Set of migration filenames that have been applied
     """
+    ensure_schema_migrations_table()
+
     db = get_database()
 
-    try:
-        with db.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT migration_name FROM schema_migrations")
-            rows = cursor.fetchall()
-            return {row[0] for row in rows}
-    except sqlite3.OperationalError:
-        # schema_migrations table doesn't exist yet
-        return set()
+    with db.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT migration_name FROM schema_migrations")
+        rows = cursor.fetchall()
+        return {row[0] for row in rows}
 
 
 def column_exists(cursor, table_name: str, column_name: str) -> bool:
