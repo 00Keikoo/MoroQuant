@@ -27,6 +27,8 @@ All production-blocking (P0) and high-priority (P1) issues discovered during Spr
 - Python migration `0012_add_initial_balance.py` was silently skipped
 - System fell back to hardcoded `STARTING_BALANCE = 10000`
 
+**NOTE (2026-07-26):** Migration `0012_add_initial_balance.py` has been retired to `ml_service/migrations/legacy/` due to ordering conflicts. It is replaced by `032_add_initial_balance.sql` which executes after the paper_account table is created.
+
 **Root Cause:**
 ```python
 # Line 150 (OLD)

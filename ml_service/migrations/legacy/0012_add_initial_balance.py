@@ -1,4 +1,11 @@
-"""Add initial_balance column to paper_account table.
+"""LEGACY MIGRATION - REPLACED BY 032_add_initial_balance.sql
+
+This Python migration was ordered incorrectly due to 4-digit prefix.
+It executed before paper_account table creation, causing production failure.
+
+Replaced by: ml_service/migrations/032_add_initial_balance.sql
+Status: Retained for backward compatibility only
+Do NOT use for future development - use SQL migrations instead
 
 Sprint 2.2B - Backend Portfolio Normalization
 Stores starting capital for accurate return % calculations.

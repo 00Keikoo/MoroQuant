@@ -202,7 +202,8 @@ def apply_python_migration(migration_file: Path) -> bool:
 def main():
     migrations_dir = Path(__file__).parent
 
-    # Collect both SQL and Python migrations
+    # SQL migrations are the official standard for MoroQuant.
+    # Python migrations remain supported for backward compatibility only.
     sql_files = list(migrations_dir.glob("*.sql"))
     python_files = [
         f for f in migrations_dir.glob("*.py")

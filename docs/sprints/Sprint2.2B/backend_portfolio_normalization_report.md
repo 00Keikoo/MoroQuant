@@ -21,6 +21,8 @@ Successfully normalized ALL portfolio calculations to backend. Frontend is now a
 
 **File:** `ml_service/services/portfolio_service.py`
 
+**NOTE (2026-07-26):** The original Python migration `0012_add_initial_balance.py` referenced in this report has been retired to `ml_service/migrations/legacy/` due to ordering issues. It is replaced by SQL migration `032_add_initial_balance.sql`.
+
 **Functions:**
 - `get_initial_balance()` — Resolves starting balance from database or constant
 - `compute_paper_account_metrics()` — Single source of truth for PAPER account
