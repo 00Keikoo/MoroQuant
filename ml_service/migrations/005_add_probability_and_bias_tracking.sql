@@ -6,12 +6,8 @@ ALTER TABLE signals ADD COLUMN prob_short REAL;
 ALTER TABLE signals ADD COLUMN prob_neutral REAL;
 ALTER TABLE signals ADD COLUMN prob_long REAL;
 
--- Add TP/SL multiplier columns (for reconstruction)
-ALTER TABLE signals ADD COLUMN tp_multiplier REAL;
-ALTER TABLE signals ADD COLUMN sl_multiplier REAL;
-
--- Add labeling method for tracking
-ALTER TABLE signals ADD COLUMN labeling_method TEXT;
+-- Note: tp_multiplier, sl_multiplier, labeling_method already added in migration 001
+-- Skipping duplicate column additions for idempotency
 
 -- Add intermediate outcome checkpoints to signal_outcomes table
 ALTER TABLE signal_outcomes ADD COLUMN checked_at_1h INTEGER DEFAULT 0;

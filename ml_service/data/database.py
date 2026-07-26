@@ -42,6 +42,15 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
+            # Bootstrap: Create migration tracking table first
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS schema_migrations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    migration_name TEXT NOT NULL UNIQUE,
+                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS ohlcv (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

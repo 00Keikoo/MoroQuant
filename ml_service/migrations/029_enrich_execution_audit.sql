@@ -1,7 +1,7 @@
 -- Migration 029: Enrich Execution Audit Metadata
 -- Add source, signal_timestamp, execution_policy, reason_detail to execution_decisions
+-- Status: REDUNDANT - These columns already exist in the current schema
+-- Keeping this migration as no-op for schema_migrations tracking consistency
 
-ALTER TABLE execution_decisions ADD COLUMN source TEXT NOT NULL DEFAULT 'PAPER' CHECK(source IN ('PAPER', 'LIVE', 'BACKTEST', 'RESEARCH'));
-ALTER TABLE execution_decisions ADD COLUMN signal_timestamp INTEGER;
-ALTER TABLE execution_decisions ADD COLUMN execution_policy TEXT;
-ALTER TABLE execution_decisions ADD COLUMN reason_detail TEXT;
+-- Note: All target columns already exist in execution_decisions table
+-- This migration is intentionally empty to maintain migration number sequence

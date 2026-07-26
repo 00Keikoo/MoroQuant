@@ -8,12 +8,8 @@
 -- ✅ 2 ACCEPTABLE DERIVED METRICS (execution_edge, profit_capture_ratio - KEEP)
 -- ❌ 4 DEAD COLUMNS (safe to remove - verified zero data, zero references)
 
--- 1. eqs (Execution Quality Score)
---    - Dead derived metric, never written
---    - Added in migration 021, DROP attempted in 022 but still exists
---    - Always computed dynamically by _calculate_eqs()
---    - Verified: 0 rows with data
-ALTER TABLE paper_positions DROP COLUMN eqs;
+-- Note: eqs column was already removed in migration 022
+-- Skipping DROP for idempotency
 
 -- 2. trailing_stop_enabled
 --    - Dead column, never written
@@ -27,11 +23,8 @@ ALTER TABLE paper_positions DROP COLUMN trailing_stop_enabled;
 --    - Verified: 0 rows with data
 ALTER TABLE paper_positions DROP COLUMN additional_profit_saved;
 
--- 4. execution_reason
---    - Dead column, no code references
---    - Never read or written
---    - Verified: 0 rows with data
-ALTER TABLE paper_positions DROP COLUMN execution_reason;
+-- Note: execution_reason column does not exist in current schema
+-- Skipping DROP for idempotency
 
 -- PRESERVED FOR OBSERVABILITY:
 -- - skip_reason: Currently unused but may document future "why didn't we trade?" scenarios
