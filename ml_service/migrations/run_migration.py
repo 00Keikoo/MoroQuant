@@ -213,6 +213,17 @@ def apply_python_migration(migration_file: Path) -> bool:
         return False
 
 
+def apply_migration(migration_file: Path) -> bool:
+    """Apply a migration file (SQL or Python) to the database."""
+    if migration_file.suffix == ".sql":
+        return apply_sql_migration(migration_file)
+    elif migration_file.suffix == ".py":
+        return apply_python_migration(migration_file)
+    else:
+        logger.error(f"Unknown migration type: {migration_file.name}")
+        return False
+
+
 def main():
     migrations_dir = Path(__file__).parent
 

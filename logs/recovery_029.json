@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-07-28T18:24:43.687912",
+  "operator": "zafka",
+  "migration": "029_enrich_execution_audit.sql",
+  "verification result": "PASS",
+  "inserted": true,
+  "rollback": false,
+  "checksum": "bcc3c9aab1ff1266fe6cb9177094dfab9135477ae4627430b2654a76fe4d6684"
+}

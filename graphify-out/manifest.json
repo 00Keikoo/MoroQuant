@@ -1350,8 +1350,8 @@
     "semantic_hash": "ed7ec18a9dfec69d3dfe8dff30adcce5"
   },
   "ml_service/migrations/run_migration.py": {
-    "mtime": 1785051219.483287,
-    "ast_hash": "f916a5b82a9ccfd81eedfc9c344ad9a1",
+    "mtime": 1785237769.3252165,
+    "ast_hash": "301b1d7f10a8aa5de5239fa73028d9dd",
     "semantic_hash": ""
   },
   "ml_service/models/__init__.py": {
@@ -4432,6 +4432,51 @@
   "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md": {
     "mtime": 1785214430.4135544,
     "ast_hash": "d29c504a42934e72519808ca05051f6e",
+    "semantic_hash": ""
+  },
+  "logs/recovery_029.json": {
+    "mtime": 1785237883.6880867,
+    "ast_hash": "b53d14013a7acfee6a23e80bf1efc4d9",
+    "semantic_hash": ""
+  },
+  "ml_service/migrations/recovery/__init__.py": {
+    "mtime": 1785216313.4088023,
+    "ast_hash": "e8c876d9a5e28165efbd64f3b2779d23",
+    "semantic_hash": ""
+  },
+  "ml_service/migrations/recovery/models.py": {
+    "mtime": 1785216296.0976295,
+    "ast_hash": "d15b42aa742b72d91c59d44c5ea49873",
+    "semantic_hash": ""
+  },
+  "ml_service/migrations/recovery/reconcile_migration.py": {
+    "mtime": 1785237810.173378,
+    "ast_hash": "ab4450963112276da866616cace89041",
+    "semantic_hash": ""
+  },
+  "ml_service/migrations/recovery/snapshot.py": {
+    "mtime": 1785214777.4060495,
+    "ast_hash": "557c0dd6310b384504835bb67512952a",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_reconcile_migration.py": {
+    "mtime": 1785237825.3114426,
+    "ast_hash": "6cc369c1da06796245b115c3e783f93f",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_recovery_models.py": {
+    "mtime": 1785216339.9612775,
+    "ast_hash": "20c1cc98fb9e855d29ab4714cc270170",
+    "semantic_hash": ""
+  },
+  "migration_history_analysis.md": {
+    "mtime": 1785237275.4754624,
+    "ast_hash": "f549b3be2dd34362847f5101e06527b4",
+    "semantic_hash": ""
+  },
+  "production_recovery_plan.md": {
+    "mtime": 1785237370.632998,
+    "ast_hash": "6c158a77b5858864af64df029d77556b",
     "semantic_hash": ""
   }
 }
