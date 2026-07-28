@@ -24,43 +24,6 @@ class DifferenceType(str, Enum):
     NULLABILITY_MISMATCH = "NULLABILITY_MISMATCH"
 
 
-class Severity(str, Enum):
-    """Severity levels for schema differences."""
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
-    CRITICAL = "CRITICAL"
-
-
-class Classification(str, Enum):
-    """ADR-023 v1.1 recovery classification types."""
-    METADATA_DRIFT = "METADATA_DRIFT"
-    SCHEMA_DRIFT = "SCHEMA_DRIFT"
-    REPLAY_CONFLICT = "REPLAY_CONFLICT"
-    SUPERSEDED_MIGRATION = "SUPERSEDED_MIGRATION"
-    MISSING_MIGRATION = "MISSING_MIGRATION"
-    DESTRUCTIVE_MIGRATION = "DESTRUCTIVE_MIGRATION"
-    MANUAL_DATABASE_MODIFICATION = "MANUAL_DATABASE_MODIFICATION"
-    UNKNOWN_STATE = "UNKNOWN_STATE"
-
-
-class Recommendation(str, Enum):
-    """Recovery recommendation actions per ADR-023 v1.1."""
-    SAFE_SKIP = "SAFE_SKIP"
-    FORCE_RECORD = "FORCE_RECORD"
-    FORWARD_MIGRATION = "FORWARD_MIGRATION"
-    MANUAL_PATCH = "MANUAL_PATCH"
-    HALT = "HALT"
-
-
-class Risk(str, Enum):
-    """Risk levels for recovery operations."""
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
-    CRITICAL = "CRITICAL"
-
-
 @dataclass(frozen=True)
 class CheckConstraint:
     """Represents a CHECK constraint on a table."""
@@ -156,12 +119,12 @@ class TableSchema:
 
 @dataclass(frozen=True)
 class SchemaDifference:
-    """Represents a detected difference between physical and target schema."""
+    """Represents a detected structural difference between physical and target schema.
+
+    Sprint 2.3A Phase 1: Raw structural differences only.
+    No severity, classification, recommendation, or risk - those belong to Sprint 2.3B.
+    """
     difference_type: DifferenceType
-    severity: Severity
-    classification: Classification
-    recommendation: Recommendation
-    risk: Risk
     target_migration: Optional[str] = None
     table_name: Optional[str] = None
     column_name: Optional[str] = None
@@ -172,10 +135,6 @@ class SchemaDifference:
         """Serialize to dictionary for JSON output."""
         return {
             "difference_type": self.difference_type.value,
-            "severity": self.severity.value,
-            "classification": self.classification.value,
-            "recommendation": self.recommendation.value,
-            "risk": self.risk.value,
             "target_migration": self.target_migration,
             "table_name": self.table_name,
             "column_name": self.column_name,

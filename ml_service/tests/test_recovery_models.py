@@ -14,10 +14,6 @@ from ml_service.migrations.recovery.models import (
     ForeignKey,
     SchemaDifference,
     DifferenceType,
-    Severity,
-    Classification,
-    Recommendation,
-    Risk,
 )
 from ml_service.migrations.recovery.snapshot import SchemaSnapshot
 
@@ -63,13 +59,11 @@ class TestImmutability:
     def test_schema_difference_immutable(self):
         diff = SchemaDifference(
             difference_type=DifferenceType.MISSING_COLUMN,
-            severity=Severity.HIGH,
-            classification=Classification.SCHEMA_DRIFT,
-            recommendation=Recommendation.FORWARD_MIGRATION,
-            risk=Risk.HIGH,
+            table_name="test_table",
+            column_name="test_column",
         )
         with pytest.raises(FrozenInstanceError):
-            diff.severity = Severity.LOW
+            diff.difference_type = DifferenceType.EXTRA_COLUMN
 
     def test_schema_snapshot_immutable(self):
         snapshot = SchemaSnapshot(
@@ -147,10 +141,6 @@ class TestSerialization:
     def test_schema_difference_to_dict(self):
         diff = SchemaDifference(
             difference_type=DifferenceType.MISSING_COLUMN,
-            severity=Severity.HIGH,
-            classification=Classification.SCHEMA_DRIFT,
-            recommendation=Recommendation.FORWARD_MIGRATION,
-            risk=Risk.HIGH,
             target_migration="029",
             table_name="execution_decisions",
             column_name="strategy_id",
@@ -159,10 +149,6 @@ class TestSerialization:
         result = diff.to_dict()
 
         assert result["difference_type"] == "MISSING_COLUMN"
-        assert result["severity"] == "HIGH"
-        assert result["classification"] == "SCHEMA_DRIFT"
-        assert result["recommendation"] == "FORWARD_MIGRATION"
-        assert result["risk"] == "HIGH"
         assert result["target_migration"] == "029"
         assert result["table_name"] == "execution_decisions"
         assert result["column_name"] == "strategy_id"
@@ -256,40 +242,14 @@ class TestModelConstruction:
 
 
 class TestEnums:
-    """Verify enum values match ADR-023 v1.1 specifications."""
+    """Verify enum values for structural difference types."""
 
     def test_difference_type_values(self):
         assert DifferenceType.MISSING_COLUMN.value == "MISSING_COLUMN"
         assert DifferenceType.CONSTRAINT_MISMATCH.value == "CONSTRAINT_MISMATCH"
-
-    def test_severity_values(self):
-        assert Severity.LOW.value == "LOW"
-        assert Severity.MEDIUM.value == "MEDIUM"
-        assert Severity.HIGH.value == "HIGH"
-        assert Severity.CRITICAL.value == "CRITICAL"
-
-    def test_classification_values(self):
-        assert Classification.METADATA_DRIFT.value == "METADATA_DRIFT"
-        assert Classification.SCHEMA_DRIFT.value == "SCHEMA_DRIFT"
-        assert Classification.REPLAY_CONFLICT.value == "REPLAY_CONFLICT"
-        assert Classification.SUPERSEDED_MIGRATION.value == "SUPERSEDED_MIGRATION"
-        assert Classification.MISSING_MIGRATION.value == "MISSING_MIGRATION"
-        assert Classification.DESTRUCTIVE_MIGRATION.value == "DESTRUCTIVE_MIGRATION"
-        assert Classification.MANUAL_DATABASE_MODIFICATION.value == "MANUAL_DATABASE_MODIFICATION"
-        assert Classification.UNKNOWN_STATE.value == "UNKNOWN_STATE"
-
-    def test_recommendation_values(self):
-        assert Recommendation.SAFE_SKIP.value == "SAFE_SKIP"
-        assert Recommendation.FORCE_RECORD.value == "FORCE_RECORD"
-        assert Recommendation.FORWARD_MIGRATION.value == "FORWARD_MIGRATION"
-        assert Recommendation.MANUAL_PATCH.value == "MANUAL_PATCH"
-        assert Recommendation.HALT.value == "HALT"
-
-    def test_risk_values(self):
-        assert Risk.LOW.value == "LOW"
-        assert Risk.MEDIUM.value == "MEDIUM"
-        assert Risk.HIGH.value == "HIGH"
-        assert Risk.CRITICAL.value == "CRITICAL"
+        assert DifferenceType.MISSING_TABLE.value == "MISSING_TABLE"
+        assert DifferenceType.EXTRA_TABLE.value == "EXTRA_TABLE"
+        assert DifferenceType.MISSING_INDEX.value == "MISSING_INDEX"
 
 
 class TestTupleImmutability:

@@ -5,8 +5,8 @@
     "semantic_hash": "005ee62cbc2d0731b7b51b51e888de03"
   },
   ".claude/settings.local.json": {
-    "mtime": 1785043454.8169732,
-    "ast_hash": "ab0df82bb7675f532387792196934502",
+    "mtime": 1784200014.954696,
+    "ast_hash": "49700ca72c6d863d59507c058cc8bda3",
     "semantic_hash": ""
   },
   "app/api/ai/analyze-market/route.ts": {
@@ -1090,7 +1090,7 @@
     "semantic_hash": "657df301edb65337a1b5f855281593e5"
   },
   "ml_service/data/database.py": {
-    "mtime": 1785050933.5168235,
+    "mtime": 1783061085.463028,
     "ast_hash": "6369c089d9b9b89b97676e7b1b6ba269",
     "semantic_hash": "6369c089d9b9b89b97676e7b1b6ba269"
   },
@@ -1210,12 +1210,12 @@
     "semantic_hash": "339393ea42272442f3c0f8b43b04800b"
   },
   "ml_service/migrations/004_replace_signal_outcomes_with_ohlcv_based.sql": {
-    "mtime": 1785050927.3956907,
+    "mtime": 1782545663.182847,
     "ast_hash": "352094124863c9f01f585fa014512a52",
     "semantic_hash": "352094124863c9f01f585fa014512a52"
   },
   "ml_service/migrations/005_add_probability_and_bias_tracking.sql": {
-    "mtime": 1785050927.3989046,
+    "mtime": 1782545663.182847,
     "ast_hash": "cf191e6df5d309998b126fd79ab8b796",
     "semantic_hash": "cf191e6df5d309998b126fd79ab8b796"
   },
@@ -1245,7 +1245,7 @@
     "semantic_hash": "c863752e573ce8c271ac7bbb8e96e917"
   },
   "ml_service/migrations/012_add_probability_columns.sql": {
-    "mtime": 1785050927.4020932,
+    "mtime": 1782545663.183847,
     "ast_hash": "3bf4e085ff5aec0e7f4356c6094dabf9",
     "semantic_hash": "3bf4e085ff5aec0e7f4356c6094dabf9"
   },
@@ -1300,7 +1300,7 @@
     "semantic_hash": "ab9eb77f6863bf8c372b0917421a554c"
   },
   "ml_service/migrations/023_cleanup_dead_columns.sql": {
-    "mtime": 1785050927.404857,
+    "mtime": 1782971435.3249884,
     "ast_hash": "551cfb71d36605b1dc1afa0f891270a6",
     "semantic_hash": "551cfb71d36605b1dc1afa0f891270a6"
   },
@@ -1330,7 +1330,7 @@
     "semantic_hash": "7dabc4f17ea654cbec36bbb2066d020c"
   },
   "ml_service/migrations/029_enrich_execution_audit.sql": {
-    "mtime": 1785050927.4072244,
+    "mtime": 1783700461.8480814,
     "ast_hash": "d496672761e265e59043edc39505f543",
     "semantic_hash": "d496672761e265e59043edc39505f543"
   },
@@ -1350,8 +1350,8 @@
     "semantic_hash": "ed7ec18a9dfec69d3dfe8dff30adcce5"
   },
   "ml_service/migrations/run_migration.py": {
-    "mtime": 1785051219.483287,
-    "ast_hash": "f916a5b82a9ccfd81eedfc9c344ad9a1",
+    "mtime": 1784199967.0411444,
+    "ast_hash": "80d13c83427657aa00d451b7b4989e4d",
     "semantic_hash": ""
   },
   "ml_service/models/__init__.py": {
@@ -4279,14 +4279,19 @@
     "ast_hash": "b5ccf19079e6e82423ecc94f00d89d42",
     "semantic_hash": ""
   },
+  "ml_service/migrations/0012_add_initial_balance.py": {
+    "mtime": 1784190707.4649348,
+    "ast_hash": "62b97db81ec968eb5c75bb7e74504375",
+    "semantic_hash": ""
+  },
   "ml_service/services/portfolio_service.py": {
     "mtime": 1784200306.5474193,
     "ast_hash": "f597e2f63284006e8f0e6a684fd4bd88",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint2.2B/backend_portfolio_normalization_report.md": {
-    "mtime": 1785044241.787748,
-    "ast_hash": "b9aac9c495bdfc23cd7f8658c319dd09",
+    "mtime": 1784191076.3092825,
+    "ast_hash": "b49b76f52b93fe4f4815266c9b5ec413",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint2.2B/portfolio_source_of_truth.md": {
@@ -4300,8 +4305,8 @@
     "semantic_hash": ""
   },
   "production_hotfix_report.md": {
-    "mtime": 1785044239.5131967,
-    "ast_hash": "6deada1b2c527e456b12671dc1db955b",
+    "mtime": 1784201197.2364345,
+    "ast_hash": "586deca17a8068b01fd79c1addf5ed62",
     "semantic_hash": ""
   },
   "prediction_engine_audit_report.md": {
@@ -4407,31 +4412,6 @@
   "docs/sprints/Sprint-R1A-Quality-Gate-Decision.md": {
     "mtime": 1784811663.4025812,
     "ast_hash": "c4ba986a453c313e5d6e5f22ec4f6a8d",
-    "semantic_hash": ""
-  },
-  "ml_service/migrations/032_add_initial_balance.sql": {
-    "mtime": 1785042973.8659215,
-    "ast_hash": "eab04c1a3cc9c674d8bbff5f51e582d8",
-    "semantic_hash": ""
-  },
-  "ml_service/migrations/legacy/0012_add_initial_balance.py": {
-    "mtime": 1785043422.4620218,
-    "ast_hash": "cbb24c86e929c1a1f27d2837184cc7ad",
-    "semantic_hash": ""
-  },
-  "docs/adr/ADR-023-Database-Recovery-Framework.md": {
-    "mtime": 1785214430.406353,
-    "ast_hash": "0713495b8e3059033c128a1ae3c05eed",
-    "semantic_hash": ""
-  },
-  "docs/sprints/Sprint-2.3A-Implementation-Plan.md": {
-    "mtime": 1785214430.4173982,
-    "ast_hash": "8e3ab44acaf9f6f8c69508ee7f73b932",
-    "semantic_hash": ""
-  },
-  "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md": {
-    "mtime": 1785214430.4135544,
-    "ast_hash": "d29c504a42934e72519808ca05051f6e",
     "semantic_hash": ""
   }
 }
