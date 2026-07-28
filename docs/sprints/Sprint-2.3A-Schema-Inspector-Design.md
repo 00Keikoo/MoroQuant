@@ -47,6 +47,7 @@ Sprint 2.3A implements the read-only inspection, diagnostic, and reporting capab
     2. Query `sqlite_master` to retrieve all active tables and indexes.
     3. Iterate through tables and execute `PRAGMA table_info(table)`, `PRAGMA foreign_key_list(table)`, and `PRAGMA index_list(table)`.
     4. Construct and return a `SchemaSnapshot`.
+*   **Check Constraints Architectural Decision**: SQLite does not provide a read-only structural API to query CHECK constraints (unlike columns, indexes, and foreign keys). Extracting them requires raw SQL string parsing of `sqlite_master`, which is out-of-scope for the Schema Inspector's pure structural extraction. Thus, `check_constraints` in `TableSchema` remain empty (`()`) by design.
 *   **Public Interface**:
     ```python
     class SchemaInspector:
