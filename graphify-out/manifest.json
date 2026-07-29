@@ -4445,8 +4445,8 @@
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/models.py": {
-    "mtime": 1785296675.398524,
-    "ast_hash": "df722ed53089b8674ecd289e7f1343a0",
+    "mtime": 1785327061.9329886,
+    "ast_hash": "37e045d6587b22708fe9eb526ddeb565",
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/reconcile_migration.py": {
@@ -4500,18 +4500,33 @@
     "semantic_hash": ""
   },
   "ml_service/tests/test_decision_analyzer.py": {
-    "mtime": 1785307578.0151384,
+    "mtime": 1785310623.7557025,
     "ast_hash": "7aee0c1800367bf975d74f515e9a2025",
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/decision/__init__.py": {
-    "mtime": 1785297800.3238502,
+    "mtime": 1785310623.7557025,
     "ast_hash": "0abefe880ae9fb6e08dace04fa081791",
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/decision/analyzer.py": {
-    "mtime": 1785307518.2664106,
+    "mtime": 1785310623.7557025,
     "ast_hash": "737f7b5568631144284326494f7257eb",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-2.3C-Implementation-Plan.md": {
+    "mtime": 1785326658.7603333,
+    "ast_hash": "a7d52315d6214fdbb3392e9b6210d8b9",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-2.3C-Recovery-Executor-Design.md": {
+    "mtime": 1785326650.5251608,
+    "ast_hash": "b2c526c4d0888dde18f7e4a658102275",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_recovery_execution_models.py": {
+    "mtime": 1785327068.9821122,
+    "ast_hash": "53c5e100c9b67109eac3239f27f152a7",
     "semantic_hash": ""
   }
 }

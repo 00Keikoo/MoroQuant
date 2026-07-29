@@ -208,3 +208,57 @@ class RecoveryDecision:
             "rationale": self.rationale,
             "details": self.details
         }
+
+
+class ExecutionStatus(str, Enum):
+    """Status of a recovery execution step."""
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+@dataclass(frozen=True)
+class ExecutionResult:
+    """Immutable record of a single recovery decision execution."""
+    decision: RecoveryDecision
+    status: ExecutionStatus
+    duration_ms: float
+    executed_sql: tuple[str, ...]
+    rolled_back: bool
+    timestamp: str
+    error_message: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize execution result to deterministic dictionary."""
+        return {
+            "decision": self.decision.to_dict(),
+            "status": self.status.value,
+            "duration_ms": self.duration_ms,
+            "executed_sql": list(self.executed_sql),
+            "rolled_back": self.rolled_back,
+            "error_message": self.error_message,
+            "timestamp": self.timestamp,
+        }
+
+
+@dataclass(frozen=True)
+class ExecutionSummary:
+    """Aggregated execution information."""
+    total_decisions: int
+    successful_executions: int
+    failed_executions: int
+    skipped_executions: int
+    total_duration_ms: float
+    results: tuple[ExecutionResult, ...]
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize execution summary to deterministic dictionary."""
+        return {
+            "total_decisions": self.total_decisions,
+            "successful_executions": self.successful_executions,
+            "failed_executions": self.failed_executions,
+            "skipped_executions": self.skipped_executions,
+            "total_duration_ms": self.total_duration_ms,
+            "results": [res.to_dict() for res in self.results],
+        }
+
