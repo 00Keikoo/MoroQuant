@@ -701,6 +701,7 @@
   "699": "page.tsx",
   "700": "TestTradesValidation",
   "701": "Sprint 2.3C Implementation Plan: Recovery Executor",
+  "702": "compute_confidence_drift",
   "703": "OpenPositionsPanel.tsx",
   "704": "_compute_newey_west_adjustment",
   "705": ".to_dict",
@@ -721,7 +722,6 @@
   "730": ".test_default_parameters",
   "731": "CryptoPriceService",
   "732": "ProxyPriceService",
-  "733": "rule_break_even_consistency",
   "734": "page.tsx",
   "742": "__init__.py"
 }
