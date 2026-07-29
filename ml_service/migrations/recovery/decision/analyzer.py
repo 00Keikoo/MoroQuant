@@ -45,8 +45,7 @@ class DecisionAnalyzer:
     ) -> Tuple[RecoveryDecision, ...]:
         """Analyze schema differences and produce recovery decisions.
 
-        Sprint 2.3B Commit 4: Implements risk classification engine.
-        Recommendation remains placeholder for future commits.
+        Sprint 2.3B Commit 5: Implements complete pipeline including recommendation engine.
 
         Args:
             differences: Tuple of detected schema differences
@@ -61,13 +60,14 @@ class DecisionAnalyzer:
         for diff in differences:
             classification = self._classify_difference(diff)
             risk = self._classify_risk(diff, classification)
+            recommendation = self._classify_recommendation(classification)
             rationale = self._generate_rationale(diff, classification)
 
             decision = RecoveryDecision(
                 difference=diff,
                 classification=classification,
                 risk=risk,
-                recommendation=RecoveryRecommendation.HALT,
+                recommendation=recommendation,
                 rationale=rationale,
                 details={},
             )
@@ -163,6 +163,37 @@ class DecisionAnalyzer:
             return RecoveryRisk.LOW
 
         return RecoveryRisk.CRITICAL
+
+    def _classify_recommendation(self, classification: RecoveryClassification) -> RecoveryRecommendation:
+        """Map classification to recovery recommendation per ADR-023 Section 4.
+
+        ADR-023 Section 4: Recovery Recommendation Types
+        """
+        if classification == RecoveryClassification.REPLAY_CONFLICT:
+            return RecoveryRecommendation.FORCE_RECORD
+
+        if classification == RecoveryClassification.SCHEMA_DRIFT:
+            return RecoveryRecommendation.FORWARD_MIGRATION
+
+        if classification == RecoveryClassification.METADATA_DRIFT:
+            return RecoveryRecommendation.HALT
+
+        if classification == RecoveryClassification.UNKNOWN_STATE:
+            return RecoveryRecommendation.HALT
+
+        if classification == RecoveryClassification.MANUAL_DATABASE_MODIFICATION:
+            return RecoveryRecommendation.MANUAL_PATCH
+
+        if classification == RecoveryClassification.MISSING_MIGRATION:
+            return RecoveryRecommendation.HALT
+
+        if classification == RecoveryClassification.DESTRUCTIVE_MIGRATION:
+            return RecoveryRecommendation.MANUAL_PATCH
+
+        if classification == RecoveryClassification.SUPERSEDED_MIGRATION:
+            return RecoveryRecommendation.SAFE_SKIP
+
+        return RecoveryRecommendation.HALT
 
     def _generate_rationale(
         self,

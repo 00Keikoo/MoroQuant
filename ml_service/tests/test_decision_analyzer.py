@@ -1,6 +1,6 @@
 """Tests for DecisionAnalyzer classification engine.
 
-Sprint 2.3B Commit 3: Tests classification logic mapping DifferenceType to RecoveryClassification.
+Sprint 2.3B Commit 5: Tests complete pipeline including recommendation engine.
 """
 
 import pytest
@@ -11,6 +11,7 @@ from ml_service.migrations.recovery.models import (
     DifferenceType,
     RecoveryClassification,
     RecoveryDecision,
+    RecoveryRecommendation,
     RecoveryRisk,
     SchemaDifference,
 )
@@ -665,3 +666,162 @@ class TestRiskClassification:
         decision = decisions[0]
         if decision.classification == RecoveryClassification.UNKNOWN_STATE:
             assert decision.risk == RecoveryRisk.CRITICAL
+
+
+class TestRecommendationMapping:
+    """Test recommendation mappings per ADR-023 Section 4."""
+
+    def test_replay_conflict_recommends_force_record(self):
+        """REPLAY_CONFLICT maps to FORCE_RECORD recommendation."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.REPLAY_CONFLICT
+        assert decisions[0].recommendation == RecoveryRecommendation.FORCE_RECORD
+
+    def test_schema_drift_recommends_forward_migration(self):
+        """SCHEMA_DRIFT maps to FORWARD_MIGRATION recommendation."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+                table_name="users",
+                column_name="age",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decisions[0].recommendation == RecoveryRecommendation.FORWARD_MIGRATION
+
+    def test_metadata_drift_recommends_halt(self):
+        """METADATA_DRIFT maps to HALT recommendation."""
+        context = DecisionContext(
+            applied_migration_names=("001_create_users",),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.METADATA_DRIFT
+        assert decisions[0].recommendation == RecoveryRecommendation.HALT
+
+    def test_manual_database_modification_recommends_manual_patch(self):
+        """MANUAL_DATABASE_MODIFICATION maps to MANUAL_PATCH recommendation."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_TABLE,
+                table_name="unauthorized_table",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.MANUAL_DATABASE_MODIFICATION
+        assert decisions[0].recommendation == RecoveryRecommendation.MANUAL_PATCH
+
+    def test_complete_pipeline_all_fields_populated(self):
+        """Verify complete pipeline populates all RecoveryDecision fields."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_COLUMN,
+                table_name="users",
+                column_name="email",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+
+        decision = decisions[0]
+        assert decision.difference is not None
+        assert decision.classification == RecoveryClassification.REPLAY_CONFLICT
+        assert decision.risk == RecoveryRisk.LOW
+        assert decision.recommendation == RecoveryRecommendation.FORCE_RECORD
+        assert decision.rationale != ""
+        assert isinstance(decision.details, dict)
+
+    def test_multiple_differences_correct_recommendations(self):
+        """Multiple differences produce correct individual recommendations."""
+        context = DecisionContext(
+            applied_migration_names=("001_create_users",),
+            available_migration_files=("001_create_users", "002_add_index"),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_INDEX,
+                index_name="idx_email",
+                target_migration="002_add_index",
+            ),
+            SchemaDifference(
+                difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+                table_name="orders",
+                column_name="quantity",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 3
+
+        assert decisions[0].classification == RecoveryClassification.METADATA_DRIFT
+        assert decisions[0].recommendation == RecoveryRecommendation.HALT
+
+        assert decisions[1].classification == RecoveryClassification.REPLAY_CONFLICT
+        assert decisions[1].recommendation == RecoveryRecommendation.FORCE_RECORD
+
+        assert decisions[2].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decisions[2].recommendation == RecoveryRecommendation.FORWARD_MIGRATION
