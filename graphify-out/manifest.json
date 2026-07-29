@@ -4530,13 +4530,23 @@
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/executor.py": {
-    "mtime": 1785329377.001096,
+    "mtime": 1785329670.0910602,
     "ast_hash": "3a1fa32ea4549fff0054f5138ff7c065",
     "semantic_hash": ""
   },
   "ml_service/tests/test_recovery_executor.py": {
-    "mtime": 1785329387.9642026,
+    "mtime": 1785329670.0910602,
     "ast_hash": "48f7ea75c24e4beca9355ee7e73959b2",
+    "semantic_hash": ""
+  },
+  "ml_service/migrations/recovery/reporter.py": {
+    "mtime": 1785329957.8731344,
+    "ast_hash": "f3239a6a4b197840cac47f46d1b8274c",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_recovery_reporter.py": {
+    "mtime": 1785329874.6182332,
+    "ast_hash": "361fcd2b7163997614361040fdfe3c68",
     "semantic_hash": ""
   }
 }
