@@ -45,8 +45,8 @@ class DecisionAnalyzer:
     ) -> Tuple[RecoveryDecision, ...]:
         """Analyze schema differences and produce recovery decisions.
 
-        Sprint 2.3B Commit 3: Implements classification logic only.
-        Risk and recommendation use placeholder values for later commits.
+        Sprint 2.3B Commit 4: Implements risk classification engine.
+        Recommendation remains placeholder for future commits.
 
         Args:
             differences: Tuple of detected schema differences
@@ -60,12 +60,13 @@ class DecisionAnalyzer:
         decisions = []
         for diff in differences:
             classification = self._classify_difference(diff)
+            risk = self._classify_risk(diff, classification)
             rationale = self._generate_rationale(diff, classification)
 
             decision = RecoveryDecision(
                 difference=diff,
                 classification=classification,
-                risk=RecoveryRisk.LOW,
+                risk=risk,
                 recommendation=RecoveryRecommendation.HALT,
                 rationale=rationale,
                 details={},
@@ -120,6 +121,48 @@ class DecisionAnalyzer:
             return False
 
         return target_migration not in self._context.applied_migration_names
+
+    def _classify_risk(
+        self,
+        diff: SchemaDifference,
+        classification: RecoveryClassification,
+    ) -> RecoveryRisk:
+        """Classify risk level according to ADR-023 Section 3.
+
+        Risk levels:
+        - LOW: Safe operations, no data impact
+        - MEDIUM: Modifies non-critical structures
+        - HIGH: Structural changes on transactional data
+        - CRITICAL: Data loss risk or corrupted state
+        """
+        if classification == RecoveryClassification.REPLAY_CONFLICT:
+            return RecoveryRisk.LOW
+
+        if classification == RecoveryClassification.SCHEMA_DRIFT:
+            diff_type = diff.difference_type
+            if diff_type in (DifferenceType.COLUMN_TYPE_MISMATCH, DifferenceType.NULLABILITY_MISMATCH):
+                return RecoveryRisk.HIGH
+            if diff_type in (DifferenceType.CONSTRAINT_MISMATCH, DifferenceType.DEFAULT_VALUE_MISMATCH):
+                return RecoveryRisk.MEDIUM
+            if diff_type == DifferenceType.MISSING_INDEX:
+                return RecoveryRisk.LOW
+            return RecoveryRisk.MEDIUM
+
+        if classification == RecoveryClassification.MANUAL_DATABASE_MODIFICATION:
+            return RecoveryRisk.HIGH
+
+        if classification in (
+            RecoveryClassification.METADATA_DRIFT,
+            RecoveryClassification.MISSING_MIGRATION,
+            RecoveryClassification.DESTRUCTIVE_MIGRATION,
+            RecoveryClassification.UNKNOWN_STATE,
+        ):
+            return RecoveryRisk.CRITICAL
+
+        if classification == RecoveryClassification.SUPERSEDED_MIGRATION:
+            return RecoveryRisk.LOW
+
+        return RecoveryRisk.CRITICAL
 
     def _generate_rationale(
         self,

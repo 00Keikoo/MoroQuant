@@ -11,6 +11,7 @@ from ml_service.migrations.recovery.models import (
     DifferenceType,
     RecoveryClassification,
     RecoveryDecision,
+    RecoveryRisk,
     SchemaDifference,
 )
 
@@ -463,3 +464,204 @@ class TestMultipleDifferences:
         assert decisions[0].classification == RecoveryClassification.METADATA_DRIFT
         assert decisions[1].classification == RecoveryClassification.REPLAY_CONFLICT
         assert decisions[2].classification == RecoveryClassification.SCHEMA_DRIFT
+
+
+class TestRiskClassification:
+    """Test risk classification per ADR-023 Section 3."""
+
+    def test_replay_conflict_maps_to_low_risk(self):
+        """REPLAY_CONFLICT classifies as LOW risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.REPLAY_CONFLICT
+        assert decisions[0].risk == RecoveryRisk.LOW
+
+    def test_schema_drift_column_type_mismatch_high_risk(self):
+        """SCHEMA_DRIFT with COLUMN_TYPE_MISMATCH classifies as HIGH risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+                table_name="orders",
+                column_name="quantity",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decisions[0].risk == RecoveryRisk.HIGH
+
+    def test_schema_drift_nullability_mismatch_high_risk(self):
+        """SCHEMA_DRIFT with NULLABILITY_MISMATCH classifies as HIGH risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.NULLABILITY_MISMATCH,
+                table_name="users",
+                column_name="email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decisions[0].risk == RecoveryRisk.HIGH
+
+    def test_schema_drift_constraint_mismatch_medium_risk(self):
+        """SCHEMA_DRIFT with CONSTRAINT_MISMATCH classifies as MEDIUM risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.CONSTRAINT_MISMATCH,
+                table_name="users",
+                column_name="email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decisions[0].risk == RecoveryRisk.MEDIUM
+
+    def test_schema_drift_default_value_mismatch_medium_risk(self):
+        """SCHEMA_DRIFT with DEFAULT_VALUE_MISMATCH classifies as MEDIUM risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.DEFAULT_VALUE_MISMATCH,
+                table_name="users",
+                column_name="status",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decisions[0].risk == RecoveryRisk.MEDIUM
+
+    def test_schema_drift_missing_index_low_risk(self):
+        """SCHEMA_DRIFT with MISSING_INDEX classifies as LOW risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_INDEX,
+                table_name="users",
+                index_name="idx_email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decisions[0].risk == RecoveryRisk.LOW
+
+    def test_manual_database_modification_high_risk(self):
+        """MANUAL_DATABASE_MODIFICATION classifies as HIGH risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_COLUMN,
+                table_name="users",
+                column_name="manual_field",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.MANUAL_DATABASE_MODIFICATION
+        assert decisions[0].risk == RecoveryRisk.HIGH
+
+    def test_metadata_drift_critical_risk(self):
+        """METADATA_DRIFT classifies as CRITICAL risk."""
+        context = DecisionContext(
+            applied_migration_names=("001_create_users",),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.METADATA_DRIFT
+        assert decisions[0].risk == RecoveryRisk.CRITICAL
+
+    def test_unknown_state_critical_risk(self):
+        """UNKNOWN_STATE classifies as CRITICAL risk."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+                table_name="unknown_table",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        decision = decisions[0]
+        if decision.classification == RecoveryClassification.UNKNOWN_STATE:
+            assert decision.risk == RecoveryRisk.CRITICAL
