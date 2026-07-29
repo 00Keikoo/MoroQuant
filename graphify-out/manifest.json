@@ -4445,7 +4445,7 @@
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/models.py": {
-    "mtime": 1785327061.9329886,
+    "mtime": 1785327513.8354812,
     "ast_hash": "37e045d6587b22708fe9eb526ddeb565",
     "semantic_hash": ""
   },
@@ -4515,18 +4515,28 @@
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-2.3C-Implementation-Plan.md": {
-    "mtime": 1785326658.7603333,
+    "mtime": 1785327513.7814803,
     "ast_hash": "a7d52315d6214fdbb3392e9b6210d8b9",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-2.3C-Recovery-Executor-Design.md": {
-    "mtime": 1785326650.5251608,
+    "mtime": 1785327513.7814803,
     "ast_hash": "b2c526c4d0888dde18f7e4a658102275",
     "semantic_hash": ""
   },
   "ml_service/tests/test_recovery_execution_models.py": {
-    "mtime": 1785327068.9821122,
+    "mtime": 1785327513.8364813,
     "ast_hash": "53c5e100c9b67109eac3239f27f152a7",
+    "semantic_hash": ""
+  },
+  "ml_service/migrations/recovery/executor.py": {
+    "mtime": 1785327693.1322951,
+    "ast_hash": "bfd611faf997fa13ad0c115232c482b1",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_recovery_executor.py": {
+    "mtime": 1785327659.454771,
+    "ast_hash": "7b7340306e061fb6424c5878a36bffe2",
     "semantic_hash": ""
   }
 }

@@ -4445,8 +4445,8 @@
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/models.py": {
-    "mtime": 1785296675.398524,
-    "ast_hash": "df722ed53089b8674ecd289e7f1343a0",
+    "mtime": 1785327061.9329886,
+    "ast_hash": "37e045d6587b22708fe9eb526ddeb565",
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/reconcile_migration.py": {
@@ -4522,6 +4522,11 @@
   "docs/sprints/Sprint-2.3C-Recovery-Executor-Design.md": {
     "mtime": 1785326650.5251608,
     "ast_hash": "b2c526c4d0888dde18f7e4a658102275",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_recovery_execution_models.py": {
+    "mtime": 1785327068.9821122,
+    "ast_hash": "53c5e100c9b67109eac3239f27f152a7",
     "semantic_hash": ""
   }
 }
