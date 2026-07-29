@@ -1,7 +1,6 @@
-"""Tests for DecisionAnalyzer skeleton.
+"""Tests for DecisionAnalyzer classification engine.
 
-Sprint 2.3B Commit 2: Tests analyzer structure and interface only.
-No classification logic tested yet.
+Sprint 2.3B Commit 3: Tests classification logic mapping DifferenceType to RecoveryClassification.
 """
 
 import pytest
@@ -10,6 +9,8 @@ from ml_service.migrations.recovery.decision.analyzer import DecisionAnalyzer
 from ml_service.migrations.recovery.models import (
     DecisionContext,
     DifferenceType,
+    RecoveryClassification,
+    RecoveryDecision,
     SchemaDifference,
 )
 
@@ -58,8 +59,82 @@ class TestDecisionAnalyzerAnalyze:
         result = analyzer.analyze(())
         assert result == ()
 
-    def test_analyze_non_empty_raises_not_implemented(self):
-        """analyze() raises NotImplementedError for non-empty differences."""
+
+class TestMetadataDriftClassification:
+    """Test METADATA_DRIFT classification per ADR-023 Section 2.1."""
+
+    def test_missing_table_applied_migration(self):
+        """MISSING_TABLE with applied migration classifies as METADATA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=("001_create_users",),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.METADATA_DRIFT
+        assert "recorded as applied but physically missing" in decisions[0].rationale
+
+    def test_missing_column_applied_migration(self):
+        """MISSING_COLUMN with applied migration classifies as METADATA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=("002_add_email",),
+            available_migration_files=("002_add_email",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_COLUMN,
+                table_name="users",
+                column_name="email",
+                target_migration="002_add_email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.METADATA_DRIFT
+
+
+class TestSchemaDriftClassification:
+    """Test SCHEMA_DRIFT classification per ADR-023 Section 2.2."""
+
+    def test_missing_table_not_applied(self):
+        """MISSING_TABLE without applied migration classifies as SCHEMA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+        assert "does not match target schema" in decisions[0].rationale
+
+    def test_column_type_mismatch(self):
+        """COLUMN_TYPE_MISMATCH classifies as SCHEMA_DRIFT."""
         context = DecisionContext(
             applied_migration_names=(),
             available_migration_files=(),
@@ -69,12 +144,322 @@ class TestDecisionAnalyzerAnalyze:
 
         differences = (
             SchemaDifference(
-                difference_type=DifferenceType.MISSING_TABLE,
-                table_name="test_table",
+                difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+                table_name="users",
+                column_name="age",
+                details={"expected": "INTEGER", "actual": "TEXT"},
             ),
         )
 
-        with pytest.raises(NotImplementedError) as exc_info:
-            analyzer.analyze(differences)
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
 
-        assert "Decision classification is not implemented yet" in str(exc_info.value)
+    def test_nullability_mismatch(self):
+        """NULLABILITY_MISMATCH classifies as SCHEMA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.NULLABILITY_MISMATCH,
+                table_name="users",
+                column_name="email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+
+    def test_constraint_mismatch(self):
+        """CONSTRAINT_MISMATCH classifies as SCHEMA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.CONSTRAINT_MISMATCH,
+                table_name="users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+
+    def test_default_value_mismatch(self):
+        """DEFAULT_VALUE_MISMATCH classifies as SCHEMA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.DEFAULT_VALUE_MISMATCH,
+                table_name="users",
+                column_name="active",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+
+    def test_missing_index(self):
+        """MISSING_INDEX classifies as SCHEMA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_INDEX,
+                table_name="users",
+                index_name="idx_email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+
+    def test_index_definition_mismatch(self):
+        """INDEX_DEFINITION_MISMATCH classifies as SCHEMA_DRIFT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.INDEX_DEFINITION_MISMATCH,
+                index_name="idx_email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.SCHEMA_DRIFT
+
+
+class TestReplayConflictClassification:
+    """Test REPLAY_CONFLICT classification per ADR-023 Section 2.3."""
+
+    def test_extra_table_not_recorded(self):
+        """EXTRA_TABLE with target migration not applied classifies as REPLAY_CONFLICT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.REPLAY_CONFLICT
+        assert "not marked applied" in decisions[0].rationale
+
+    def test_extra_column_not_recorded(self):
+        """EXTRA_COLUMN with target migration not applied classifies as REPLAY_CONFLICT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=("002_add_email",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_COLUMN,
+                table_name="users",
+                column_name="email",
+                target_migration="002_add_email",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.REPLAY_CONFLICT
+
+    def test_extra_index_not_recorded(self):
+        """EXTRA_INDEX with target migration not applied classifies as REPLAY_CONFLICT."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=("003_add_index",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_INDEX,
+                index_name="idx_email",
+                target_migration="003_add_index",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.REPLAY_CONFLICT
+
+
+class TestManualDatabaseModificationClassification:
+    """Test MANUAL_DATABASE_MODIFICATION classification per ADR-023 Section 2.7."""
+
+    def test_extra_table_no_migration(self):
+        """EXTRA_TABLE with no target migration classifies as MANUAL_DATABASE_MODIFICATION."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_TABLE,
+                table_name="rogue_table",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.MANUAL_DATABASE_MODIFICATION
+        assert "absent from migration files" in decisions[0].rationale
+
+    def test_extra_column_no_migration(self):
+        """EXTRA_COLUMN with no target migration classifies as MANUAL_DATABASE_MODIFICATION."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_COLUMN,
+                table_name="users",
+                column_name="unauthorized_field",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 1
+        assert decisions[0].classification == RecoveryClassification.MANUAL_DATABASE_MODIFICATION
+
+
+class TestDeterministicOutput:
+    """Test that DecisionAnalyzer produces deterministic output."""
+
+    def test_same_input_same_output(self):
+        """Multiple analyze calls with same input produce identical output."""
+        context = DecisionContext(
+            applied_migration_names=("001_create_users",),
+            available_migration_files=("001_create_users",),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+        )
+
+        result1 = analyzer.analyze(differences)
+        result2 = analyzer.analyze(differences)
+
+        assert result1 == result2
+        assert result1[0].to_dict() == result2[0].to_dict()
+
+
+class TestImmutabilityGuarantees:
+    """Test that RecoveryDecision objects are immutable."""
+
+    def test_recovery_decision_immutable(self):
+        """RecoveryDecision objects cannot be modified after creation."""
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_INDEX,
+                index_name="idx_test",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        decision = decisions[0]
+
+        with pytest.raises(AttributeError):
+            decision.classification = RecoveryClassification.UNKNOWN_STATE
+
+
+class TestMultipleDifferences:
+    """Test analyzing multiple differences in a single call."""
+
+    def test_multiple_differences(self):
+        """analyze() processes multiple differences and returns correct classifications."""
+        context = DecisionContext(
+            applied_migration_names=("001_create_users",),
+            available_migration_files=("001_create_users", "002_add_email"),
+            migration_checksums={},
+        )
+        analyzer = DecisionAnalyzer(context)
+
+        differences = (
+            SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                table_name="users",
+                target_migration="001_create_users",
+            ),
+            SchemaDifference(
+                difference_type=DifferenceType.EXTRA_COLUMN,
+                table_name="accounts",
+                column_name="balance",
+                target_migration="002_add_email",
+            ),
+            SchemaDifference(
+                difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+                table_name="orders",
+                column_name="quantity",
+            ),
+        )
+
+        decisions = analyzer.analyze(differences)
+        assert len(decisions) == 3
+        assert decisions[0].classification == RecoveryClassification.METADATA_DRIFT
+        assert decisions[1].classification == RecoveryClassification.REPLAY_CONFLICT
+        assert decisions[2].classification == RecoveryClassification.SCHEMA_DRIFT
