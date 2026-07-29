@@ -727,7 +727,6 @@
   "725": ".test_default_parameters",
   "726": ".to_dict",
   "727": "_bootstrap_confidence_interval",
-  "728": "mock_equity_repo",
   "729": "_compute_newey_west_adjustment",
   "730": "_is_structurally_blocked",
   "731": "CryptoPriceService",
