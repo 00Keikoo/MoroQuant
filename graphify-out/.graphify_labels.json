@@ -727,13 +727,11 @@
   "725": ".test_default_parameters",
   "726": ".to_dict",
   "727": "_bootstrap_confidence_interval",
-  "728": ".capture_snapshot",
   "729": "_compute_newey_west_adjustment",
   "730": "_is_structurally_blocked",
   "731": "CryptoPriceService",
   "732": "ProxyPriceService",
   "733": "rule_break_even_consistency",
-  "734": "test_regime_execution_integration.py",
   "735": "mock_no_network_prices",
   "742": "__init__.py"
 }

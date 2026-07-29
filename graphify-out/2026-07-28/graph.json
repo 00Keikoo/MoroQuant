@@ -48866,8 +48866,8 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testbreakevenconsistencyrule",
-      "community": 733,
-      "community_name": "rule_break_even_consistency",
+      "community": 109,
+      "community_name": "test execution validation (TestExecutionClassifica",
       "norm_label": "testbreakevenconsistencyrule"
     },
     {
@@ -48877,8 +48877,8 @@
       "source_location": "L260",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testbreakevenconsistencyrule_test_valid_break_even_with_moves",
-      "community": 733,
-      "community_name": "rule_break_even_consistency",
+      "community": 109,
+      "community_name": "test execution validation (TestExecutionClassifica",
       "norm_label": ".test_valid_break_even_with_moves()"
     },
     {
@@ -48888,8 +48888,8 @@
       "source_location": "L264",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testbreakevenconsistencyrule_test_invalid_break_even_no_moves",
-      "community": 733,
-      "community_name": "rule_break_even_consistency",
+      "community": 109,
+      "community_name": "test execution validation (TestExecutionClassifica",
       "norm_label": ".test_invalid_break_even_no_moves()"
     },
     {
@@ -48899,8 +48899,8 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testbreakevenconsistencyrule_test_no_break_even_no_validation",
-      "community": 733,
-      "community_name": "rule_break_even_consistency",
+      "community": 109,
+      "community_name": "test execution validation (TestExecutionClassifica",
       "norm_label": ".test_no_break_even_no_validation()"
     },
     {
@@ -48910,8 +48910,8 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testexecutionclassificationrule",
-      "community": 109,
-      "community_name": "test execution validation (TestExecutionClassifica",
+      "community": 733,
+      "community_name": "rule_break_even_consistency",
       "norm_label": "testexecutionclassificationrule"
     },
     {
@@ -48921,8 +48921,8 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testexecutionclassificationrule_test_valid_classification_model_correct_execution_correct",
-      "community": 109,
-      "community_name": "test execution validation (TestExecutionClassifica",
+      "community": 733,
+      "community_name": "rule_break_even_consistency",
       "norm_label": ".test_valid_classification_model_correct_execution_correct()"
     },
     {
@@ -48932,8 +48932,8 @@
       "source_location": "L291",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testexecutionclassificationrule_test_valid_classification_model_weak",
-      "community": 109,
-      "community_name": "test execution validation (TestExecutionClassifica",
+      "community": 733,
+      "community_name": "rule_break_even_consistency",
       "norm_label": ".test_valid_classification_model_weak()"
     },
     {
@@ -48943,8 +48943,8 @@
       "source_location": "L303",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_testexecutionclassificationrule_test_valid_classification_unknown",
-      "community": 109,
-      "community_name": "test execution validation (TestExecutionClassifica",
+      "community": 733,
+      "community_name": "rule_break_even_consistency",
       "norm_label": ".test_valid_classification_unknown()"
     },
     {
@@ -49262,8 +49262,8 @@
       "source_location": "L258",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_rationale_258",
-      "community": 733,
-      "community_name": "rule_break_even_consistency",
+      "community": 109,
+      "community_name": "test execution validation (TestExecutionClassifica",
       "norm_label": "test rule 9: if break_even_triggered == 1 then sl_move_count >= 1"
     },
     {
@@ -49273,8 +49273,8 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "ml_service_tests_test_execution_validation_rationale_277",
-      "community": 109,
-      "community_name": "test execution validation (TestExecutionClassifica",
+      "community": 733,
+      "community_name": "rule_break_even_consistency",
       "norm_label": "test rule 10: execution classification must be valid"
     },
     {
@@ -50131,8 +50131,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "ml_service_tests_test_migration_027",
-      "community": 656,
-      "community_name": ".get_account",
+      "community": 680,
+      "community_name": "0012_add_initial_balance.py",
       "norm_label": "test_migration_027.py"
     },
     {
@@ -50153,8 +50153,8 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "ml_service_tests_test_migration_027_test_migration_027_backfill",
-      "community": 656,
-      "community_name": ".get_account",
+      "community": 680,
+      "community_name": "0012_add_initial_balance.py",
       "norm_label": "test_migration_027_backfill()"
     },
     {
@@ -50175,8 +50175,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "ml_service_tests_test_migration_027_rationale_112",
-      "community": 656,
-      "community_name": ".get_account",
+      "community": 680,
+      "community_name": "0012_add_initial_balance.py",
       "norm_label": "verify case a: rows with null metadata become populated (including timeframe)."
     },
     {
@@ -50219,8 +50219,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "ml_service_tests_test_migration_engine_test_successful_migration_records_in_schema_migrations",
-      "community": 680,
-      "community_name": "0012_add_initial_balance.py",
+      "community": 16,
+      "community_name": "test migration engine (Database)",
       "norm_label": "test_successful_migration_records_in_schema_migrations()"
     },
     {
@@ -50406,8 +50406,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "ml_service_tests_test_migration_engine_rationale_59",
-      "community": 680,
-      "community_name": "0012_add_initial_balance.py",
+      "community": 16,
+      "community_name": "test migration engine (Database)",
       "norm_label": "test that successful migrations are recorded in schema_migrations."
     },
     {
@@ -57286,8 +57286,8 @@
       "source_location": "L221",
       "_origin": "ast",
       "id": "ml_service_validation_execution_rules_rule_break_even_consistency",
-      "community": 733,
-      "community_name": "rule_break_even_consistency",
+      "community": 109,
+      "community_name": "test execution validation (TestExecutionClassifica",
       "norm_label": "rule_break_even_consistency()"
     },
     {
@@ -57297,8 +57297,8 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "ml_service_validation_execution_rules_rule_execution_classification_valid",
-      "community": 109,
-      "community_name": "test execution validation (TestExecutionClassifica",
+      "community": 733,
+      "community_name": "rule_break_even_consistency",
       "norm_label": "rule_execution_classification_valid()"
     },
     {
@@ -57440,8 +57440,8 @@
       "source_location": "L222",
       "_origin": "ast",
       "id": "ml_service_validation_execution_rules_rationale_222",
-      "community": 733,
-      "community_name": "rule_break_even_consistency",
+      "community": 109,
+      "community_name": "test execution validation (TestExecutionClassifica",
       "norm_label": "rule 9: if break_even_triggered == 1 then sl_move_count must indicate modificati"
     },
     {
@@ -57451,8 +57451,8 @@
       "source_location": "L242",
       "_origin": "ast",
       "id": "ml_service_validation_execution_rules_rationale_242",
-      "community": 109,
-      "community_name": "test execution validation (TestExecutionClassifica",
+      "community": 733,
+      "community_name": "rule_break_even_consistency",
       "norm_label": "rule 10: execution classification must be one of known values."
     },
     {
@@ -92029,7 +92029,7 @@
       "label": "2.3 DifferenceEngine",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L57",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_2_3_differenceengine",
       "community": 627,
@@ -92040,7 +92040,7 @@
       "label": "2.4 Difference Models",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L66",
+      "source_location": "L67",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_2_4_difference_models",
       "community": 627,
@@ -92051,7 +92051,7 @@
       "label": "3. Sequence Diagram",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L76",
+      "source_location": "L77",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_3_sequence_diagram",
       "community": 627,
@@ -92062,7 +92062,7 @@
       "label": "4. Output Artifacts & JSON Schemas",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L101",
+      "source_location": "L102",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_4_output_artifacts_json_schemas",
       "community": 627,
@@ -92073,7 +92073,7 @@
       "label": "4.1 `schema_snapshot.json`",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L103",
+      "source_location": "L104",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_4_1_schema_snapshot_json",
       "community": 627,
@@ -92084,7 +92084,7 @@
       "label": "4.2 `difference_report.json`",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L128",
+      "source_location": "L129",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_4_2_difference_report_json",
       "community": 627,
@@ -92095,7 +92095,7 @@
       "label": "5. Error & Non-Functional Requirements",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L152",
+      "source_location": "L153",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_5_error_non_functional_requirements",
       "community": 627,
@@ -92106,7 +92106,7 @@
       "label": "5.1 Error Model",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L154",
+      "source_location": "L155",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_5_1_error_model",
       "community": 627,
@@ -92117,7 +92117,7 @@
       "label": "5.2 Non-Functional Requirements",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L159",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_5_2_non_functional_requirements",
       "community": 627,
@@ -92128,7 +92128,7 @@
       "label": "6. Testing Strategy",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L165",
+      "source_location": "L166",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_6_testing_strategy",
       "community": 627,
@@ -92139,7 +92139,7 @@
       "label": "7. Operational Guidelines for Claude Code",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L177",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_7_operational_guidelines_for_claude_code",
       "community": 627,
@@ -92150,7 +92150,7 @@
       "label": "Definition of Ready (DoR)",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L179",
+      "source_location": "L180",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_definition_of_ready_dor",
       "community": 627,
@@ -92161,7 +92161,7 @@
       "label": "Definition of Done (DoD)",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L183",
+      "source_location": "L184",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_definition_of_done_dod",
       "community": 627,
@@ -92172,7 +92172,7 @@
       "label": "Handoff Instructions",
       "file_type": "document",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L189",
+      "source_location": "L190",
       "_origin": "ast",
       "id": "docs_sprints_sprint_2_3a_schema_inspector_design_handoff_instructions",
       "community": 627,
@@ -110770,7 +110770,7 @@
       "community": 639,
       "norm_label": "claude.md",
       "community_name": "CLAUDE.md",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
     },
     {
       "label": "graphify",
@@ -110784,7 +110784,7 @@
       "community": 510,
       "norm_label": "graphify",
       "community_name": "Module 510",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify"
     },
     {
       "label": "DESIGN.md",
@@ -110798,7 +110798,7 @@
       "community": 201,
       "norm_label": "design.md",
       "community_name": "Module 201",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
     },
     {
       "label": "Brand & Style",
@@ -110812,7 +110812,7 @@
       "community": 640,
       "norm_label": "brand & style",
       "community_name": "Brand & Style",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
     },
     {
       "label": "Colors",
@@ -110826,7 +110826,7 @@
       "community": 641,
       "norm_label": "colors",
       "community_name": "Colors",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
     },
     {
       "label": "Typography",
@@ -110840,7 +110840,7 @@
       "community": 646,
       "norm_label": "typography",
       "community_name": "Typography",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -110854,7 +110854,7 @@
       "community": 644,
       "norm_label": "layout & spacing",
       "community_name": "Layout & Spacing",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -110868,7 +110868,7 @@
       "community": 643,
       "norm_label": "elevation & depth",
       "community_name": "Elevation & Depth",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -110882,7 +110882,7 @@
       "community": 645,
       "norm_label": "shapes",
       "community_name": "Shapes",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
     },
     {
       "label": "Components",
@@ -110896,7 +110896,7 @@
       "community": 642,
       "norm_label": "components",
       "community_name": "Components",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
     },
     {
       "label": "DESIGN.md",
@@ -110910,7 +110910,7 @@
       "community": 308,
       "norm_label": "design.md",
       "community_name": "Module 308",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
     },
     {
       "label": "Brand & Style",
@@ -110924,7 +110924,7 @@
       "community": 647,
       "norm_label": "brand & style",
       "community_name": "Brand & Style",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
     },
     {
       "label": "Colors",
@@ -110938,7 +110938,7 @@
       "community": 648,
       "norm_label": "colors",
       "community_name": "Colors",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
     },
     {
       "label": "Typography",
@@ -110952,7 +110952,7 @@
       "community": 653,
       "norm_label": "typography",
       "community_name": "Typography",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -110966,7 +110966,7 @@
       "community": 651,
       "norm_label": "layout & spacing",
       "community_name": "Layout & Spacing",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -110980,7 +110980,7 @@
       "community": 650,
       "norm_label": "elevation & depth",
       "community_name": "Elevation & Depth",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -110994,7 +110994,7 @@
       "community": 652,
       "norm_label": "shapes",
       "community_name": "Shapes",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
     },
     {
       "label": "Components",
@@ -111008,7 +111008,7 @@
       "community": 649,
       "norm_label": "components",
       "community_name": "Components",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
     },
     {
       "label": "CLAUDE.md",
@@ -111022,7 +111022,7 @@
       "community": 556,
       "norm_label": "claude.md",
       "community_name": "Module 556",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_md_claude_claude"
     },
     {
       "label": "graphify",
@@ -111036,7 +111036,7 @@
       "community": 555,
       "norm_label": "graphify",
       "community_name": "Module 555",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify"
     },
     {
       "label": "DESIGN.md",
@@ -111050,7 +111050,7 @@
       "community": 561,
       "norm_label": "design.md",
       "community_name": "Module 561",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
     },
     {
       "label": "Brand & Style",
@@ -111064,7 +111064,7 @@
       "community": 562,
       "norm_label": "brand & style",
       "community_name": "Module 562",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_brand_style"
     },
     {
       "label": "Colors",
@@ -111078,7 +111078,7 @@
       "community": 563,
       "norm_label": "colors",
       "community_name": "Module 563",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_colors"
     },
     {
       "label": "Typography",
@@ -111092,7 +111092,7 @@
       "community": 569,
       "norm_label": "typography",
       "community_name": "Module 569",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -111106,7 +111106,7 @@
       "community": 566,
       "norm_label": "layout & spacing",
       "community_name": "Module 566",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -111120,7 +111120,7 @@
       "community": 565,
       "norm_label": "elevation & depth",
       "community_name": "Module 565",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -111134,7 +111134,7 @@
       "community": 567,
       "norm_label": "shapes",
       "community_name": "Module 567",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_shapes"
     },
     {
       "label": "Components",
@@ -111148,7 +111148,7 @@
       "community": 564,
       "norm_label": "components",
       "community_name": "Module 564",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_components"
     },
     {
       "label": "DESIGN.md",
@@ -111162,7 +111162,7 @@
       "community": 574,
       "norm_label": "design.md",
       "community_name": "Module 574",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
     },
     {
       "label": "Brand & Style",
@@ -111176,7 +111176,7 @@
       "community": 575,
       "norm_label": "brand & style",
       "community_name": "Module 575",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_brand_style"
     },
     {
       "label": "Colors",
@@ -111190,7 +111190,7 @@
       "community": 576,
       "norm_label": "colors",
       "community_name": "Module 576",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_colors"
     },
     {
       "label": "Typography",
@@ -111204,7 +111204,7 @@
       "community": 582,
       "norm_label": "typography",
       "community_name": "Module 582",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_typography"
     },
     {
       "label": "Layout & Spacing",
@@ -111218,7 +111218,7 @@
       "community": 579,
       "norm_label": "layout & spacing",
       "community_name": "Module 579",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_layout_spacing"
     },
     {
       "label": "Elevation & Depth",
@@ -111232,7 +111232,7 @@
       "community": 578,
       "norm_label": "elevation & depth",
       "community_name": "Module 578",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_elevation_depth"
     },
     {
       "label": "Shapes",
@@ -111246,7 +111246,7 @@
       "community": 580,
       "norm_label": "shapes",
       "community_name": "Module 580",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_shapes"
     },
     {
       "label": "Components",
@@ -111260,7 +111260,7 @@
       "community": 577,
       "norm_label": "components",
       "community_name": "Module 577",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_components"
     },
     {
       "label": "Graphify",
@@ -111302,7 +111302,7 @@
       "community": 554,
       "norm_label": "claude",
       "community_name": "Module 554",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude"
     },
     {
       "label": "Skill",
@@ -111512,7 +111512,7 @@
       "community": 568,
       "norm_label": "design",
       "community_name": "Module 568",
-      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
+      "id": "design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design_stitch_current_institutional_quant_core_design"
     },
     {
       "label": "Code",
@@ -111554,7 +111554,7 @@
       "community": 581,
       "norm_label": "design",
       "community_name": "Module 581",
-      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
+      "id": "design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design_stitch_current_moroquant_lab_design"
     },
     {
       "label": "Code",
@@ -254339,7 +254339,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L76",
+      "source_location": "L77",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_sprint_2_3a_design_specification_schema_inspector_difference_engine",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_3_sequence_diagram",
@@ -254349,7 +254349,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L101",
+      "source_location": "L102",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_sprint_2_3a_design_specification_schema_inspector_difference_engine",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_4_output_artifacts_json_schemas",
@@ -254359,7 +254359,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L152",
+      "source_location": "L153",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_sprint_2_3a_design_specification_schema_inspector_difference_engine",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_5_error_non_functional_requirements",
@@ -254369,7 +254369,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L165",
+      "source_location": "L166",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_sprint_2_3a_design_specification_schema_inspector_difference_engine",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_6_testing_strategy",
@@ -254379,7 +254379,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L177",
+      "source_location": "L178",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_sprint_2_3a_design_specification_schema_inspector_difference_engine",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_7_operational_guidelines_for_claude_code",
@@ -254409,7 +254409,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L57",
+      "source_location": "L58",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_2_component_specifications",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_2_3_differenceengine",
@@ -254419,7 +254419,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L66",
+      "source_location": "L67",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_2_component_specifications",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_2_4_difference_models",
@@ -254429,7 +254429,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L103",
+      "source_location": "L104",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_4_output_artifacts_json_schemas",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_4_1_schema_snapshot_json",
@@ -254439,7 +254439,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L128",
+      "source_location": "L129",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_4_output_artifacts_json_schemas",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_4_2_difference_report_json",
@@ -254449,7 +254449,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L154",
+      "source_location": "L155",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_5_error_non_functional_requirements",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_5_1_error_model",
@@ -254459,7 +254459,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L159",
+      "source_location": "L160",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_5_error_non_functional_requirements",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_5_2_non_functional_requirements",
@@ -254469,7 +254469,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L183",
+      "source_location": "L184",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_7_operational_guidelines_for_claude_code",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_definition_of_done_dod",
@@ -254479,7 +254479,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L179",
+      "source_location": "L180",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_7_operational_guidelines_for_claude_code",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_definition_of_ready_dor",
@@ -254489,7 +254489,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/sprints/Sprint-2.3A-Schema-Inspector-Design.md",
-      "source_location": "L189",
+      "source_location": "L190",
       "weight": 1.0,
       "source": "docs_sprints_sprint_2_3a_schema_inspector_design_7_operational_guidelines_for_claude_code",
       "target": "docs_sprints_sprint_2_3a_schema_inspector_design_handoff_instructions",

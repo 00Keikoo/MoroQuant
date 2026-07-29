@@ -14,6 +14,11 @@ from ml_service.migrations.recovery.models import (
     ForeignKey,
     SchemaDifference,
     DifferenceType,
+    RecoveryClassification,
+    RecoveryRisk,
+    RecoveryRecommendation,
+    DecisionContext,
+    RecoveryDecision,
 )
 from ml_service.migrations.recovery.snapshot import SchemaSnapshot
 
@@ -72,6 +77,31 @@ class TestImmutability:
         )
         with pytest.raises(FrozenInstanceError):
             snapshot.timestamp = 9999999999
+
+    def test_decision_context_immutable(self):
+        context = DecisionContext(
+            applied_migration_names=("001_initial", "002_add_users"),
+            available_migration_files=("001_initial.sql", "002_add_users.sql"),
+            migration_checksums={"001_initial": "abc123", "002_add_users": "def456"},
+        )
+        with pytest.raises(FrozenInstanceError):
+            context.applied_migration_names = ("003_new",)
+
+    def test_recovery_decision_immutable(self):
+        diff = SchemaDifference(
+            difference_type=DifferenceType.MISSING_COLUMN,
+            table_name="users",
+            column_name="email",
+        )
+        decision = RecoveryDecision(
+            difference=diff,
+            classification=RecoveryClassification.SCHEMA_DRIFT,
+            risk=RecoveryRisk.HIGH,
+            recommendation=RecoveryRecommendation.FORWARD_MIGRATION,
+            rationale="Column missing from physical schema",
+        )
+        with pytest.raises(FrozenInstanceError):
+            decision.risk = RecoveryRisk.LOW
 
 
 class TestSerialization:
@@ -251,6 +281,29 @@ class TestEnums:
         assert DifferenceType.EXTRA_TABLE.value == "EXTRA_TABLE"
         assert DifferenceType.MISSING_INDEX.value == "MISSING_INDEX"
 
+    def test_recovery_classification_values(self):
+        assert RecoveryClassification.METADATA_DRIFT.value == "METADATA_DRIFT"
+        assert RecoveryClassification.SCHEMA_DRIFT.value == "SCHEMA_DRIFT"
+        assert RecoveryClassification.REPLAY_CONFLICT.value == "REPLAY_CONFLICT"
+        assert RecoveryClassification.SUPERSEDED_MIGRATION.value == "SUPERSEDED_MIGRATION"
+        assert RecoveryClassification.MISSING_MIGRATION.value == "MISSING_MIGRATION"
+        assert RecoveryClassification.DESTRUCTIVE_MIGRATION.value == "DESTRUCTIVE_MIGRATION"
+        assert RecoveryClassification.MANUAL_DATABASE_MODIFICATION.value == "MANUAL_DATABASE_MODIFICATION"
+        assert RecoveryClassification.UNKNOWN_STATE.value == "UNKNOWN_STATE"
+
+    def test_recovery_risk_values(self):
+        assert RecoveryRisk.LOW.value == "LOW"
+        assert RecoveryRisk.MEDIUM.value == "MEDIUM"
+        assert RecoveryRisk.HIGH.value == "HIGH"
+        assert RecoveryRisk.CRITICAL.value == "CRITICAL"
+
+    def test_recovery_recommendation_values(self):
+        assert RecoveryRecommendation.SAFE_SKIP.value == "SAFE_SKIP"
+        assert RecoveryRecommendation.FORCE_RECORD.value == "FORCE_RECORD"
+        assert RecoveryRecommendation.FORWARD_MIGRATION.value == "FORWARD_MIGRATION"
+        assert RecoveryRecommendation.MANUAL_PATCH.value == "MANUAL_PATCH"
+        assert RecoveryRecommendation.HALT.value == "HALT"
+
 
 class TestTupleImmutability:
     """Verify tuple fields maintain immutability."""
@@ -274,3 +327,194 @@ class TestTupleImmutability:
         )
         with pytest.raises(TypeError):
             table.primary_key[0] = "new_id"
+
+
+class TestDecisionContext:
+    """Sprint 2.3B: Verify DecisionContext construction and immutability."""
+
+    def test_decision_context_construction(self):
+        context = DecisionContext(
+            applied_migration_names=("001_initial", "002_add_users", "003_add_indexes"),
+            available_migration_files=("001_initial.sql", "002_add_users.sql", "003_add_indexes.sql"),
+            migration_checksums={
+                "001_initial": "abc123",
+                "002_add_users": "def456",
+                "003_add_indexes": "ghi789",
+            },
+        )
+        assert len(context.applied_migration_names) == 3
+        assert context.applied_migration_names[0] == "001_initial"
+        assert len(context.available_migration_files) == 3
+        assert context.migration_checksums["002_add_users"] == "def456"
+
+    def test_decision_context_empty(self):
+        context = DecisionContext(
+            applied_migration_names=(),
+            available_migration_files=(),
+            migration_checksums={},
+        )
+        assert len(context.applied_migration_names) == 0
+        assert len(context.available_migration_files) == 0
+        assert len(context.migration_checksums) == 0
+
+    def test_decision_context_tuple_fields_immutable(self):
+        context = DecisionContext(
+            applied_migration_names=("001_initial",),
+            available_migration_files=("001_initial.sql",),
+            migration_checksums={"001_initial": "abc123"},
+        )
+        with pytest.raises(TypeError):
+            context.applied_migration_names[0] = "002_new"
+
+
+class TestRecoveryDecision:
+    """Sprint 2.3B: Verify RecoveryDecision construction, serialization, and immutability."""
+
+    def test_recovery_decision_construction_minimal(self):
+        diff = SchemaDifference(
+            difference_type=DifferenceType.MISSING_COLUMN,
+            table_name="users",
+            column_name="email",
+        )
+        decision = RecoveryDecision(
+            difference=diff,
+            classification=RecoveryClassification.SCHEMA_DRIFT,
+            risk=RecoveryRisk.HIGH,
+            recommendation=RecoveryRecommendation.FORWARD_MIGRATION,
+            rationale="Column configuration does not match the target schema.",
+        )
+        assert decision.difference == diff
+        assert decision.classification == RecoveryClassification.SCHEMA_DRIFT
+        assert decision.risk == RecoveryRisk.HIGH
+        assert decision.recommendation == RecoveryRecommendation.FORWARD_MIGRATION
+        assert len(decision.details) == 0
+
+    def test_recovery_decision_construction_with_details(self):
+        diff = SchemaDifference(
+            difference_type=DifferenceType.MISSING_TABLE,
+            table_name="audit_log",
+            target_migration="005_add_audit",
+        )
+        decision = RecoveryDecision(
+            difference=diff,
+            classification=RecoveryClassification.METADATA_DRIFT,
+            risk=RecoveryRisk.CRITICAL,
+            recommendation=RecoveryRecommendation.HALT,
+            rationale="Schema element has been recorded as applied, but is physically missing.",
+            details={
+                "ledger_status": "applied",
+                "physical_status": "missing",
+                "data_loss_risk": True,
+            },
+        )
+        assert decision.details["ledger_status"] == "applied"
+        assert decision.details["data_loss_risk"] is True
+
+    def test_recovery_decision_to_dict(self):
+        diff = SchemaDifference(
+            difference_type=DifferenceType.EXTRA_TABLE,
+            table_name="temp_data",
+        )
+        decision = RecoveryDecision(
+            difference=diff,
+            classification=RecoveryClassification.MANUAL_DATABASE_MODIFICATION,
+            risk=RecoveryRisk.HIGH,
+            recommendation=RecoveryRecommendation.MANUAL_PATCH,
+            rationale="Elements exist physically but are absent from migration files.",
+            details={"requires_dba": True},
+        )
+        result = decision.to_dict()
+
+        assert result["classification"] == "MANUAL_DATABASE_MODIFICATION"
+        assert result["risk"] == "HIGH"
+        assert result["recommended_action"] == "MANUAL_PATCH"
+        assert result["rationale"] == "Elements exist physically but are absent from migration files."
+        assert result["details"]["requires_dba"] is True
+        assert "difference" in result
+        assert result["difference"]["difference_type"] == "EXTRA_TABLE"
+
+    def test_recovery_decision_serialization_deterministic(self):
+        diff = SchemaDifference(
+            difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+            table_name="trades",
+            column_name="price",
+            details={"expected": "REAL", "actual": "TEXT"},
+        )
+        decision = RecoveryDecision(
+            difference=diff,
+            classification=RecoveryClassification.SCHEMA_DRIFT,
+            risk=RecoveryRisk.MEDIUM,
+            recommendation=RecoveryRecommendation.FORWARD_MIGRATION,
+            rationale="Column configuration mismatch requires normalization.",
+        )
+        result1 = decision.to_dict()
+        result2 = decision.to_dict()
+        assert result1 == result2
+
+    def test_recovery_decision_all_classifications(self):
+        """Verify all ADR-023 classifications can be instantiated."""
+        diff = SchemaDifference(difference_type=DifferenceType.MISSING_INDEX)
+
+        classifications = [
+            RecoveryClassification.METADATA_DRIFT,
+            RecoveryClassification.SCHEMA_DRIFT,
+            RecoveryClassification.REPLAY_CONFLICT,
+            RecoveryClassification.SUPERSEDED_MIGRATION,
+            RecoveryClassification.MISSING_MIGRATION,
+            RecoveryClassification.DESTRUCTIVE_MIGRATION,
+            RecoveryClassification.MANUAL_DATABASE_MODIFICATION,
+            RecoveryClassification.UNKNOWN_STATE,
+        ]
+
+        for classification in classifications:
+            decision = RecoveryDecision(
+                difference=diff,
+                classification=classification,
+                risk=RecoveryRisk.LOW,
+                recommendation=RecoveryRecommendation.SAFE_SKIP,
+                rationale=f"Test {classification.value}",
+            )
+            assert decision.classification == classification
+
+    def test_recovery_decision_all_risk_levels(self):
+        """Verify all risk levels can be assigned."""
+        diff = SchemaDifference(difference_type=DifferenceType.MISSING_COLUMN)
+
+        risk_levels = [
+            RecoveryRisk.LOW,
+            RecoveryRisk.MEDIUM,
+            RecoveryRisk.HIGH,
+            RecoveryRisk.CRITICAL,
+        ]
+
+        for risk in risk_levels:
+            decision = RecoveryDecision(
+                difference=diff,
+                classification=RecoveryClassification.SCHEMA_DRIFT,
+                risk=risk,
+                recommendation=RecoveryRecommendation.FORWARD_MIGRATION,
+                rationale=f"Test {risk.value}",
+            )
+            assert decision.risk == risk
+
+    def test_recovery_decision_all_recommendations(self):
+        """Verify all recommendations can be assigned."""
+        diff = SchemaDifference(difference_type=DifferenceType.EXTRA_COLUMN)
+
+        recommendations = [
+            RecoveryRecommendation.SAFE_SKIP,
+            RecoveryRecommendation.FORCE_RECORD,
+            RecoveryRecommendation.FORWARD_MIGRATION,
+            RecoveryRecommendation.MANUAL_PATCH,
+            RecoveryRecommendation.HALT,
+        ]
+
+        for recommendation in recommendations:
+            decision = RecoveryDecision(
+                difference=diff,
+                classification=RecoveryClassification.REPLAY_CONFLICT,
+                risk=RecoveryRisk.LOW,
+                recommendation=recommendation,
+                rationale=f"Test {recommendation.value}",
+            )
+            assert decision.recommendation == recommendation
