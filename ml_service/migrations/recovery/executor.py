@@ -13,7 +13,23 @@ from ml_service.migrations.recovery.models import (
     ExecutionResult,
     ExecutionStatus,
     DecisionContext,
+    RecoveryRecommendation,
 )
+
+
+class ExecutionError(Exception):
+    """Base exception for all recovery execution failures."""
+    pass
+
+
+class ApprovalRequiredError(ExecutionError):
+    """Raised when an action requires approval but no valid token is provided."""
+    pass
+
+
+class RecoveryHaltedError(ExecutionError):
+    """Raised when a HALT recommendation is processed or execution is explicitly aborted."""
+    pass
 
 
 class RecoveryExecutor:
@@ -52,6 +68,8 @@ class RecoveryExecutor:
 
         Raises:
             TypeError: If decisions is not a tuple or contains non-RecoveryDecision items
+            RecoveryHaltedError: If a decision is classified as HALT
+            ExecutionError: On transaction or SQLite query failure
         """
         if not isinstance(decisions, tuple):
             raise TypeError(f"decisions must be tuple, got {type(decisions).__name__}")
@@ -81,29 +99,38 @@ class RecoveryExecutor:
         """Execute a single recovery decision.
 
         Each decision is executed within its own transaction boundary.
-        For this commit, all decisions return placeholder SKIPPED results.
-        Actual migration execution logic will be added in later commits.
 
         Args:
             decision: The recovery decision to execute
 
         Returns:
-            ExecutionResult with SKIPPED status
+            ExecutionResult
         """
         start_time = datetime.now(UTC)
         rolled_back = False
+        status = ExecutionStatus.SUCCESS
+        executed_sql: tuple[str, ...] = ()
+        error_message = None
 
         try:
             self._begin_transaction()
 
-            # Placeholder: actual execution logic will be added in next commit
-            # For now, all decisions are skipped but transaction lifecycle is exercised
+            # Delegate to internal planning layer
+            planned = self._plan_execution(decision)
+            status = planned.status
+            executed_sql = planned.executed_sql
+            error_message = planned.error_message
 
             self._commit_transaction()
 
+        except RecoveryHaltedError:
+            rolled_back = True
+            self._rollback_transaction()
+            raise
         except Exception as e:
             rolled_back = True
             self._rollback_transaction()
+            raise ExecutionError(f"Database error during execution: {e}") from e
 
         end_time = datetime.now(UTC)
         duration_ms = (end_time - start_time).total_seconds() * 1000.0
@@ -111,13 +138,85 @@ class RecoveryExecutor:
 
         return ExecutionResult(
             decision=decision,
-            status=ExecutionStatus.SKIPPED,
+            status=status,
             duration_ms=duration_ms,
-            executed_sql=(),
+            executed_sql=executed_sql,
             rolled_back=rolled_back,
             timestamp=timestamp,
+            error_message=error_message,
+        )
+
+    def _plan_execution(self, decision: RecoveryDecision) -> ExecutionResult:
+        """Route decision to appropriate planning handler based on recommendation."""
+        rec = decision.recommendation
+        if rec == RecoveryRecommendation.FORWARD_MIGRATION:
+            return self._handle_forward_migration(decision)
+        elif rec == RecoveryRecommendation.FORCE_RECORD:
+            return self._handle_force_record(decision)
+        elif rec == RecoveryRecommendation.SAFE_SKIP:
+            return self._handle_safe_skip(decision)
+        elif rec == RecoveryRecommendation.MANUAL_PATCH:
+            return self._handle_manual_patch(decision)
+        elif rec == RecoveryRecommendation.HALT:
+            return self._handle_halt(decision)
+        else:
+            raise ValueError(f"Unknown recommendation: {rec}")
+
+    def _handle_forward_migration(self, decision: RecoveryDecision) -> ExecutionResult:
+        """Create placeholder execution plan for forward migration."""
+        migration_name = decision.difference.target_migration or "unknown"
+        executed_sql = (f"-- PLAN: FORWARD_MIGRATION for {migration_name}",)
+        return ExecutionResult(
+            decision=decision,
+            status=ExecutionStatus.SUCCESS,
+            duration_ms=0.0,
+            executed_sql=executed_sql,
+            rolled_back=False,
+            timestamp="",
             error_message=None,
         )
+
+    def _handle_force_record(self, decision: RecoveryDecision) -> ExecutionResult:
+        """Create placeholder ledger action for force recording."""
+        migration_name = decision.difference.target_migration or "unknown"
+        executed_sql = (f"INSERT INTO schema_migrations (migration_name, applied_at) VALUES ('{migration_name}', CURRENT_TIMESTAMP);",)
+        return ExecutionResult(
+            decision=decision,
+            status=ExecutionStatus.SUCCESS,
+            duration_ms=0.0,
+            executed_sql=executed_sql,
+            rolled_back=False,
+            timestamp="",
+            error_message=None,
+        )
+
+    def _handle_safe_skip(self, decision: RecoveryDecision) -> ExecutionResult:
+        """Create skipped execution result for safe skip."""
+        return ExecutionResult(
+            decision=decision,
+            status=ExecutionStatus.SKIPPED,
+            duration_ms=0.0,
+            executed_sql=(),
+            rolled_back=False,
+            timestamp="",
+            error_message=None,
+        )
+
+    def _handle_manual_patch(self, decision: RecoveryDecision) -> ExecutionResult:
+        """Create manual intervention result for manual patch."""
+        return ExecutionResult(
+            decision=decision,
+            status=ExecutionStatus.SKIPPED,
+            duration_ms=0.0,
+            executed_sql=(),
+            rolled_back=False,
+            timestamp="",
+            error_message="Manual patch required; execution skipped.",
+        )
+
+    def _handle_halt(self, decision: RecoveryDecision) -> ExecutionResult:
+        """Create blocked execution result for halt and raise RecoveryHaltedError."""
+        raise RecoveryHaltedError(f"Recovery halted due to HALT recommendation: {decision.rationale}")
 
     def _begin_transaction(self) -> None:
         """Begin a new transaction with immediate isolation.

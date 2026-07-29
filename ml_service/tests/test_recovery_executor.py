@@ -9,7 +9,12 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-from ml_service.migrations.recovery.executor import RecoveryExecutor
+from ml_service.migrations.recovery.executor import (
+    RecoveryExecutor,
+    ExecutionError,
+    ApprovalRequiredError,
+    RecoveryHaltedError,
+)
 from ml_service.migrations.recovery.models import (
     DecisionContext,
     RecoveryDecision,
@@ -130,8 +135,8 @@ class TestRecoveryExecutorExecute:
         result = results[0]
         assert isinstance(result, ExecutionResult)
         assert result.decision is sample_decision
-        assert result.status == ExecutionStatus.SKIPPED
-        assert result.executed_sql == ()
+        assert result.status == ExecutionStatus.SUCCESS
+        assert "INSERT INTO schema_migrations" in result.executed_sql[0]
         assert result.rolled_back is False
         assert result.error_message is None
         assert result.duration_ms >= 0.0
@@ -150,8 +155,8 @@ class TestRecoveryExecutorExecute:
             ),
             classification=RecoveryClassification.MISSING_MIGRATION,
             risk=RecoveryRisk.HIGH,
-            recommendation=RecoveryRecommendation.HALT,
-            rationale="Missing migration",
+            recommendation=RecoveryRecommendation.SAFE_SKIP,
+            rationale="Bypass for now",
         )
 
         decision2 = RecoveryDecision(
@@ -326,29 +331,31 @@ class TestExecutionResultContract:
         with pytest.raises((AttributeError, Exception)):
             result.status = ExecutionStatus.SUCCESS  # type: ignore
 
-    def test_placeholder_returns_skipped_status(
+    def test_placeholder_returns_success_status(
         self,
         decision_context: DecisionContext,
         test_db_path: str,
         sample_decision: RecoveryDecision
     ):
-        """Placeholder implementation should return SKIPPED status."""
+        """FORCE_RECORD recommendation should return SUCCESS status."""
         executor = RecoveryExecutor(decision_context, test_db_path)
         results = executor.execute((sample_decision,))
 
-        assert results[0].status == ExecutionStatus.SKIPPED
+        assert results[0].status == ExecutionStatus.SUCCESS
 
-    def test_placeholder_returns_empty_sql(
+    def test_placeholder_returns_ledger_sql(
         self,
         decision_context: DecisionContext,
         test_db_path: str,
         sample_decision: RecoveryDecision
     ):
-        """Placeholder implementation should return empty SQL tuple."""
+        """FORCE_RECORD should return placeholder ledger action SQL."""
         executor = RecoveryExecutor(decision_context, test_db_path)
         results = executor.execute((sample_decision,))
 
-        assert results[0].executed_sql == ()
+        assert results[0].executed_sql == (
+            "INSERT INTO schema_migrations (migration_name, applied_at) VALUES ('003_new', CURRENT_TIMESTAMP);",
+        )
         assert isinstance(results[0].executed_sql, tuple)
 
     def test_placeholder_returns_no_rollback(
@@ -386,6 +393,134 @@ class TestExecutionResultContract:
         results = executor.execute((sample_decision,))
 
         assert results[0].duration_ms >= 0.0
+
+
+class TestExecutionPlanner:
+    """Tests for the internal planning layer of RecoveryExecutor."""
+
+    def test_forward_migration_planning(
+        self,
+        decision_context: DecisionContext,
+        test_db_path: str
+    ):
+        """FORWARD_MIGRATION planning should create placeholder execution plan."""
+        decision = RecoveryDecision(
+            difference=SchemaDifference(
+                difference_type=DifferenceType.MISSING_TABLE,
+                target_migration="003_new",
+                table_name="test_table",
+            ),
+            classification=RecoveryClassification.SCHEMA_DRIFT,
+            risk=RecoveryRisk.HIGH,
+            recommendation=RecoveryRecommendation.FORWARD_MIGRATION,
+            rationale="Schema drift",
+        )
+        executor = RecoveryExecutor(decision_context, test_db_path)
+        results = executor.execute((decision,))
+
+        assert results[0].status == ExecutionStatus.SUCCESS
+        assert results[0].executed_sql == ("-- PLAN: FORWARD_MIGRATION for 003_new",)
+        assert results[0].rolled_back is False
+        assert results[0].error_message is None
+
+    def test_force_record_planning(
+        self,
+        decision_context: DecisionContext,
+        test_db_path: str
+    ):
+        """FORCE_RECORD planning should create placeholder ledger action."""
+        decision = RecoveryDecision(
+            difference=SchemaDifference(
+                difference_type=DifferenceType.EXTRA_TABLE,
+                target_migration="003_new",
+                table_name="test_table",
+            ),
+            classification=RecoveryClassification.REPLAY_CONFLICT,
+            risk=RecoveryRisk.LOW,
+            recommendation=RecoveryRecommendation.FORCE_RECORD,
+            rationale="Replay conflict",
+        )
+        executor = RecoveryExecutor(decision_context, test_db_path)
+        results = executor.execute((decision,))
+
+        assert results[0].status == ExecutionStatus.SUCCESS
+        assert results[0].executed_sql == (
+            "INSERT INTO schema_migrations (migration_name, applied_at) VALUES ('003_new', CURRENT_TIMESTAMP);",
+        )
+        assert results[0].rolled_back is False
+
+    def test_safe_skip_planning(
+        self,
+        decision_context: DecisionContext,
+        test_db_path: str
+    ):
+        """SAFE_SKIP planning should create skipped execution result."""
+        decision = RecoveryDecision(
+            difference=SchemaDifference(
+                difference_type=DifferenceType.EXTRA_INDEX,
+                target_migration="002_add_table",
+                index_name="idx_test",
+            ),
+            classification=RecoveryClassification.SUPERSEDED_MIGRATION,
+            risk=RecoveryRisk.LOW,
+            recommendation=RecoveryRecommendation.SAFE_SKIP,
+            rationale="Superseded migration",
+        )
+        executor = RecoveryExecutor(decision_context, test_db_path)
+        results = executor.execute((decision,))
+
+        assert results[0].status == ExecutionStatus.SKIPPED
+        assert results[0].executed_sql == ()
+        assert results[0].rolled_back is False
+
+    def test_manual_patch_planning(
+        self,
+        decision_context: DecisionContext,
+        test_db_path: str
+    ):
+        """MANUAL_PATCH planning should create manual intervention result."""
+        decision = RecoveryDecision(
+            difference=SchemaDifference(
+                difference_type=DifferenceType.COLUMN_TYPE_MISMATCH,
+                target_migration="001_initial",
+                table_name="test_table",
+                column_name="col",
+            ),
+            classification=RecoveryClassification.DESTRUCTIVE_MIGRATION,
+            risk=RecoveryRisk.CRITICAL,
+            recommendation=RecoveryRecommendation.MANUAL_PATCH,
+            rationale="Destructive migration",
+        )
+        executor = RecoveryExecutor(decision_context, test_db_path)
+        results = executor.execute((decision,))
+
+        assert results[0].status == ExecutionStatus.SKIPPED
+        assert results[0].executed_sql == ()
+        assert "manual patch" in results[0].error_message.lower()
+        assert results[0].rolled_back is False
+
+    def test_halt_planning(
+        self,
+        decision_context: DecisionContext,
+        test_db_path: str
+    ):
+        """HALT planning should raise RecoveryHaltedError."""
+        decision = RecoveryDecision(
+            difference=SchemaDifference(
+                difference_type=DifferenceType.MISSING_COLUMN,
+                target_migration="001_initial",
+                table_name="test_table",
+                column_name="col",
+            ),
+            classification=RecoveryClassification.METADATA_DRIFT,
+            risk=RecoveryRisk.CRITICAL,
+            recommendation=RecoveryRecommendation.HALT,
+            rationale="Halt execution",
+        )
+        executor = RecoveryExecutor(decision_context, test_db_path)
+
+        with pytest.raises(RecoveryHaltedError, match="Recovery halted due to HALT recommendation"):
+            executor.execute((decision,))
 
 
 class TestTransactionLifecycle:
