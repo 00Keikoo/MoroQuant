@@ -1,0 +1,50 @@
+name: Recovery Framework CI
+
+on:
+  push:
+    branches:
+      - recovery-executor
+
+  pull_request:
+    branches:
+      - recovery-executor
+      - main
+
+jobs:
+  recovery-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        working-directory: ml_service
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Recovery Framework Tests
+        run: |
+          PYTHONPATH=. python -m pytest \
+          ml_service/tests/test_recovery_models.py \
+          ml_service/tests/test_recovery_execution_models.py \
+          ml_service/tests/test_schema_inspector.py \
+          ml_service/tests/test_decision_analyzer.py \
+          ml_service/tests/test_recovery_executor.py \
+          ml_service/tests/test_recovery_reporter.py \
+          ml_service/tests/test_migration_runner.py \
+          -v
+
+      - name: Upload Pytest Cache
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-test-results
+          path: |
+            .pytest_cache
