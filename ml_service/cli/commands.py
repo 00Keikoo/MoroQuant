@@ -106,11 +106,18 @@ def db_inspect(db_path: Optional[str], migrations_dir: Optional[str], output_for
 
     # Fall back to configurations if not specified
     if not db_path or not migrations_dir:
-        config = get_config()
+        try:
+            config = get_config()
+            cfg_db_path = getattr(config, "database_path", "trading.db")
+            cfg_migrations_dir = getattr(config, "migrations_dir", "ml_service/migrations")
+        except Exception:
+            cfg_db_path = "trading.db"
+            cfg_migrations_dir = "ml_service/migrations"
+
         if not db_path:
-            db_path = config.database_path if hasattr(config, "database_path") else "trading.db"
+            db_path = cfg_db_path
         if not migrations_dir:
-            migrations_dir = config.migrations_dir if hasattr(config, "migrations_dir") else "ml_service/migrations"
+            migrations_dir = cfg_migrations_dir
 
     try:
         orchestrator = RecoveryOrchestrator(db_path=db_path, migrations_dir=migrations_dir)
@@ -201,11 +208,18 @@ def db_recover(
 
     # Fall back to configurations if not specified
     if not db_path or not migrations_dir:
-        config = get_config()
+        try:
+            config = get_config()
+            cfg_db_path = getattr(config, "database_path", "trading.db")
+            cfg_migrations_dir = getattr(config, "migrations_dir", "ml_service/migrations")
+        except Exception:
+            cfg_db_path = "trading.db"
+            cfg_migrations_dir = "ml_service/migrations"
+
         if not db_path:
-            db_path = config.database_path if hasattr(config, "database_path") else "trading.db"
+            db_path = cfg_db_path
         if not migrations_dir:
-            migrations_dir = config.migrations_dir if hasattr(config, "migrations_dir") else "ml_service/migrations"
+            migrations_dir = cfg_migrations_dir
 
     try:
         orchestrator = RecoveryOrchestrator(db_path=db_path, migrations_dir=migrations_dir)
