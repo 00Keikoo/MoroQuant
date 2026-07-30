@@ -756,5 +756,10 @@
   "754": ".test_single_trade",
   "755": ".test_repository_exception_propagates",
   "756": ".test_negative_pagination_parameters",
-  "757": "mock_no_network_prices"
+  "757": "mock_no_network_prices",
+  "758": "hyperliquidStore.ts",
+  "759": "news.ts",
+  "760": "indicators.ts",
+  "761": "PerformanceHeader.tsx",
+  "762": ".to_dict"
 }

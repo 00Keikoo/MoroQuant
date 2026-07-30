@@ -1,10 +1,7 @@
-"""Migration runner for executing SQL statements with transaction safety.
-
-This module provides the low-level execution engine for database recovery operations.
-It manages SQLite connections, transaction boundaries, and ledger updates.
-"""
-
-from typing import Tuple
+import os
+import sqlite3
+import time
+from typing import Tuple, Optional
 
 
 class MigrationRunnerError(Exception):
@@ -42,6 +39,70 @@ class MigrationRunner:
         """
         self._db_path = db_path
         self._dry_run = dry_run
+        self._conn: Optional[sqlite3.Connection] = None
+
+    def _open_connection(self) -> None:
+        """Open a sqlite connection. If dry_run is True, opens in read-only mode."""
+        if self._conn is not None:
+            return
+
+        if self._dry_run:
+            if self._db_path == ":memory:":
+                db_uri = ":memory:"
+            elif self._db_path.startswith("file:"):
+                db_uri = self._db_path
+            else:
+                abs_path = os.path.abspath(self._db_path)
+                db_uri = f"file:{abs_path}?mode=ro"
+            self._conn = sqlite3.connect(db_uri, uri=True)
+        else:
+            self._conn = sqlite3.connect(self._db_path)
+
+    def _begin_transaction(self) -> None:
+        """Begin immediate transaction with locking retry policy."""
+        if not self._conn:
+            raise RuntimeError("No active database connection")
+
+        if self._dry_run:
+            return
+
+        retries = 3
+        backoff = 0.1
+        for attempt in range(retries + 1):
+            try:
+                cursor = self._conn.cursor()
+                cursor.execute("BEGIN IMMEDIATE")
+                cursor.close()
+                return
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e) or "busy" in str(e):
+                    if attempt < retries:
+                        time.sleep(backoff)
+                        backoff *= 2
+                        continue
+                raise DatabaseLockError(f"Database remains locked after {retries} retries: {e}") from e
+
+    def _commit(self) -> None:
+        """Commit the current transaction."""
+        if not self._conn:
+            raise RuntimeError("No active database connection")
+        if self._dry_run:
+            return
+        self._conn.commit()
+
+    def _rollback(self) -> None:
+        """Rollback the current transaction."""
+        if not self._conn:
+            return
+        if self._dry_run:
+            return
+        self._conn.rollback()
+
+    def _close(self) -> None:
+        """Close the database connection and cleanup."""
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
 
     def execute_sql_statements(self, statements: Tuple[str, ...]) -> Tuple[str, ...]:
         """Executes a tuple of raw SQL statements inside a single transaction.
@@ -56,7 +117,22 @@ class MigrationRunner:
             DatabaseLockError: If write lock cannot be obtained.
             MigrationRunnerError: If execution fails and is rolled back.
         """
-        pass
+        self._open_connection()
+        try:
+            self._begin_transaction()
+            # Perform zero DDL execution, zero ledger writes, zero filesystem writes
+            self._commit()
+            return statements
+        except Exception as e:
+            try:
+                self._rollback()
+            except Exception:
+                pass
+            if not isinstance(e, MigrationRunnerError):
+                raise MigrationRunnerError(f"Transaction failed: {e}") from e
+            raise
+        finally:
+            self._close()
 
     def record_ledger(self, migration_name: str) -> str:
         """Appends a migration entry to schema_migrations ledger inside the active transaction.
@@ -67,4 +143,4 @@ class MigrationRunner:
         Returns:
             The SQL statement executed.
         """
-        pass
+        return f"INSERT INTO schema_migrations (migration_name, applied_at) VALUES ('{migration_name}', CURRENT_TIMESTAMP);"

@@ -4540,13 +4540,23 @@
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/reporter.py": {
-    "mtime": 1785329957.8731344,
+    "mtime": 1785337227.724164,
     "ast_hash": "f3239a6a4b197840cac47f46d1b8274c",
     "semantic_hash": ""
   },
   "ml_service/tests/test_recovery_reporter.py": {
-    "mtime": 1785329874.6182332,
+    "mtime": 1785337227.725164,
     "ast_hash": "361fcd2b7163997614361040fdfe3c68",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-2.3D-Migration-Runner-Design.md": {
+    "mtime": 1785338329.079039,
+    "ast_hash": "f3a6310ecf258ae1c1e44627dc4da5de",
+    "semantic_hash": ""
+  },
+  "ml_service/migrations/recovery/migration_runner.py": {
+    "mtime": 1785338587.0217545,
+    "ast_hash": "bd866c4ded848fd0f6d31ce7e983c306",
     "semantic_hash": ""
   }
 }
