@@ -3,11 +3,10 @@ name: Recovery Framework CI
 on:
   push:
     branches:
-      - recovery-executor
+      - "**"
 
   pull_request:
     branches:
-      - recovery-executor
       - main
 
 jobs:
@@ -32,13 +31,11 @@ jobs:
       - name: Run Recovery Framework Tests
         run: |
           PYTHONPATH=. python -m pytest \
-          ml_service/tests/test_recovery_models.py \
-          ml_service/tests/test_recovery_execution_models.py \
+          ml_service/tests/test_recovery_*.py \
           ml_service/tests/test_schema_inspector.py \
           ml_service/tests/test_decision_analyzer.py \
-          ml_service/tests/test_recovery_executor.py \
-          ml_service/tests/test_recovery_reporter.py \
           ml_service/tests/test_migration_runner.py \
+          ml_service/tests/test_reconcile_migration.py \
           -v
 
       - name: Upload Pytest Cache
