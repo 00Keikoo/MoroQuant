@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import time
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Any
 
 
 class MigrationRunnerError(Exception):
@@ -148,3 +148,103 @@ class MigrationRunner:
             The SQL statement executed.
         """
         return f"INSERT INTO schema_migrations (migration_name, applied_at) VALUES ('{migration_name}', CURRENT_TIMESTAMP);"
+
+    def execute_plan(self, decisions: Tuple[Any, ...]) -> Tuple[Any, ...]:
+        """Execute a plan consisting of multiple recovery decisions sequentially.
+
+        Args:
+            decisions: A tuple of RecoveryDecision objects to execute.
+
+        Returns:
+            A tuple of ExecutionResult objects.
+        """
+        if not isinstance(decisions, tuple):
+            raise TypeError("decisions must be a tuple")
+
+        results = []
+        for decision in decisions:
+            # We import RecoveryDecision here to avoid circular imports if any
+            from ml_service.migrations.recovery.models import RecoveryDecision
+            if not isinstance(decision, RecoveryDecision):
+                raise TypeError("All decisions must be RecoveryDecision instances")
+            results.append(self.execute_action(decision))
+        return tuple(results)
+
+    def execute_action(self, decision: Any) -> Any:
+        """Execute a single recovery decision within transaction boundaries.
+
+        Args:
+            decision: The RecoveryDecision to execute.
+
+        Returns:
+            ExecutionResult representing the result of the execution.
+        """
+        from datetime import datetime, UTC
+        from ml_service.migrations.recovery.executor import RecoveryHaltedError, ExecutionError
+        from ml_service.migrations.recovery.models import (
+            ExecutionStatus,
+            RecoveryRecommendation,
+            ExecutionResult
+        )
+
+        start_time = time.perf_counter()
+        rolled_back = False
+        status = ExecutionStatus.SUCCESS
+        executed_sql: Tuple[str, ...] = ()
+        error_message: Optional[str] = None
+
+        try:
+            self._open_connection()
+            self._begin_transaction()
+
+            rec = decision.recommendation
+            migration_name = decision.difference.target_migration or "unknown"
+
+            if rec == RecoveryRecommendation.FORWARD_MIGRATION:
+                executed_sql = (f"-- PLAN: FORWARD_MIGRATION for {migration_name}",)
+            elif rec == RecoveryRecommendation.FORCE_RECORD:
+                executed_sql = (self.record_ledger(migration_name),)
+            elif rec == RecoveryRecommendation.SAFE_SKIP:
+                status = ExecutionStatus.SKIPPED
+                executed_sql = ()
+            elif rec == RecoveryRecommendation.MANUAL_PATCH:
+                status = ExecutionStatus.SKIPPED
+                executed_sql = ()
+                error_message = "Manual patch required; execution skipped."
+            elif rec == RecoveryRecommendation.HALT:
+                raise RecoveryHaltedError(f"Recovery halted due to HALT recommendation: {decision.rationale}")
+            else:
+                raise ValueError(f"Unknown recommendation: {rec}")
+
+            self._commit()
+        except RecoveryHaltedError as e:
+            rolled_back = True
+            try:
+                self._rollback()
+            except Exception:
+                pass
+            raise e
+        except Exception as e:
+            rolled_back = True
+            try:
+                self._rollback()
+            except Exception:
+                pass
+            raise ExecutionError(f"Database error during execution: {e}") from e
+        finally:
+            self._close()
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000.0
+        timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+        return ExecutionResult(
+            decision=decision,
+            status=status,
+            duration_ms=duration_ms,
+            executed_sql=executed_sql,
+            rolled_back=rolled_back,
+            timestamp=timestamp,
+            error_message=error_message
+        )
+

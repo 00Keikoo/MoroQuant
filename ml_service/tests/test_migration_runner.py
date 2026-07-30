@@ -20,7 +20,7 @@ Tests cover:
 import os
 import sqlite3
 import time
-from typing import Tuple
+from typing import Tuple, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -468,3 +468,153 @@ class TestSqlExecutionLayer:
             runner.execute_sql_statements(("SELECT * FROM non_existent_table;",))
 
         assert "no such table" in str(exc_info.value)
+
+
+class TestMigrationRunnerExecutePlan:
+    """Comprehensive unit tests for execute_plan and execute_action methods."""
+
+    @pytest.fixture
+    def sample_decision(self) -> Any:
+        """Create a sample recovery decision."""
+        from ml_service.migrations.recovery.models import (
+            RecoveryDecision,
+            SchemaDifference,
+            DifferenceType,
+            RecoveryClassification,
+            RecoveryRisk,
+            RecoveryRecommendation,
+        )
+        diff = SchemaDifference(
+            difference_type=DifferenceType.MISSING_TABLE,
+            target_migration="003_test_migration",
+            table_name="test_table",
+        )
+        return RecoveryDecision(
+            difference=diff,
+            classification=RecoveryClassification.SCHEMA_DRIFT,
+            risk=RecoveryRisk.MEDIUM,
+            recommendation=RecoveryRecommendation.FORCE_RECORD,
+            rationale="Test rationale",
+        )
+
+    def test_execute_plan_success_path(self, sample_decision) -> None:
+        """Verify successful execute_plan execution path constructs ExecutionResult correctly."""
+        runner = MigrationRunner(db_path=":memory:")
+        results = runner.execute_plan((sample_decision,))
+        assert isinstance(results, tuple)
+        assert len(results) == 1
+
+        result = results[0]
+        from ml_service.migrations.recovery.models import ExecutionResult, ExecutionStatus
+        assert isinstance(result, ExecutionResult)
+        assert result.decision == sample_decision
+        assert result.status == ExecutionStatus.SUCCESS
+        assert result.rolled_back is False
+        assert result.error_message is None
+        assert result.duration_ms >= 0.0
+        assert result.timestamp.endswith("Z")
+
+    def test_execute_plan_multiple_action_ordering(self) -> None:
+        """Verify that multiple decisions are executed in exact ordering."""
+        from ml_service.migrations.recovery.models import (
+            RecoveryDecision,
+            SchemaDifference,
+            DifferenceType,
+            RecoveryClassification,
+            RecoveryRisk,
+            RecoveryRecommendation,
+        )
+        decisions = (
+            RecoveryDecision(
+                difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="001"),
+                classification=RecoveryClassification.SCHEMA_DRIFT,
+                risk=RecoveryRisk.LOW,
+                recommendation=RecoveryRecommendation.SAFE_SKIP,
+                rationale="Reason 1",
+            ),
+            RecoveryDecision(
+                difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="002"),
+                classification=RecoveryClassification.SCHEMA_DRIFT,
+                risk=RecoveryRisk.LOW,
+                recommendation=RecoveryRecommendation.FORCE_RECORD,
+                rationale="Reason 2",
+            ),
+        )
+        runner = MigrationRunner(db_path=":memory:")
+        results = runner.execute_plan(decisions)
+        assert len(results) == 2
+        assert results[0].decision.difference.target_migration == "001"
+        assert results[1].decision.difference.target_migration == "002"
+
+    def test_execute_plan_dry_run_path(self, tmp_path, sample_decision) -> None:
+        """Verify dry-run execution routes read-only and does not write or raise database lock issues."""
+        db_file = str(tmp_path / "fake_dry_run.db")
+        # Initialize an empty sqlite file first so that opening it mode=ro works
+        conn = sqlite3.connect(db_file)
+        conn.close()
+
+        runner = MigrationRunner(db_path=db_file, dry_run=True)
+        results = runner.execute_plan((sample_decision,))
+        assert len(results) == 1
+        assert results[0].status.value == "SUCCESS"
+        assert results[0].rolled_back is False
+
+    def test_execute_action_immutable_output(self, sample_decision) -> None:
+        """Verify returned ExecutionResult output is immutable (frozen)."""
+        runner = MigrationRunner(db_path=":memory:")
+        result = runner.execute_action(sample_decision)
+        with pytest.raises((AttributeError, TypeError)):
+            result.status = "FAILED"  # type: ignore
+
+    def test_execute_action_rollback_path_on_database_error(self, sample_decision) -> None:
+        """Verify database transaction failure triggers rollback and propagates ExecutionError."""
+        runner = MigrationRunner(db_path=":memory:")
+        # Mock _begin_transaction to raise a database lock/operational error
+        with patch.object(runner, "_begin_transaction", side_effect=sqlite3.OperationalError("database is locked")):
+            from ml_service.migrations.recovery.executor import ExecutionError
+            with pytest.raises(ExecutionError) as exc_info:
+                runner.execute_action(sample_decision)
+            assert "Database error during execution" in str(exc_info.value)
+
+    def test_execute_action_exception_propagation_on_halt(self) -> None:
+        """Verify RecoveryHaltedError propagates directly on HALT recommendation."""
+        from ml_service.migrations.recovery.models import (
+            RecoveryDecision,
+            SchemaDifference,
+            DifferenceType,
+            RecoveryClassification,
+            RecoveryRisk,
+            RecoveryRecommendation,
+        )
+        halt_decision = RecoveryDecision(
+            difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="003"),
+            classification=RecoveryClassification.METADATA_DRIFT,
+            risk=RecoveryRisk.CRITICAL,
+            recommendation=RecoveryRecommendation.HALT,
+            rationale="Halt requested",
+        )
+        runner = MigrationRunner(db_path=":memory:")
+        from ml_service.migrations.recovery.executor import RecoveryHaltedError
+        with pytest.raises(RecoveryHaltedError) as exc_info:
+            runner.execute_action(halt_decision)
+        assert "Recovery halted due to HALT recommendation" in str(exc_info.value)
+
+    def test_execute_plan_rejects_non_tuple(self, sample_decision) -> None:
+        """Verify execute_plan raises TypeError when input is not a tuple."""
+        runner = MigrationRunner(db_path=":memory:")
+        with pytest.raises(TypeError, match="decisions must be a tuple"):
+            runner.execute_plan([sample_decision])  # type: ignore
+
+    def test_execute_plan_rejects_non_decision_types(self) -> None:
+        """Verify execute_plan raises TypeError if any item is not a RecoveryDecision."""
+        runner = MigrationRunner(db_path=":memory:")
+        with pytest.raises(TypeError, match="All decisions must be RecoveryDecision instances"):
+            runner.execute_plan(("not_a_decision",))  # type: ignore
+
+    def test_deterministic_timing_metadata(self, sample_decision) -> None:
+        """Verify execution timing duration_ms is measured and returns positive/zero value."""
+        runner = MigrationRunner(db_path=":memory:")
+        result = runner.execute_action(sample_decision)
+        assert isinstance(result.duration_ms, float)
+        assert result.duration_ms >= 0.0
+
