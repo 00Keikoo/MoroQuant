@@ -618,3 +618,148 @@ class TestMigrationRunnerExecutePlan:
         assert isinstance(result.duration_ms, float)
         assert result.duration_ms >= 0.0
 
+
+class TestMigrationRunnerPlanning:
+    """Comprehensive unit tests for MigrationRunner's SQL planning methods."""
+
+    @pytest.fixture
+    def decisions(self) -> Any:
+        """Create sample recovery decisions covering all recommendations."""
+        from ml_service.migrations.recovery.models import (
+            RecoveryDecision,
+            SchemaDifference,
+            DifferenceType,
+            RecoveryClassification,
+            RecoveryRisk,
+            RecoveryRecommendation,
+        )
+        return (
+            RecoveryDecision(
+                difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="001_first"),
+                classification=RecoveryClassification.SCHEMA_DRIFT,
+                risk=RecoveryRisk.LOW,
+                recommendation=RecoveryRecommendation.FORWARD_MIGRATION,
+                rationale="Test forward",
+            ),
+            RecoveryDecision(
+                difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="002_second"),
+                classification=RecoveryClassification.REPLAY_CONFLICT,
+                risk=RecoveryRisk.LOW,
+                recommendation=RecoveryRecommendation.FORCE_RECORD,
+                rationale="Test force record",
+            ),
+            RecoveryDecision(
+                difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="003_third"),
+                classification=RecoveryClassification.SUPERSEDED_MIGRATION,
+                risk=RecoveryRisk.LOW,
+                recommendation=RecoveryRecommendation.SAFE_SKIP,
+                rationale="Test safe skip",
+            ),
+            RecoveryDecision(
+                difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="004_fourth"),
+                classification=RecoveryClassification.DESTRUCTIVE_MIGRATION,
+                risk=RecoveryRisk.HIGH,
+                recommendation=RecoveryRecommendation.MANUAL_PATCH,
+                rationale="Test manual patch",
+            ),
+            RecoveryDecision(
+                difference=SchemaDifference(DifferenceType.MISSING_TABLE, target_migration="005_fifth"),
+                classification=RecoveryClassification.METADATA_DRIFT,
+                risk=RecoveryRisk.CRITICAL,
+                recommendation=RecoveryRecommendation.HALT,
+                rationale="Test halt",
+            ),
+        )
+
+    def test_plan_method_signature_and_input_types(self) -> None:
+        """Verify plan method signature and input validations."""
+        runner = MigrationRunner(db_path=":memory:")
+        with pytest.raises(TypeError, match="decisions must be a tuple"):
+            runner.plan([])  # type: ignore
+
+        with pytest.raises(TypeError, match="All decisions must be RecoveryDecision instances"):
+            runner.plan(("not_a_decision",))  # type: ignore
+
+    def test_deterministic_plan_generation(self, decisions) -> None:
+        """Verify plan outputs are strictly deterministic across calls."""
+        runner = MigrationRunner(db_path=":memory:")
+        
+        plan_1 = runner.plan(decisions)
+        plan_2 = runner.plan(decisions)
+        
+        assert len(plan_1) == len(decisions)
+        assert len(plan_2) == len(decisions)
+        
+        # Verify plans are structurally and values-wise identical (deterministic)
+        for r1, r2 in zip(plan_1, plan_2):
+            assert r1.status == r2.status
+            assert r1.executed_sql == r2.executed_sql
+            assert r1.duration_ms == r2.duration_ms
+            assert r1.rolled_back == r2.rolled_back
+            assert r1.timestamp == r2.timestamp
+            assert r1.error_message == r2.error_message
+
+    def test_immutable_outputs(self, decisions) -> None:
+        """Verify generated plan elements are frozen/immutable."""
+        runner = MigrationRunner(db_path=":memory:")
+        results = runner.plan(decisions)
+        for result in results:
+            with pytest.raises((AttributeError, TypeError)):
+                result.status = "FAILED"  # type: ignore
+
+    def test_stable_ordering(self, decisions) -> None:
+        """Verify plan sequence matches the exact input ordering."""
+        runner = MigrationRunner(db_path=":memory:")
+        results = runner.plan(decisions)
+        
+        assert results[0].decision.difference.target_migration == "001_first"
+        assert results[1].decision.difference.target_migration == "002_second"
+        assert results[2].decision.difference.target_migration == "003_third"
+        assert results[3].decision.difference.target_migration == "004_fourth"
+        assert results[4].decision.difference.target_migration == "005_fifth"
+
+    def test_recommendation_to_planner_mapping(self, decisions) -> None:
+        """Verify recommendation mapper correctly links each action to the proper planner method."""
+        runner = MigrationRunner(db_path=":memory:")
+        results = runner.plan(decisions)
+        
+        # FORWARD_MIGRATION
+        assert results[0].status.value == "SUCCESS"
+        assert results[0].executed_sql == ("-- PLAN: FORWARD_MIGRATION for 001_first",)
+        
+        # FORCE_RECORD
+        assert results[1].status.value == "SUCCESS"
+        assert "INSERT INTO schema_migrations" in results[1].executed_sql[0]
+        
+        # SAFE_SKIP
+        assert results[2].status.value == "SKIPPED"
+        assert results[2].executed_sql == ()
+        
+        # MANUAL_PATCH
+        assert results[3].status.value == "SKIPPED"
+        assert results[3].executed_sql == ()
+        assert "Manual patch" in results[3].error_message
+        
+        # HALT
+        assert results[4].status.value == "FAILED"
+        assert results[4].executed_sql == ()
+        assert "Recovery halted" in results[4].error_message
+
+    def test_no_sql_database_or_filesystem_writes(self, decisions) -> None:
+        """Verify that planning does not open database connections, run SQL or alter filesystem."""
+        # Using a non-existent database file that would crash if it tried to connect
+        db_path = "/non_existent_directory_safeguard/never_write_me.db"
+        runner = MigrationRunner(db_path=db_path)
+        
+        with patch("sqlite3.connect") as mock_connect, \
+             patch("builtins.open") as mock_open:
+            results = runner.plan(decisions)
+            
+            # Assert no database connections were made
+            mock_connect.assert_not_called()
+            # Assert no file writes were performed
+            mock_open.assert_not_called()
+            
+            assert len(results) == len(decisions)
+
+
