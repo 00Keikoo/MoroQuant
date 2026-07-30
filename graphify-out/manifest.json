@@ -1055,8 +1055,8 @@
     "semantic_hash": "29929d97cb56a85a85a3acb63cc3cbda"
   },
   "ml_service/cli/commands.py": {
-    "mtime": 1785238687.3236508,
-    "ast_hash": "854890ee80fa9891311f0d2e6a9f9b7a",
+    "mtime": 1785399691.8971598,
+    "ast_hash": "8156fb82597d8aa64a904bb9539f4234",
     "semantic_hash": ""
   },
   "ml_service/compare_backtest_methods.py": {
@@ -4597,6 +4597,16 @@
   "ml_service/tests/test_recovery_orchestrator.py": {
     "mtime": 1785398519.3250577,
     "ast_hash": "9532da9dbe2e8c4f295bf98dbf8917c4",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-2.4B-Recovery-CLI-Design.md": {
+    "mtime": 1785399530.2397397,
+    "ast_hash": "cb06241c4bf3a937a08901d89c2a3d7d",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_recovery_cli.py": {
+    "mtime": 1785399704.048056,
+    "ast_hash": "04ee7d5b45eefc0c3b821ae5e56f9fa1",
     "semantic_hash": ""
   }
 }

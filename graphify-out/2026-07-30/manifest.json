@@ -4590,13 +4590,18 @@
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/orchestrator.py": {
-    "mtime": 1785398133.8300464,
-    "ast_hash": "1b79cd4eaee0a587b8ff93a429d24838",
+    "mtime": 1785398510.3228793,
+    "ast_hash": "2cc2a88b55d306e392a334a210227f51",
     "semantic_hash": ""
   },
   "ml_service/tests/test_recovery_orchestrator.py": {
-    "mtime": 1785398138.9517748,
-    "ast_hash": "3a642683e636234c5d00530c39d3b55d",
+    "mtime": 1785398519.3250577,
+    "ast_hash": "9532da9dbe2e8c4f295bf98dbf8917c4",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-2.4B-Recovery-CLI-Design.md": {
+    "mtime": 1785399530.2397397,
+    "ast_hash": "cb06241c4bf3a937a08901d89c2a3d7d",
     "semantic_hash": ""
   }
 }

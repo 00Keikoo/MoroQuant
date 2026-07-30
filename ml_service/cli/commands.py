@@ -87,6 +87,242 @@ def db_info():
     db.print_db_info()
 
 
+@cli.group("db")
+def db_group():
+    """Database administration and recovery commands."""
+    pass
+
+
+@db_group.command("inspect")
+@click.option("--db-path", type=click.Path(exists=True), help="Override path to SQLite database.")
+@click.option("--migrations-dir", type=click.Path(exists=True), help="Override migrations directory.")
+@click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", help="Output format.")
+def db_inspect(db_path: Optional[str], migrations_dir: Optional[str], output_format: str):
+    """Inspect database schema integrity, identifying structural drift and metadata holes."""
+    import json
+    import sys
+    from ml_service.migrations.recovery.orchestrator import RecoveryOrchestrator
+    from ml_service.migrations.recovery.models import RecoveryRecommendation
+
+    # Fall back to configurations if not specified
+    if not db_path or not migrations_dir:
+        config = get_config()
+        if not db_path:
+            db_path = config.database_path if hasattr(config, "database_path") else "trading.db"
+        if not migrations_dir:
+            migrations_dir = config.migrations_dir if hasattr(config, "migrations_dir") else "ml_service/migrations"
+
+    try:
+        orchestrator = RecoveryOrchestrator(db_path=db_path, migrations_dir=migrations_dir)
+        decisions = orchestrator.run_diagnostics()
+    except Exception as e:
+        if output_format == "json":
+            click.echo(json.dumps({"status": "ERROR", "error": str(e)}))
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+    if not decisions:
+        if output_format == "json":
+            click.echo(json.dumps({"status": "CLEAN", "decisions": []}))
+        else:
+            click.echo("Database schema matches the target migrations. No drift detected.")
+        sys.exit(0)
+
+    # Determine risk counts and compile exit code
+    has_halt = any(d.recommendation == RecoveryRecommendation.HALT for d in decisions)
+    risk_counts = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
+    for d in decisions:
+        risk_name = d.risk.value if hasattr(d.risk, "value") else str(d.risk)
+        if risk_name in risk_counts:
+            risk_counts[risk_name] += 1
+
+    if output_format == "json":
+        decisions_json = [d.to_dict() for d in decisions]
+        result = {
+            "status": "DRIFT_DETECTED",
+            "summary": {
+                "total_drift_items": len(decisions),
+                "risk_counts": risk_counts,
+            },
+            "decisions": decisions_json,
+        }
+        click.echo(json.dumps(result, indent=2))
+    else:
+        click.echo("=" * 80)
+        click.echo("MOROQUANT DATABASE INSPECTION REPORT")
+        click.echo("=" * 80)
+        click.echo(f"Target Database: {db_path}")
+        click.echo("Status: DRIFT DETECTED\n")
+
+        for idx, d in enumerate(decisions, 1):
+            click.echo(f"[DRIFT ID: {idx:03d}]")
+            click.echo("-" * 80)
+            click.echo(f"Table Name:      {d.difference.table_name or 'N/A'}")
+            click.echo(f"Difference Type: {d.difference.difference_type.value if hasattr(d.difference.difference_type, 'value') else str(d.difference.difference_type)}")
+            click.echo(f"Column Name:     {d.difference.column_name or 'N/A'}")
+            click.echo(f"Classification:  {d.classification.value if hasattr(d.classification, 'value') else str(d.classification)}")
+            click.echo(f"Risk Level:      {d.risk.value if hasattr(d.risk, 'value') else str(d.risk)}")
+            click.echo(f"Recommendation:  {d.recommendation.value if hasattr(d.recommendation, 'value') else str(d.recommendation)}")
+            click.echo(f"Rationale:       {d.rationale}")
+            click.echo("-" * 80 + "\n")
+
+        click.echo("SUMMARY:")
+        click.echo(f"- Total Drift Mismatches: {len(decisions)}")
+        click.echo(f"- Risk Summary: " + ", ".join(f"{v} {k}" for k, v in risk_counts.items() if v > 0))
+        click.echo(f"- Recommended Action: " + ", ".join(f"{d.recommendation.value if hasattr(d.recommendation, 'value') else str(d.recommendation)}" for d in decisions))
+        click.echo("=" * 80)
+
+    sys.exit(2)
+
+
+@db_group.command("recover")
+@click.option("--db-path", type=click.Path(exists=True), help="Override path to SQLite database.")
+@click.option("--migrations-dir", type=click.Path(exists=True), help="Override migrations directory.")
+@click.option("--dry-run", is_flag=True, help="Display recovery decisions without executing them.")
+@click.option("--approve-token", envvar="MQ_CTO_APPROVAL_TOKEN", help="CTO validation token for HIGH/CRITICAL risks.")
+@click.option("--interactive/--non-interactive", "is_interactive", default=True, help="Force confirmation prompts.")
+@click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", help="Output format.")
+def db_recover(
+    db_path: Optional[str],
+    migrations_dir: Optional[str],
+    dry_run: bool,
+    approve_token: Optional[str],
+    is_interactive: bool,
+    output_format: str,
+):
+    """Reconcile database drift, applying safe updates or recording metadata state."""
+    import json
+    import sys
+    import getpass
+    from ml_service.migrations.recovery.orchestrator import RecoveryOrchestrator
+    from ml_service.migrations.recovery.models import RecoveryRecommendation, RecoveryRisk, ExecutionStatus
+    from ml_service.migrations.recovery.executor import ApprovalRequiredError
+
+    # Fall back to configurations if not specified
+    if not db_path or not migrations_dir:
+        config = get_config()
+        if not db_path:
+            db_path = config.database_path if hasattr(config, "database_path") else "trading.db"
+        if not migrations_dir:
+            migrations_dir = config.migrations_dir if hasattr(config, "migrations_dir") else "ml_service/migrations"
+
+    try:
+        orchestrator = RecoveryOrchestrator(db_path=db_path, migrations_dir=migrations_dir)
+        decisions = orchestrator.run_diagnostics()
+    except Exception as e:
+        if output_format == "json":
+            click.echo(json.dumps({"status": "ERROR", "error": str(e)}))
+        else:
+            click.echo(f"Error checking diagnostics: {e}", err=True)
+        sys.exit(1)
+
+    if not decisions:
+        if output_format == "json":
+            click.echo(json.dumps({"status": "SUCCESS", "message": "No recovery decisions to execute.", "results": []}))
+        else:
+            click.echo("No recovery decisions to execute. Database is clean.")
+        sys.exit(0)
+
+    # Dry run flow
+    if dry_run:
+        risk_counts = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
+        for d in decisions:
+            risk_name = d.risk.value if hasattr(d.risk, "value") else str(d.risk)
+            if risk_name in risk_counts:
+                risk_counts[risk_name] += 1
+
+        if output_format == "json":
+            decisions_json = [d.to_dict() for d in decisions]
+            click.echo(json.dumps({
+                "status": "DRY_RUN",
+                "summary": {
+                    "total_drift_items": len(decisions),
+                    "risk_counts": risk_counts,
+                },
+                "decisions": decisions_json
+            }, indent=2))
+        else:
+            click.echo("=" * 80)
+            click.echo("[DRY-RUN] proposed recovery operations")
+            click.echo("=" * 80)
+            for idx, d in enumerate(decisions, 1):
+                click.echo(f"  [{idx:03d}] Recommendation: {d.recommendation.value if hasattr(d.recommendation, 'value') else str(d.recommendation)} (Risk: {d.risk.value if hasattr(d.risk, 'value') else str(d.risk)})")
+                click.echo(f"        Rationale: {d.rationale}")
+            click.echo("=" * 80)
+        sys.exit(0)
+
+    # Risk and approval verification
+    has_high_or_critical = any(d.risk in (RecoveryRisk.HIGH, RecoveryRisk.CRITICAL) for d in decisions)
+    if has_high_or_critical:
+        # Prompt operator safety warning if interactive
+        if is_interactive:
+            click.echo("WARNING: This recovery includes structural changes and potential data loss risk.", err=True)
+            confirm = click.prompt("To proceed, type exactly 'I UNDERSTAND'")
+            if confirm != "I UNDERSTAND":
+                if output_format == "json":
+                    click.echo(json.dumps({"status": "ABORTED", "error": "User abort."}))
+                else:
+                    click.echo("Aborted by user.")
+                sys.exit(1)
+        else:
+            # Non-interactive requires approval token matching backend env
+            import os
+            env_token = os.environ.get("MQ_CTO_APPROVAL_TOKEN")
+            if not approve_token or approve_token != env_token:
+                if output_format == "json":
+                    click.echo(json.dumps({"status": "ERROR", "error": "Approval token missing or mismatched for high/critical risk."}))
+                else:
+                    click.echo("Error: Approval token missing or mismatched for high/critical risk.", err=True)
+                sys.exit(1)
+
+    # Perform apply execution
+    try:
+        operator = getpass.getuser()
+        summary, report_path = orchestrator.apply_recovery(
+            decisions=decisions,
+            operator=operator,
+            approval_token=approve_token
+        )
+    except Exception as e:
+        if output_format == "json":
+            click.echo(json.dumps({"status": "ERROR", "error": str(e)}))
+        else:
+            click.echo(f"Error during recovery execution: {e}", err=True)
+        sys.exit(1)
+
+    # Print summary output
+    if output_format == "json":
+        click.echo(json.dumps({
+            "status": "SUCCESS",
+            "audit_report": report_path,
+            "summary": summary.to_dict()
+        }, indent=2))
+    else:
+        click.echo("=" * 80)
+        click.echo("MOROQUANT DATABASE RECOVERY EXECUTION SUMMARY")
+        click.echo("=" * 80)
+        click.echo(f"Operator Context: {operator}")
+        click.echo(f"Audit Report:     {report_path}\n")
+
+        click.echo("RESULTS:")
+        for idx, res in enumerate(summary.results, 1):
+            status_str = res.status.value if hasattr(res.status, "value") else str(res.status)
+            rec_str = res.decision.recommendation.value if hasattr(res.decision.recommendation, "value") else str(res.decision.recommendation)
+            click.echo(f"- Decision {idx:03d}: {status_str} [{rec_str}] -> {res.decision.rationale}")
+
+        click.echo("\nMETRICS:")
+        click.echo(f"- Total Processed: {summary.total_decisions}")
+        click.echo(f"- Successful:      {summary.successful_executions}")
+        click.echo(f"- Failed:          {summary.failed_executions}")
+        click.echo(f"- Skipped:         {summary.skipped_executions}")
+        click.echo(f"- Duration:        {summary.total_duration_ms:.2f} ms")
+        click.echo("=" * 80)
+
+    sys.exit(0)
+
+
+
 @cli.command()
 @click.option("--symbol", required=True, help="Trading symbol")
 @click.option("--timeframe", required=True, help="Timeframe")
