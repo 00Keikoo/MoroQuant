@@ -239,7 +239,7 @@ class TestTransactionLifecycle:
                 mock_conn = MagicMock()
                 mock_connect.return_value = mock_conn
 
-                with pytest.raises(MigrationRunnerError, match="Transaction failed"):
+                with pytest.raises(ValueError, match="Simulated Error"):
                     runner.execute_sql_statements(("SELECT 1;",))
 
                 mock_conn.rollback.assert_called_once()
@@ -254,7 +254,7 @@ class TestTransactionLifecycle:
         """Verify connection is closed and cleaned up on failure."""
         runner = MigrationRunner(db_path=":memory:")
         with patch.object(runner, "_begin_transaction", side_effect=ValueError("Simulated Error")):
-            with pytest.raises(MigrationRunnerError):
+            with pytest.raises(ValueError, match="Simulated Error"):
                 runner.execute_sql_statements(("SELECT 1;",))
         assert runner._conn is None
 
@@ -267,11 +267,12 @@ class TestTransactionLifecycle:
             mock_connect.return_value = mock_conn
             mock_conn.cursor.return_value = mock_cursor
 
-            # Fail twice with locked error, then succeed
+            # Fail twice with locked error, then succeed for BEGIN IMMEDIATE, then succeed for SQL execution
             mock_cursor.execute.side_effect = [
                 sqlite3.OperationalError("database is locked"),
                 sqlite3.OperationalError("database is locked"),
-                None,  # succeeds on 3rd attempt
+                None,  # succeeds on 3rd attempt for BEGIN IMMEDIATE
+                None,  # succeeds for SELECT 1;
             ]
 
             with patch("time.sleep") as mock_sleep:
@@ -332,3 +333,138 @@ class TestTransactionLifecycle:
         statements = ("CREATE TABLE t (id INT);", "INSERT INTO t VALUES (1);", "SELECT * FROM t;")
         result = runner.execute_sql_statements(statements)
         assert result == statements
+
+
+class TestSqlExecutionLayer:
+    """Comprehensive unit tests for the SQL Execution Layer."""
+
+    def test_single_sql_execution(self, tmp_path) -> None:
+        """Verify executing a single SQL statement works and returns metadata."""
+        db_file = str(tmp_path / "test.db")
+        runner = MigrationRunner(db_path=db_file)
+        result = runner.execute_sql_statements(("CREATE TABLE test_single (id INT);",))
+        assert result == ("CREATE TABLE test_single (id INT);",)
+
+        # Verify side effects occurred in database
+        runner._open_connection()
+        cursor = runner._conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='test_single';")
+        row = cursor.fetchone()
+        assert row is not None
+        assert row[0] == "test_single"
+        runner._close()
+
+    def test_multiple_sql_execution(self, tmp_path) -> None:
+        """Verify multiple SQL statements are executed sequentially."""
+        db_file = str(tmp_path / "test.db")
+        runner = MigrationRunner(db_path=db_file)
+        statements = (
+            "CREATE TABLE test_multi (id INT);",
+            "INSERT INTO test_multi VALUES (42);",
+            "INSERT INTO test_multi VALUES (100);",
+        )
+        result = runner.execute_sql_statements(statements)
+        assert result == statements
+
+        # Verify side effects occurred in database
+        runner._open_connection()
+        cursor = runner._conn.cursor()
+        cursor.execute("SELECT id FROM test_multi ORDER BY id;")
+        rows = cursor.fetchall()
+        assert len(rows) == 2
+        assert rows[0][0] == 42
+        assert rows[1][0] == 100
+        runner._close()
+
+    def test_failure_on_second_statement(self, tmp_path) -> None:
+        """Verify that execution stops immediately on the first SQL error (e.g. second statement)."""
+        db_file = str(tmp_path / "test.db")
+        runner = MigrationRunner(db_path=db_file)
+        statements = (
+            "CREATE TABLE test_fail (id INT);",
+            "INSERT INTO test_fail VALUES ('not_an_int_but_ok');",
+            "INVALID SQL STATEMENT HERE;",
+            "INSERT INTO test_fail VALUES (999);",
+        )
+        with pytest.raises(sqlite3.OperationalError):
+            runner.execute_sql_statements(statements)
+
+        # The table should not even exist because of rollback
+        runner._open_connection()
+        cursor = runner._conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='test_fail';")
+        assert cursor.fetchone() is None
+        runner._close()
+
+    def test_rollback_on_failure(self, tmp_path) -> None:
+        """Verify that a failure triggers rollback through existing transaction lifecycle."""
+        db_file = str(tmp_path / "test.db")
+        runner = MigrationRunner(db_path=db_file)
+        # Let's pre-create a table to check state
+        runner._open_connection()
+        runner._conn.execute("CREATE TABLE test_rollback (val TEXT);")
+        runner._conn.execute("INSERT INTO test_rollback VALUES ('original');")
+        runner._conn.commit()
+        runner._close()
+
+        statements = (
+            "INSERT INTO test_rollback VALUES ('new_value');",
+            "SOME WRONG SQL;",
+        )
+
+        with pytest.raises(sqlite3.OperationalError):
+            runner.execute_sql_statements(statements)
+
+        # Check that table state rolled back to 'original' and doesn't contain 'new_value'
+        runner._open_connection()
+        cursor = runner._conn.cursor()
+        cursor.execute("SELECT val FROM test_rollback;")
+        rows = cursor.fetchall()
+        assert len(rows) == 1
+        assert rows[0][0] == "original"
+        runner._close()
+
+    def test_deterministic_ordering(self) -> None:
+        """Verify deterministic execution ordering."""
+        # Using a mock cursor to track order of execution
+        runner = MigrationRunner(db_path=":memory:")
+        with patch("sqlite3.connect") as mock_connect:
+            mock_conn = MagicMock()
+            mock_cursor = MagicMock()
+            mock_connect.return_value = mock_conn
+            mock_conn.cursor.return_value = mock_cursor
+
+            statements = ("SELECT 'first';", "SELECT 'second';", "SELECT 'third';")
+            runner.execute_sql_statements(statements)
+
+            # Check that mock_cursor.execute was called with each statement in order
+            calls = [call[1][0] for call in mock_cursor.execute.mock_calls if "BEGIN" not in call[1][0]]
+            assert calls == list(statements)
+
+    def test_dry_run_executes_zero_sql(self) -> None:
+        """Verify dry-run executes zero SQL modifications."""
+        runner = MigrationRunner(db_path=":memory:", dry_run=True)
+        statements = ("CREATE TABLE should_not_exist (id INT);",)
+        result = runner.execute_sql_statements(statements)
+        assert result == statements
+
+        # Verify the table was not actually created
+        runner._open_connection()
+        cursor = runner._conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='should_not_exist';")
+        assert cursor.fetchone() is None
+        runner._close()
+
+    def test_empty_statement_list(self) -> None:
+        """Verify passing an empty statement list works and returns empty tuple."""
+        runner = MigrationRunner(db_path=":memory:")
+        result = runner.execute_sql_statements(())
+        assert result == ()
+
+    def test_sql_execution_exception_propagation(self) -> None:
+        """Verify SQL execution exceptions propagate as their original exception type."""
+        runner = MigrationRunner(db_path=":memory:")
+        with pytest.raises(sqlite3.OperationalError) as exc_info:
+            runner.execute_sql_statements(("SELECT * FROM non_existent_table;",))
+
+        assert "no such table" in str(exc_info.value)

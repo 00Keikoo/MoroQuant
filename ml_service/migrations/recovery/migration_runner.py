@@ -115,22 +115,26 @@ class MigrationRunner:
 
         Raises:
             DatabaseLockError: If write lock cannot be obtained.
-            MigrationRunnerError: If execution fails and is rolled back.
+            Exception: If execution fails, rolls back, and propagates the original exception.
         """
         self._open_connection()
+        executed = []
         try:
             self._begin_transaction()
-            # Perform zero DDL execution, zero ledger writes, zero filesystem writes
+            if not self._dry_run and statements:
+                cursor = self._conn.cursor()
+                for stmt in statements:
+                    cursor.execute(stmt)
+                    executed.append(stmt)
+                cursor.close()
             self._commit()
-            return statements
+            return tuple(executed) if not self._dry_run else statements
         except Exception as e:
             try:
                 self._rollback()
             except Exception:
                 pass
-            if not isinstance(e, MigrationRunnerError):
-                raise MigrationRunnerError(f"Transaction failed: {e}") from e
-            raise
+            raise e
         finally:
             self._close()
 
