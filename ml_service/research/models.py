@@ -43,6 +43,7 @@ class ResearchRun:
     run_id: str
     experiment_id: str
     status: str
+    session_id: str = ""
     hyperparameters: Tuple[Tuple[str, Union[str, int, float, bool, None]], ...] = field(default_factory=tuple)
     metrics: Tuple[Tuple[str, float], ...] = field(default_factory=tuple)
     model_binary_path: Optional[str] = None
@@ -57,6 +58,7 @@ class ResearchRun:
             "run_id": self.run_id,
             "experiment_id": self.experiment_id,
             "status": self.status,
+            "session_id": self.session_id,
             "hyperparameters": [list(item) for item in sorted_hparams],
             "metrics": [list(item) for item in sorted_metrics],
             "model_binary_path": self.model_binary_path,
