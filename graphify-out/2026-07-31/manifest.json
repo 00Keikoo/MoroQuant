@@ -4698,5 +4698,15 @@
     "mtime": 1785483913.8577824,
     "ast_hash": "9d31affd8836e9357d40fb0fa050f1ed",
     "semantic_hash": ""
+  },
+  "ml_service/research/feature_snapshot.py": {
+    "mtime": 1785485689.3330932,
+    "ast_hash": "71d4757e91eb780d6fb4848ccfa538b6",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_feature_snapshot.py": {
+    "mtime": 1785485704.1503186,
+    "ast_hash": "28107110136dfaa8b9f7d07fbb773c62",
+    "semantic_hash": ""
   }
 }
