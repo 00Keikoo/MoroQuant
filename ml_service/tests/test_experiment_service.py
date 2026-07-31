@@ -1,189 +1,96 @@
-"""Unit tests for ExperimentService."""
-
 import pytest
-from unittest.mock import Mock
-from ml_service.lab.experiments.service import ExperimentService
-from ml_service.lab.experiments.types import ExperimentContract
-
-
-@pytest.fixture
-def mock_repository():
-    """Create a mock repository."""
-    return Mock()
-
+from dataclasses import FrozenInstanceError
+from ml_service.research.models import ResearchExperiment, ResearchRun
+from ml_service.research.research_experiment import ResearchExperimentManager
+from ml_service.research.experiment_repository import ExperimentRepository
+from ml_service.research.experiment_service import ExperimentService
 
 @pytest.fixture
-def service(mock_repository):
-    """Create a service instance with mock repository."""
-    return ExperimentService(repository=mock_repository)
+def service():
+    repository = ExperimentRepository()
+    manager = ResearchExperimentManager()
+    return ExperimentService(repository, manager)
 
+def test_experiment_creation(service):
+    session_id = "sess_123"
+    config = {"lr": 0.01, "batch_size": 32}
+    exp = service.create_experiment(session_id=session_id, hypothesis_config=config, experiment_id="exp_1")
+    
+    assert exp.experiment_id == "exp_1"
+    assert exp.session_id == session_id
+    assert exp.status == "INITIALIZED"
+    assert exp.runs == ()
+    assert exp.created_at != ""
+    
+    # Retrieve and verify
+    retrieved = service.get_experiment("exp_1")
+    assert retrieved == exp
+    assert service.has_experiment("exp_1") is True
 
-@pytest.fixture
-def sample_experiment():
-    """Create a sample experiment contract with cleaned domain model."""
-    return ExperimentContract(
-        id=1,
-        experiment_id="exp_test_001",
-        run_id="run_abc123",
-        status="CREATED",
-        dataset_version="v1.0.0",
-        feature_version="v1.1.0",
-        model_version="v2.0.0",
-        hyperparameters='{"learning_rate": 0.01}',
-        train_loss=None,
-        validation_loss=None,
-        started_at="2026-07-11T10:00:00",
-        completed_at=None,
-        created_at="2026-07-11T10:00:00",
-        updated_at="2026-07-11T10:00:00",
-        notes=None
-    )
+def test_duplicate_rejection(service):
+    session_id = "sess_123"
+    config = {"lr": 0.01}
+    service.create_experiment(session_id=session_id, hypothesis_config=config, experiment_id="exp_1")
+    
+    with pytest.raises(ValueError):
+        service.create_experiment(session_id=session_id, hypothesis_config=config, experiment_id="exp_1")
 
+def test_retrieval_and_invalid_lookup(service):
+    with pytest.raises(KeyError):
+        service.get_experiment("exp_nonexistent")
+        
+    assert service.has_experiment("exp_nonexistent") is False
 
-def test_create_experiment(service, mock_repository, sample_experiment):
-    """Test creating an experiment."""
-    mock_repository.create.return_value = 1
-    mock_repository.get_by_id.return_value = sample_experiment
+def test_deletion(service):
+    exp = service.create_experiment("sess_123", {"lr": 0.01}, "exp_1")
+    service.delete_experiment("exp_1")
+    
+    assert service.has_experiment("exp_1") is False
+    with pytest.raises(KeyError):
+        service.get_experiment("exp_1")
 
-    result = service.create_experiment(
-        experiment_id="exp_test_001",
-        dataset_version="v1.0.0",
-        feature_version="v1.1.0",
-        model_version="v2.0.0",
-        hyperparameters='{"learning_rate": 0.01}'
-    )
+def test_deterministic_ordering(service):
+    service.create_experiment("sess_1", {"lr": 0.01}, "exp_a")
+    service.create_experiment("sess_1", {"lr": 0.01}, "exp_c")
+    service.create_experiment("sess_1", {"lr": 0.01}, "exp_b")
+    
+    exps = service.list_experiments()
+    assert len(exps) == 3
+    assert [e.experiment_id for e in exps] == ["exp_a", "exp_b", "exp_c"]
 
-    assert result is not None
-    assert result.experiment_id == "exp_test_001"
-    mock_repository.create.assert_called_once()
-    mock_repository.get_by_id.assert_called_once_with(1)
+def test_filtering_by_session_id(service):
+    service.create_experiment("sess_1", {"lr": 0.01}, "exp_a")
+    service.create_experiment("sess_2", {"lr": 0.01}, "exp_b")
+    service.create_experiment("sess_1", {"lr": 0.01}, "exp_c")
+    
+    exps_sess_1 = service.list_experiments_by_session("sess_1")
+    assert len(exps_sess_1) == 2
+    assert [e.experiment_id for e in exps_sess_1] == ["exp_a", "exp_c"]
+    
+    exps_sess_2 = service.list_experiments_by_session("sess_2")
+    assert len(exps_sess_2) == 1
+    assert exps_sess_2[0].experiment_id == "exp_b"
 
+def test_immutability_preservation(service):
+    exp = service.create_experiment("sess_123", {"lr": 0.01}, "exp_1")
+    with pytest.raises(FrozenInstanceError):
+        exp.status = "ACTIVE"  # type: ignore
 
-def test_start_training(service, mock_repository):
-    """Test starting training phase."""
-    mock_repository.update_status.return_value = True
-
-    success = service.start_training("run_abc123")
-
-    assert success
-    mock_repository.update_status.assert_called_once_with("run_abc123", "TRAINING")
-
-
-def test_transition_to(service, mock_repository):
-    """Test flexible state transitions."""
-    mock_repository.update_status.return_value = True
-
-    success = service.transition_to("run_abc123", "VALIDATING")
-
-    assert success
-    mock_repository.update_status.assert_called_once_with("run_abc123", "VALIDATING")
-
-
-def test_complete_training(service, mock_repository):
-    """Test completing training with metrics."""
-    mock_repository.update_metrics.return_value = True
-    mock_repository.update_status.return_value = True
-
-    success = service.complete_training(
-        run_id="run_abc123",
-        train_loss=0.5,
-        validation_loss=0.6
-    )
-
-    assert success
-    mock_repository.update_status.assert_called_once_with("run_abc123", "COMPLETED")
-
-
-def test_fail_run(service, mock_repository):
-    """Test failing a run."""
-    mock_repository.update_status.return_value = True
-
-    success = service.fail_run("run_abc123")
-
-    assert success
-    mock_repository.update_status.assert_called_once_with("run_abc123", "FAILED")
-
-
-def test_update_training_metrics(service, mock_repository):
-    """Test updating training metrics."""
-    mock_repository.update_metrics.return_value = True
-
-    success = service.update_training_metrics(
-        run_id="run_abc123",
-        train_loss=0.5,
-        validation_loss=0.6
-    )
-
-    assert success
-    mock_repository.update_metrics.assert_called_once()
-
-
-def test_get_run(service, mock_repository, sample_experiment):
-    """Test getting a run by run_id."""
-    mock_repository.get_by_run_id.return_value = sample_experiment
-
-    result = service.get_run("run_abc123")
-
-    assert result is not None
-    assert result.run_id == "run_abc123"
-    mock_repository.get_by_run_id.assert_called_once_with("run_abc123")
-
-
-def test_get_experiment_runs(service, mock_repository, sample_experiment):
-    """Test getting all runs for an experiment."""
-    mock_repository.get_by_experiment_id.return_value = [sample_experiment]
-
-    results = service.get_experiment_runs("exp_test_001")
-
-    assert len(results) == 1
-    mock_repository.get_by_experiment_id.assert_called_once_with("exp_test_001")
-
-
-def test_list_all_runs(service, mock_repository, sample_experiment):
-    """Test listing all runs."""
-    mock_repository.list_all.return_value = [sample_experiment]
-
-    results = service.list_all_runs(limit=100, offset=0)
-
-    assert len(results) == 1
-    mock_repository.list_all.assert_called_once_with(limit=100, offset=0)
-
-
-def test_list_by_status(service, mock_repository, sample_experiment):
-    """Test listing runs by status."""
-    mock_repository.list_by_status.return_value = [sample_experiment]
-
-    results = service.list_by_status("CREATED")
-
-    assert len(results) == 1
-    mock_repository.list_by_status.assert_called_once_with("CREATED")
-
-
-def test_delete_run(service, mock_repository):
-    """Test deleting a run."""
-    mock_repository.delete.return_value = True
-
-    success = service.delete_run("run_abc123")
-
-    assert success
-    mock_repository.delete.assert_called_once_with("run_abc123")
-
-
-def test_get_run_count(service, mock_repository):
-    """Test getting run count."""
-    mock_repository.count_all.return_value = 5
-
-    count = service.get_run_count()
-
-    assert count == 5
-    mock_repository.count_all.assert_called_once()
-
-
-def test_get_status_count(service, mock_repository):
-    """Test getting status count."""
-    mock_repository.count_by_status.return_value = 3
-
-    count = service.get_status_count("COMPLETED")
-
-    assert count == 3
-    mock_repository.count_by_status.assert_called_once_with("COMPLETED")
+def test_lifecycle_transitions(service):
+    exp = service.create_experiment("sess_123", {"lr": 0.01}, "exp_1")
+    
+    # Transition to ACTIVE
+    exp = service.start_experiment("exp_1")
+    assert exp.status == "ACTIVE"
+    assert service.get_experiment("exp_1").status == "ACTIVE"
+    
+    # Transition to EVALUATED (completed)
+    run = ResearchRun(run_id="run_1", experiment_id="exp_1", status="COMPLETED")
+    exp = service.complete_experiment("exp_1", runs=(run,))
+    assert exp.status == "EVALUATED"
+    assert len(exp.runs) == 1
+    assert service.get_experiment("exp_1").status == "EVALUATED"
+    
+    # Invalid transition check
+    with pytest.raises(ValueError):
+        service.start_experiment("exp_1")
