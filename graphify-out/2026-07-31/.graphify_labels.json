@@ -738,10 +738,13 @@
   "736": "test_db_path",
   "737": "news.ts",
   "738": "indicators.ts",
+  "739": "PerformanceHeader.tsx",
+  "740": ".get_metadata",
   "741": ".__init__",
   "742": "__init__.py",
   "743": "test_db_path",
-  "751": ".test_negative_offset",
-  "767": "mock_trade_repo",
-  "770": ".test_default_parameters"
+  "744": ".get_trade_detail",
+  "745": ".get_trade_list",
+  "746": ".test_repositories_injected",
+  "747": "service"
 }

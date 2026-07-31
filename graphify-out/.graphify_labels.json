@@ -746,5 +746,17 @@
   "744": ".get_trade_detail",
   "745": ".get_trade_list",
   "746": ".test_repositories_injected",
-  "747": "service"
+  "747": "service",
+  "748": "_load_regime_trade_returns",
+  "749": "CryptoPriceService",
+  "750": "ProxyPriceService",
+  "751": "make_immutable",
+  "752": "TestEdgeCases",
+  "753": "rule_execution_classification_valid",
+  "754": "._get_explainer",
+  "755": ".to_dict",
+  "756": "test_regime_execution_policy.py",
+  "757": ".to_dict",
+  "758": "mock_equity_repo",
+  "759": "mock_no_network_prices"
 }
