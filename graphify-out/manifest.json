@@ -4823,5 +4823,70 @@
     "mtime": 1785507540.530782,
     "ast_hash": "228cf425eb6c008f28a92e5840fad5e8",
     "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.5B.5-TrainingPipeline-Design.md": {
+    "mtime": 1785507982.3138044,
+    "ast_hash": "d25ae4cbbb81fe5d8f9e8bc45a17015a",
+    "semantic_hash": ""
+  },
+  "ml_service/research/training_pipeline.py": {
+    "mtime": 1785511403.3569417,
+    "ast_hash": "f5dfce5221969736fd4c7f0f76ee3fe8",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_training_pipeline.py": {
+    "mtime": 1785511409.5724628,
+    "ast_hash": "a0594e701738a87ba6171a14a507a77b",
+    "semantic_hash": ""
+  },
+  "ml_service/research/trainers/base_trainer.py": {
+    "mtime": 1785510737.4815826,
+    "ast_hash": "72c25514e13f1717c5c0e04cd98795a9",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_base_trainer.py": {
+    "mtime": 1785509267.7377613,
+    "ast_hash": "aa4ae27dba43380bf27a7a69c05cf6a2",
+    "semantic_hash": ""
+  },
+  "ml_service/research/trainers/xgboost_trainer.py": {
+    "mtime": 1785510755.2182882,
+    "ast_hash": "eb42fce8776c3f0ddb06f9e4ee3a8bc8",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_xgboost_trainer.py": {
+    "mtime": 1785509721.4986827,
+    "ast_hash": "fa647047bd7a427e048f89330245e391",
+    "semantic_hash": ""
+  },
+  "ml_service/research/trainers/lightgbm_trainer.py": {
+    "mtime": 1785510228.5834868,
+    "ast_hash": "1e05ef3ef7f9256631c52310e08a5bc3",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_lightgbm_trainer.py": {
+    "mtime": 1785510233.0123296,
+    "ast_hash": "a9b1b02bb575845484f894474d1e0cf4",
+    "semantic_hash": ""
+  },
+  "ml_service/research/trainers/trainer_factory.py": {
+    "mtime": 1785510499.179899,
+    "ast_hash": "e4c5fbe8d2cd3838d45836af965d4c99",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_trainer_factory.py": {
+    "mtime": 1785510501.2238405,
+    "ast_hash": "a8911a89139fe40cee0da868781d6b96",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_training_pipeline_integration.py": {
+    "mtime": 1785510729.6717765,
+    "ast_hash": "90b946051693c273280e67f708e31e16",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_research_workflow_e2e.py": {
+    "mtime": 1785510925.1671271,
+    "ast_hash": "fd6171bc51c63d0377615c1c175b8cbc",
+    "semantic_hash": ""
   }
 }
