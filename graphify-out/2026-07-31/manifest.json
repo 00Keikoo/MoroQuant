@@ -1055,7 +1055,7 @@
     "semantic_hash": "29929d97cb56a85a85a3acb63cc3cbda"
   },
   "ml_service/cli/commands.py": {
-    "mtime": 1785415180.3708277,
+    "mtime": 1785479592.1247556,
     "ast_hash": "42ce9be1667c0c087ab5bd1fdef44a4e",
     "semantic_hash": ""
   },
@@ -4565,7 +4565,7 @@
     "semantic_hash": ""
   },
   ".github/workflows/recovery-framework.yml": {
-    "mtime": 1785414610.0477788,
+    "mtime": 1785479592.0717552,
     "ast_hash": "5ff33e23e71c2839cb203950a03f8f26",
     "semantic_hash": ""
   },
@@ -4575,68 +4575,78 @@
     "semantic_hash": ""
   },
   "Sprint-2.4A-Recovery-Finalization-Design.md": {
-    "mtime": 1785394837.2858942,
+    "mtime": 1785479592.072755,
     "ast_hash": "08dbaa91f1870fd5494d14c6b8decdb1",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-2.4A-Recovery-Finalization-Design.md": {
-    "mtime": 1785394833.7258925,
+    "mtime": 1785479592.074127,
     "ast_hash": "08dbaa91f1870fd5494d14c6b8decdb1",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-2.4A-Recovery-Orchestrator-Design.md": {
-    "mtime": 1785397661.7674491,
+    "mtime": 1785479592.0747552,
     "ast_hash": "d4c228da43b6449cb35d9f307b486271",
     "semantic_hash": ""
   },
   "ml_service/migrations/recovery/orchestrator.py": {
-    "mtime": 1785398510.3228793,
+    "mtime": 1785479592.1247556,
     "ast_hash": "2cc2a88b55d306e392a334a210227f51",
     "semantic_hash": ""
   },
   "ml_service/tests/test_recovery_orchestrator.py": {
-    "mtime": 1785398519.3250577,
+    "mtime": 1785479592.1257555,
     "ast_hash": "9532da9dbe2e8c4f295bf98dbf8917c4",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-2.4B-Recovery-CLI-Design.md": {
-    "mtime": 1785399530.2397397,
+    "mtime": 1785479592.0747552,
     "ast_hash": "cb06241c4bf3a937a08901d89c2a3d7d",
     "semantic_hash": ""
   },
   "ml_service/tests/test_recovery_cli.py": {
-    "mtime": 1785399704.048056,
+    "mtime": 1785479592.1257555,
     "ast_hash": "04ee7d5b45eefc0c3b821ae5e56f9fa1",
     "semantic_hash": ""
   },
   "docs/recovery/Recovery-Architecture.md": {
-    "mtime": 1785417038.0971968,
+    "mtime": 1785479592.072755,
     "ast_hash": "931b9ee2dc2be9708f1eda41343d8949",
     "semantic_hash": ""
   },
   "docs/recovery/Recovery-CLI-Guide.md": {
-    "mtime": 1785417043.2092893,
+    "mtime": 1785479592.074127,
     "ast_hash": "7c4dfc4d562cbe8fe1a7b22cdd765c93",
     "semantic_hash": ""
   },
   "docs/recovery/Recovery-Developer-Guide.md": {
-    "mtime": 1785417061.863932,
+    "mtime": 1785479592.074127,
     "ast_hash": "ac19fea120a4d24a1d4a3b145b112b1e",
     "semantic_hash": ""
   },
   "docs/recovery/Recovery-Operations-Runbook.md": {
-    "mtime": 1785417067.0890086,
+    "mtime": 1785479592.074127,
     "ast_hash": "360b9b16ea3e339d9c92895c1fa9cbd4",
     "semantic_hash": ""
   },
   "docs/recovery/Recovery-Test-Coverage.md": {
-    "mtime": 1785417071.3468726,
+    "mtime": 1785479592.074127,
     "ast_hash": "cea943fce77a00c0aa6a4e67ffde111a",
     "semantic_hash": ""
   },
   "docs/recovery/Release-v1.8.0.md": {
-    "mtime": 1785417079.8895714,
+    "mtime": 1785479592.074127,
     "ast_hash": "c3589cdf52e3c5641931c08bda2cb77a",
+    "semantic_hash": ""
+  },
+  "docs/adr/ADR-024-Quant-Research-Platform.md": {
+    "mtime": 1785479888.748135,
+    "ast_hash": "cf7152d361beb4c144489e2f8ac6d99c",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.5A-Research-Foundation-Design.md": {
+    "mtime": 1785480914.3087962,
+    "ast_hash": "61342a00901f698124d56f8ed34156e5",
     "semantic_hash": ""
   }
 }
