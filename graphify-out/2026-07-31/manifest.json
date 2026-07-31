@@ -4648,5 +4648,20 @@
     "mtime": 1785480914.3087962,
     "ast_hash": "61342a00901f698124d56f8ed34156e5",
     "semantic_hash": ""
+  },
+  "ml_service/research/models.py": {
+    "mtime": 1785481304.1258695,
+    "ast_hash": "856c2f5efd108e0bb3543eb173c8f78f",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_research_models.py": {
+    "mtime": 1785481326.5633416,
+    "ast_hash": "7581474dc100192a2f6006875058a398",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.5A-Audit-Report.md": {
+    "mtime": 1785481097.49078,
+    "ast_hash": "43ef1af008c46b40c33d204bca678872",
+    "semantic_hash": ""
   }
 }
