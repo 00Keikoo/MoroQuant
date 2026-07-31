@@ -736,7 +736,6 @@
   "734": "PerformanceCard.tsx",
   "735": "paperProvider.ts",
   "736": "test_db_path",
-  "737": "Sequence Diagrams",
   "738": "indicators.ts",
   "739": ".threshold_long",
   "741": ".to_dict",
@@ -753,5 +752,6 @@
   "757": "news.ts",
   "760": ".test_trade_with_missing_signal",
   "761": ".test_repository_exception_propagates",
-  "762": "Any"
+  "762": "Any",
+  "769": "Performance Characteristics"
 }

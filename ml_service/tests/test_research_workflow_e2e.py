@@ -27,8 +27,12 @@ from ml_service.research.training_pipeline import TrainingPipelineManager, Train
 
 
 @pytest.fixture
-def workflow_context():
+def workflow_context(tmp_path):
     """Builds and returns all services required for the research workflow."""
+    import numpy as np
+    import pandas as pd
+    import hashlib
+
     # Repositories
     session_repo = ResearchRepository()
     experiment_repo = ExperimentRepository()
@@ -47,11 +51,57 @@ def workflow_context():
     # Pipeline
     pipeline_manager = TrainingPipelineManager()
     
+    # Generate synthetic parquet files
+    np.random.seed(42)
+    n_rows = 100
+    timestamps = pd.date_range("2026-01-01", periods=n_rows, freq="h")
+    
+    # Create dataset DataFrame containing both BTCUSDT and ETHUSDT symbols
+    btc_df = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "BTCUSDT",
+        "target": np.random.choice([0.0, 1.0], size=n_rows)
+    })
+    eth_df = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "ETHUSDT",
+        "target": np.random.choice([0.0, 1.0], size=n_rows)
+    })
+    dataset_df = pd.concat([btc_df, eth_df], ignore_index=True)
+    
+    # Create feature DataFrame containing features for both symbols
+    btc_feat = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "BTCUSDT",
+        "feat_1": np.random.normal(0, 1, n_rows),
+        "feat_2": np.random.normal(0, 1, n_rows)
+    })
+    eth_feat = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "ETHUSDT",
+        "feat_1": np.random.normal(0, 1, n_rows),
+        "feat_2": np.random.normal(0, 1, n_rows)
+    })
+    features_df = pd.concat([btc_feat, eth_feat], ignore_index=True)
+    
+    ds_path = str(tmp_path / "ds_1.0.0.parquet")
+    feat_path = str(tmp_path / "fds_1.0.0.parquet")
+    
+    dataset_df.to_parquet(ds_path)
+    features_df.to_parquet(feat_path)
+    
+    def compute_sha256(path):
+        with open(path, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+            
+    ds_hash = compute_sha256(ds_path)
+    feat_hash = compute_sha256(feat_path)
+    
     # Snapshots
     dataset_snapshot = DatasetSnapshot(
         dataset_version_id="DS_1.0.0",
-        fingerprint="ds-fingerprint-e2e",
-        file_path="/storage/datasets/ds_1.0.0.parquet",
+        fingerprint=ds_hash,
+        file_path=ds_path,
         is_frozen=True,
         created_at="2026-07-31T00:00:00Z"
     )
@@ -59,8 +109,8 @@ def workflow_context():
     feature_snapshot = FeatureSnapshot(
         feature_dataset_id="FDS_1.0.0",
         source_dataset_id="DS_1.0.0",
-        fingerprint="feat-fingerprint-e2e",
-        file_path="/storage/features/fds_1.0.0.parquet",
+        fingerprint=feat_hash,
+        file_path=feat_path,
         is_frozen=True,
         created_at="2026-07-31T00:00:00Z"
     )

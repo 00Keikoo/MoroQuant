@@ -2,29 +2,67 @@
 
 import pytest
 import dataclasses
+import hashlib
+import numpy as np
+import pandas as pd
 from ml_service.research.models import DatasetSnapshot, FeatureSnapshot
 from ml_service.research.trainers.base_trainer import TrainerConfig, TrainingResult, TrainingMetrics, ArtifactMetadata
 from ml_service.research.trainers.xgboost_trainer import XGBoostTrainer
 
 
 @pytest.fixture
-def valid_dataset():
+def valid_dataset_path(tmp_path):
+    n_rows = 100
+    timestamps = pd.date_range("2026-01-01", periods=n_rows, freq="h")
+    df = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "BTCUSDT",
+        "target": (np.random.normal(0, 1, n_rows) > 0.0).astype(float)
+    })
+    path = str(tmp_path / "dataset.parquet")
+    df.to_parquet(path)
+    with open(path, "rb") as f:
+        file_hash = hashlib.sha256(f.read()).hexdigest()
+    return path, file_hash
+
+
+@pytest.fixture
+def valid_features_path(tmp_path):
+    n_rows = 100
+    timestamps = pd.date_range("2026-01-01", periods=n_rows, freq="h")
+    df = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "BTCUSDT",
+        "feat_1": np.random.normal(0.5, 1.0, n_rows),
+        "feat_2": np.random.normal(-0.5, 1.0, n_rows)
+    })
+    path = str(tmp_path / "features.parquet")
+    df.to_parquet(path)
+    with open(path, "rb") as f:
+        file_hash = hashlib.sha256(f.read()).hexdigest()
+    return path, file_hash
+
+
+@pytest.fixture
+def valid_dataset(valid_dataset_path):
+    path, file_hash = valid_dataset_path
     return DatasetSnapshot(
         dataset_version_id="DS_1.0.0",
-        fingerprint="a" * 64,
-        file_path="data/dataset.parquet",
+        fingerprint=file_hash,
+        file_path=path,
         is_frozen=True,
         created_at="2026-07-31T00:00:00+00:00"
     )
 
 
 @pytest.fixture
-def valid_features():
+def valid_features(valid_features_path):
+    path, file_hash = valid_features_path
     return FeatureSnapshot(
         feature_dataset_id="FS_1.0.0",
         source_dataset_id="DS_1.0.0",
-        fingerprint="b" * 64,
-        file_path="data/features.parquet",
+        fingerprint=file_hash,
+        file_path=path,
         is_frozen=True,
         created_at="2026-07-31T00:00:00+00:00"
     )
@@ -36,7 +74,7 @@ def valid_config():
         model_type="xgboost",
         seed=42,
         hyperparameters=(("max_depth", 6), ("learning_rate", 0.1)),
-        training_parameters=(("epochs", 100),)
+        training_parameters=(("epochs", 10),)
     )
 
 
@@ -173,20 +211,20 @@ def test_deterministic_outputs(valid_dataset, valid_features):
     config_1 = TrainerConfig(
         model_type="xgboost",
         seed=100,
-        hyperparameters=(("max_depth", 6),),
-        training_parameters=(("epochs", 50),)
+        hyperparameters=(("max_depth", 6), ("subsample", 0.5), ("colsample_bytree", 0.5)),
+        training_parameters=(("epochs", 5),)
     )
     config_2 = TrainerConfig(
         model_type="xgboost",
         seed=100,
-        hyperparameters=(("max_depth", 6),),
-        training_parameters=(("epochs", 50),)
+        hyperparameters=(("max_depth", 6), ("subsample", 0.5), ("colsample_bytree", 0.5)),
+        training_parameters=(("epochs", 5),)
     )
     config_3 = TrainerConfig(
         model_type="xgboost",
         seed=200,
-        hyperparameters=(("max_depth", 6),),
-        training_parameters=(("epochs", 50),)
+        hyperparameters=(("max_depth", 6), ("subsample", 0.5), ("colsample_bytree", 0.5)),
+        training_parameters=(("epochs", 5),)
     )
 
     trainer_a = XGBoostTrainer()

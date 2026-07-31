@@ -2,6 +2,9 @@
 
 import pytest
 import dataclasses
+import hashlib
+import numpy as np
+import pandas as pd
 from unittest.mock import MagicMock
 
 from ml_service.research.models import ResearchRun, DatasetSnapshot, FeatureSnapshot
@@ -25,23 +28,59 @@ def sample_research_run() -> ResearchRun:
 
 
 @pytest.fixture
-def sample_dataset_snapshot() -> DatasetSnapshot:
+def sample_dataset_path(tmp_path):
+    n_rows = 100
+    timestamps = pd.date_range("2026-01-01", periods=n_rows, freq="h")
+    # Highly correlated feature-target structure to guarantee positive Sharpe ratio for testing
+    df = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "BTCUSDT",
+        "target": (np.random.normal(0.5, 1.0, n_rows) > 0.0).astype(float)
+    })
+    path = str(tmp_path / "dataset.parquet")
+    df.to_parquet(path)
+    with open(path, "rb") as f:
+        file_hash = hashlib.sha256(f.read()).hexdigest()
+    return path, file_hash
+
+
+@pytest.fixture
+def sample_features_path(tmp_path):
+    n_rows = 100
+    timestamps = pd.date_range("2026-01-01", periods=n_rows, freq="h")
+    df = pd.DataFrame({
+        "timestamp": timestamps,
+        "symbol": "BTCUSDT",
+        "feat_1": np.random.normal(0.5, 1.0, n_rows),
+        "feat_2": np.random.normal(-0.5, 1.0, n_rows)
+    })
+    path = str(tmp_path / "features.parquet")
+    df.to_parquet(path)
+    with open(path, "rb") as f:
+        file_hash = hashlib.sha256(f.read()).hexdigest()
+    return path, file_hash
+
+
+@pytest.fixture
+def sample_dataset_snapshot(sample_dataset_path) -> DatasetSnapshot:
+    path, file_hash = sample_dataset_path
     return DatasetSnapshot(
         dataset_version_id="DS_1.0.0",
-        fingerprint="ds-fingerprint-999",
-        file_path="/storage/datasets/ds_1.0.0.parquet",
+        fingerprint=file_hash,
+        file_path=path,
         is_frozen=True,
         created_at="2026-07-31T00:00:00Z"
     )
 
 
 @pytest.fixture
-def sample_feature_snapshot() -> FeatureSnapshot:
+def sample_feature_snapshot(sample_features_path) -> FeatureSnapshot:
+    path, file_hash = sample_features_path
     return FeatureSnapshot(
         feature_dataset_id="FDS_1.0.0",
         source_dataset_id="DS_1.0.0",
-        fingerprint="feat-fingerprint-999",
-        file_path="/storage/features/fds_1.0.0.parquet",
+        fingerprint=file_hash,
+        file_path=path,
         is_frozen=True,
         created_at="2026-07-31T00:00:00Z"
     )

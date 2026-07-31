@@ -4943,5 +4943,15 @@
     "mtime": 1785516335.8982415,
     "ast_hash": "20083f79f52c1a314c658e2bf38d3280",
     "semantic_hash": ""
+  },
+  "ml_service/research/model_registry/promotion_manager.py": {
+    "mtime": 1785516441.4602704,
+    "ast_hash": "8e25243c3288d7aa71d8369c428ce951",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_promotion_manager.py": {
+    "mtime": 1785516445.3203125,
+    "ast_hash": "5dd18a6ca41086a9f61287e478228579",
+    "semantic_hash": ""
   }
 }

@@ -1,377 +1,206 @@
-"""Repository layer for model registry."""
+"""In-memory repository layer for the Model Registry."""
 
-import sqlite3
-import json
-from pathlib import Path
-from typing import Optional, List, Dict, Any
-
+import copy
+from typing import Dict, List, Optional, Any
 from ml_service.research.model_registry.model_types import (
-    ModelVersionMetadata,
-    ModelLineage,
-    ModelEvaluation,
+    Model,
+    ModelVersion,
+    ArtifactMetadata,
+    EvaluationResult,
+    PromotionRecord,
     ModelLifecycleState
 )
 
 
 class ModelRegistryRepository:
-    """SQLite repository for model metadata and lineage."""
+    """Pure in-memory repository for Model, ModelVersion, and EvaluationResult aggregates."""
 
-    def __init__(self, db_path: Optional[str] = None):
-        if db_path is None:
-            db_path = Path(__file__).parent.parent.parent.parent / "storage" / "database.db"
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self):
+        self._models: Dict[str, Model] = {}
+        self._versions: Dict[str, ModelVersion] = {}
+        self._evaluations: Dict[str, EvaluationResult] = {}
 
-    def _get_connection(self):
-        """Get database connection with row factory."""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
+    # --- Model Operations ---
+    def save_model(self, model: Model) -> None:
+        """Save a model family, rejecting duplicates."""
+        if not isinstance(model, Model):
+            raise TypeError("Expected Model instance")
+        if model.model_id in self._models:
+            raise ValueError(f"Model with id '{model.model_id}' already exists")
+        self._models[model.model_id] = copy.deepcopy(model)
 
-    def save_model(self, model_id: str, name: str, description: str, created_at: str) -> None:
-        """Save base model identifier."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO models (model_id, name, description, created_at)
-                VALUES (?, ?, ?, ?)
-            """, (model_id, name, description, created_at))
-            conn.commit()
-        finally:
-            conn.close()
+    def get_model(self, model_id: str) -> Optional[Model]:
+        """Retrieve a model family by ID."""
+        model = self._models.get(model_id)
+        return copy.deepcopy(model) if model else None
 
     def model_exists(self, model_id: str) -> bool:
         """Check if model exists."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1 FROM models WHERE model_id = ?", (model_id,))
-            return cursor.fetchone() is not None
-        finally:
-            conn.close()
+        return model_id in self._models
 
-    def save_version(self, metadata: ModelVersionMetadata) -> None:
-        """Save model version metadata."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO model_versions (
-                    model_version_id, model_id, version, lifecycle_state,
-                    fingerprint, storage_path, hyperparameters_json,
-                    symbol, timeframe, algorithm,
-                    created_at, promoted_at, promoted_by,
-                    git_commit, git_tag, is_frozen
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                metadata.model_version_id,
-                metadata.model_id,
-                metadata.version,
-                metadata.lifecycle_state.value,
-                metadata.fingerprint,
-                metadata.storage_path,
-                json.dumps(metadata.hyperparameters),
-                metadata.symbol,
-                metadata.timeframe,
-                metadata.algorithm,
-                metadata.created_at,
-                metadata.promoted_at,
-                metadata.promoted_by,
-                metadata.git_commit,
-                metadata.git_tag,
-                1 if metadata.is_frozen else 0
-            ))
-            conn.commit()
-        finally:
-            conn.close()
+    def delete_model(self, model_id: str) -> None:
+        """Delete a model family and all its associated versions/evaluations."""
+        if model_id not in self._models:
+            raise KeyError(f"Model '{model_id}' not found")
+        
+        # Cascade delete versions and evaluations
+        associated_versions = [
+            vid for vid, v in self._versions.items() if v.model_id == model_id
+        ]
+        for vid in associated_versions:
+            self.delete_version(vid)
+            
+        del self._models[model_id]
 
-    def save_lineage(self, model_version_id: str, lineage: ModelLineage) -> None:
-        """Save model lineage."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO model_lineage (
-                    model_version_id, snapshot_id, dataset_id,
-                    feature_dataset_id, experiment_id, best_config_id
-                ) VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                model_version_id,
-                lineage.snapshot_id,
-                lineage.dataset_id,
-                lineage.feature_dataset_id,
-                lineage.experiment_id,
-                lineage.best_config_id
-            ))
-            conn.commit()
-        finally:
-            conn.close()
+    def list_models(self) -> List[Model]:
+        """List all models sorted by model_id."""
+        return sorted([copy.deepcopy(m) for m in self._models.values()])
 
-    def save_evaluation(self, model_version_id: str, evaluation: ModelEvaluation) -> None:
-        """Save model evaluation metrics."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO model_evaluations (
-                    model_version_id, sharpe_ratio, max_drawdown, ece,
-                    brier_score, win_rate, profit_factor, sortino_ratio,
-                    trade_count, is_approved, approved_by, approved_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                model_version_id,
-                evaluation.sharpe_ratio,
-                evaluation.max_drawdown,
-                evaluation.ece,
-                evaluation.brier_score,
-                evaluation.win_rate,
-                evaluation.profit_factor,
-                evaluation.sortino_ratio,
-                evaluation.trade_count,
-                1 if evaluation.is_approved else 0,
-                evaluation.approved_by,
-                evaluation.approved_at
-            ))
-            conn.commit()
-        finally:
-            conn.close()
+    # --- ModelVersion Operations ---
+    def save_version(self, version: ModelVersion) -> None:
+        """Save a model version, rejecting duplicates and checking fingerprint uniqueness."""
+        if not isinstance(version, ModelVersion):
+            raise TypeError("Expected ModelVersion instance")
+        
+        if version.model_version_id in self._versions:
+            raise ValueError(f"ModelVersion with id '{version.model_version_id}' already exists")
+        
+        # Validate composite fingerprint uniqueness
+        for existing in self._versions.values():
+            if existing.composite_fingerprint.value == version.composite_fingerprint.value:
+                raise ValueError(
+                    f"ModelVersion with composite fingerprint '{version.composite_fingerprint.value}' already exists"
+                )
+                
+        self._versions[version.model_version_id] = copy.deepcopy(version)
 
-    def get_version(self, model_version_id: str) -> Optional[ModelVersionMetadata]:
-        """Retrieve model version with lineage and evaluation."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
+    def get_version(self, model_version_id: str) -> Optional[ModelVersion]:
+        """Retrieve a model version."""
+        version = self._versions.get(model_version_id)
+        return copy.deepcopy(version) if version else None
 
-            cursor.execute("""
-                SELECT mv.*, ml.snapshot_id, ml.dataset_id, ml.feature_dataset_id,
-                       ml.experiment_id, ml.best_config_id,
-                       me.sharpe_ratio, me.max_drawdown, me.ece, me.brier_score,
-                       me.win_rate, me.profit_factor, me.sortino_ratio, me.trade_count,
-                       me.is_approved, me.approved_by, me.approved_at
-                FROM model_versions mv
-                LEFT JOIN model_lineage ml ON mv.model_version_id = ml.model_version_id
-                LEFT JOIN model_evaluations me ON mv.model_version_id = me.model_version_id
-                WHERE mv.model_version_id = ?
-            """, (model_version_id,))
+    def version_exists(self, model_version_id: str) -> bool:
+        """Check if version exists."""
+        return model_version_id in self._versions
 
-            row = cursor.fetchone()
-            if not row:
-                return None
+    def update_version_state(self, model_version_id: str, new_state: ModelLifecycleState) -> None:
+        """Update lifecycle state of an existing version."""
+        if model_version_id not in self._versions:
+            raise KeyError(f"ModelVersion '{model_version_id}' not found")
+        
+        old_version = self._versions[model_version_id]
+        # Since ModelVersion is frozen, reconstruct it with the new state
+        updated = ModelVersion(
+            model_version_id=old_version.model_version_id,
+            model_id=old_version.model_id,
+            version=old_version.version,
+            lifecycle_state=new_state,
+            composite_fingerprint=old_version.composite_fingerprint,
+            created_at=old_version.created_at
+        )
+        self._versions[model_version_id] = updated
 
-            lineage = ModelLineage(
-                snapshot_id=row['snapshot_id'],
-                dataset_id=row['dataset_id'],
-                feature_dataset_id=row['feature_dataset_id'],
-                experiment_id=row['experiment_id'],
-                best_config_id=row['best_config_id']
-            ) if row['snapshot_id'] else None
+    def delete_version(self, model_version_id: str) -> None:
+        """Delete version and its evaluation."""
+        if model_version_id not in self._versions:
+            raise KeyError(f"ModelVersion '{model_version_id}' not found")
+        
+        if model_version_id in self._evaluations:
+            del self._evaluations[model_version_id]
+            
+        del self._versions[model_version_id]
 
-            evaluation = ModelEvaluation(
-                sharpe_ratio=row['sharpe_ratio'],
-                max_drawdown=row['max_drawdown'],
-                ece=row['ece'],
-                brier_score=row['brier_score'],
-                win_rate=row['win_rate'],
-                profit_factor=row['profit_factor'],
-                sortino_ratio=row['sortino_ratio'],
-                trade_count=row['trade_count'],
-                is_approved=bool(row['is_approved']),
-                approved_by=row['approved_by'],
-                approved_at=row['approved_at']
-            ) if row['sharpe_ratio'] is not None else None
+    def list_versions_by_model(self, model_id: str) -> List[ModelVersion]:
+        """List versions for a specific model, sorted deterministically."""
+        versions = [
+            copy.deepcopy(v) for v in self._versions.values() if v.model_id == model_id
+        ]
+        return sorted(versions)
 
-            return ModelVersionMetadata(
-                model_version_id=row['model_version_id'],
-                model_id=row['model_id'],
-                version=row['version'],
-                lifecycle_state=ModelLifecycleState(row['lifecycle_state']),
-                fingerprint=row['fingerprint'],
-                storage_path=row['storage_path'],
-                hyperparameters=json.loads(row['hyperparameters_json']),
-                lineage=lineage,
-                created_at=row['created_at'],
-                symbol=row['symbol'],
-                timeframe=row['timeframe'],
-                algorithm=row['algorithm'],
-                evaluation=evaluation,
-                is_frozen=bool(row['is_frozen']),
-                promoted_at=row['promoted_at'],
-                promoted_by=row['promoted_by'],
-                git_commit=row['git_commit'],
-                git_tag=row['git_tag']
-            )
-        finally:
-            conn.close()
+    def list_versions_by_state(self, state: ModelLifecycleState) -> List[ModelVersion]:
+        """List all versions in a specific lifecycle state."""
+        versions = [
+            copy.deepcopy(v) for v in self._versions.values() if v.lifecycle_state == state
+        ]
+        return sorted(versions)
 
-    def update_lifecycle_state(
-        self,
-        model_version_id: str,
-        new_state: ModelLifecycleState,
-        promoted_by: Optional[str] = None,
-        promoted_at: Optional[str] = None
-    ) -> None:
-        """Update model lifecycle state."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE model_versions
-                SET lifecycle_state = ?, promoted_at = ?, promoted_by = ?
-                WHERE model_version_id = ?
-            """, (new_state.value, promoted_at, promoted_by, model_version_id))
-            conn.commit()
-        finally:
-            conn.close()
+    # --- EvaluationResult Operations ---
+    def save_evaluation(self, evaluation: EvaluationResult) -> None:
+        """Save/overwrite evaluation result for a version."""
+        if not isinstance(evaluation, EvaluationResult):
+            raise TypeError("Expected EvaluationResult instance")
+        # Ensure model version exists
+        if evaluation.model_version_id not in self._versions:
+            raise ValueError(f"Associated ModelVersion '{evaluation.model_version_id}' does not exist")
+            
+        self._evaluations[evaluation.model_version_id] = copy.deepcopy(evaluation)
 
-    def set_frozen(self, model_version_id: str, is_frozen: bool) -> None:
-        """Set frozen state of model."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE model_versions
-                SET is_frozen = ?
-                WHERE model_version_id = ?
-            """, (1 if is_frozen else 0, model_version_id))
-            conn.commit()
-        finally:
-            conn.close()
+    def get_evaluation(self, model_version_id: str) -> Optional[EvaluationResult]:
+        """Retrieve evaluation result by model version ID."""
+        evaluation = self._evaluations.get(model_version_id)
+        return copy.deepcopy(evaluation) if evaluation else None
 
-    def get_production_model(
-        self,
-        symbol: str,
-        timeframe: str,
-        algorithm: str
-    ) -> Optional[ModelVersionMetadata]:
-        """Get current production model for symbol/timeframe/algorithm."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT model_version_id FROM model_versions
-                WHERE symbol = ? AND timeframe = ? AND algorithm = ?
-                  AND lifecycle_state = ?
-            """, (symbol, timeframe, algorithm, ModelLifecycleState.PRODUCTION.value))
+    def evaluation_exists(self, model_version_id: str) -> bool:
+        """Check if evaluation exists."""
+        return model_version_id in self._evaluations
 
-            row = cursor.fetchone()
-            if not row:
-                return None
 
-            return self.get_version(row['model_version_id'])
-        finally:
-            conn.close()
+class ArtifactRepository:
+    """Pure in-memory repository for ArtifactMetadata bundles."""
 
-    def list_versions_by_model(self, model_id: str) -> List[ModelVersionMetadata]:
-        """List all versions for a model."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT model_version_id FROM model_versions
-                WHERE model_id = ?
-                ORDER BY created_at DESC
-            """, (model_id,))
+    def __init__(self):
+        self._artifacts: Dict[str, ArtifactMetadata] = {}
 
-            return [self.get_version(row['model_version_id']) for row in cursor.fetchall()]
-        finally:
-            conn.close()
+    def save_artifact(self, artifact: ArtifactMetadata) -> None:
+        """Save artifact metadata, rejecting duplicates."""
+        if not isinstance(artifact, ArtifactMetadata):
+            raise TypeError("Expected ArtifactMetadata instance")
+        if artifact.model_version_id in self._artifacts:
+            raise ValueError(f"Artifact for version '{artifact.model_version_id}' already exists")
+            
+        self._artifacts[artifact.model_version_id] = copy.deepcopy(artifact)
 
-    def list_by_state(self, state: ModelLifecycleState) -> List[ModelVersionMetadata]:
-        """List all models in a specific lifecycle state."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT model_version_id FROM model_versions
-                WHERE lifecycle_state = ?
-                ORDER BY created_at DESC
-            """, (state.value,))
+    def get_artifact(self, model_version_id: str) -> Optional[ArtifactMetadata]:
+        """Retrieve artifact metadata by model version ID."""
+        artifact = self._artifacts.get(model_version_id)
+        return copy.deepcopy(artifact) if artifact else None
 
-            return [self.get_version(row['model_version_id']) for row in cursor.fetchall()]
-        finally:
-            conn.close()
+    def artifact_exists(self, model_version_id: str) -> bool:
+        """Check if artifact metadata exists."""
+        return model_version_id in self._artifacts
 
-    def fingerprint_exists(self, fingerprint: str) -> bool:
-        """Check if fingerprint already exists."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT 1 FROM model_versions WHERE fingerprint = ?
-            """, (fingerprint,))
-            return cursor.fetchone() is not None
-        finally:
-            conn.close()
+    def delete_artifact(self, model_version_id: str) -> None:
+        """Delete artifact metadata."""
+        if model_version_id not in self._artifacts:
+            raise KeyError(f"Artifact for version '{model_version_id}' not found")
+        del self._artifacts[model_version_id]
 
-    def get_lineage_chain(self, model_version_id: str) -> Dict[str, Any]:
-        """Get complete lineage chain for a model version."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT ml.*, mv.model_id, mv.version, mv.symbol, mv.timeframe, mv.algorithm
-                FROM model_lineage ml
-                JOIN model_versions mv ON ml.model_version_id = mv.model_version_id
-                WHERE ml.model_version_id = ?
-            """, (model_version_id,))
 
-            row = cursor.fetchone()
-            if not row:
-                return {}
+class PromotionHistoryRepository:
+    """Pure in-memory repository for append-only PromotionRecord events."""
 
-            return {
-                'model_version_id': row['model_version_id'],
-                'model_id': row['model_id'],
-                'version': row['version'],
-                'symbol': row['symbol'],
-                'timeframe': row['timeframe'],
-                'algorithm': row['algorithm'],
-                'snapshot_id': row['snapshot_id'],
-                'dataset_id': row['dataset_id'],
-                'feature_dataset_id': row['feature_dataset_id'],
-                'experiment_id': row['experiment_id'],
-                'best_config_id': row['best_config_id']
-            }
-        finally:
-            conn.close()
+    def __init__(self):
+        self._records: Dict[str, PromotionRecord] = {}
 
-    def find_models_by_dataset(self, dataset_id: str) -> List[str]:
-        """Find all model versions using a specific dataset."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT model_version_id FROM model_lineage
-                WHERE dataset_id = ?
-            """, (dataset_id,))
-            return [row['model_version_id'] for row in cursor.fetchall()]
-        finally:
-            conn.close()
+    def save_promotion_record(self, record: PromotionRecord) -> None:
+        """Save a promotion history record. Cannot overwrite or update."""
+        if not isinstance(record, PromotionRecord):
+            raise TypeError("Expected PromotionRecord instance")
+        
+        # Verify promotion_id uniqueness (Event Sourcing append-only invariant)
+        if record.promotion_id in self._records:
+            raise ValueError(f"PromotionRecord with promotion_id '{record.promotion_id}' already exists")
+            
+        self._records[record.promotion_id] = copy.deepcopy(record)
 
-    def find_models_by_feature_dataset(self, feature_dataset_id: str) -> List[str]:
-        """Find all model versions using a specific feature dataset."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT model_version_id FROM model_lineage
-                WHERE feature_dataset_id = ?
-            """, (feature_dataset_id,))
-            return [row['model_version_id'] for row in cursor.fetchall()]
-        finally:
-            conn.close()
+    def get_promotion_record(self, promotion_id: str) -> Optional[PromotionRecord]:
+        """Retrieve promotion record by ID."""
+        record = self._records.get(promotion_id)
+        return copy.deepcopy(record) if record else None
 
-    def find_models_by_experiment(self, experiment_id: str) -> List[str]:
-        """Find all model versions from a specific experiment."""
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT model_version_id FROM model_lineage
-                WHERE experiment_id = ?
-            """, (experiment_id,))
-            return [row['model_version_id'] for row in cursor.fetchall()]
-        finally:
-            conn.close()
+    def list_records_by_version(self, model_version_id: str) -> List[PromotionRecord]:
+        """List promotion history for a model version sorted chronologically."""
+        records = [
+            copy.deepcopy(r) for r in self._records.values() if r.model_version_id == model_version_id
+        ]
+        return sorted(records)
