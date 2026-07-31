@@ -2895,3 +2895,171 @@ Verification Results:
 2026-07-10 22:45:07 | ml_trading | INFO | Test signals cleaned up
 2026-07-10 22:45:07 | ml_trading | INFO | ================================================================================
 2026-07-10 22:45:07 | ml_trading | INFO | VERIFICATION PASSED: All test cases behaved correctly
+2026-07-30 20:08:25 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:25 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:25 | ml_trading | INFO | Database initialized at /tmp/tmp4zgk3qea.db
+2026-07-30 20:08:25 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:25 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:25 | ml_trading | INFO | Database initialized at /tmp/tmpdgr_q035.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmpxjkm0ha1.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmp73t5rn9r.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmpxi7y8ksg.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmpd2hx2ok5.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmpsv4a6fc6.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmp3uslv_o7.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmpt6gqqkd3.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmpwnlm8ols.db
+2026-07-30 20:08:26 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:26 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:26 | ml_trading | INFO | Database initialized at /tmp/tmpme_1npl8.db
+2026-07-30 20:08:27 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:27 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:27 | ml_trading | INFO | Database initialized at /tmp/tmpal_wkpp6.db
+2026-07-30 20:08:27 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:27 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:27 | ml_trading | INFO | Database initialized at /tmp/tmpen32fmme.db
+2026-07-30 20:08:27 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:27 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:27 | ml_trading | INFO | Database initialized at /tmp/tmpn58yh_l9.db
+2026-07-30 20:08:27 | ml_trading | ERROR | Missing physical column: execution_decisions.source
+2026-07-30 20:08:27 | ml_trading | ERROR | Missing physical column: execution_decisions.signal_timestamp
+2026-07-30 20:08:27 | ml_trading | ERROR | Missing physical index: idx_exec_dec_src
+2026-07-30 20:08:27 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:27 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:27 | ml_trading | INFO | Database initialized at /tmp/tmphq5s7boa.db
+2026-07-30 20:08:27 | ml_trading | INFO | Recovery log written to /tmp/pytest-of-zafka/pytest-0/logs/recovery_029.json
+2026-07-30 20:08:27 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:27 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:27 | ml_trading | INFO | Database initialized at /tmp/tmpbqsyiulc.db
+2026-07-30 20:08:28 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:28 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:28 | ml_trading | INFO | Database initialized at /tmp/tmpa8_jg979.db
+2026-07-30 20:08:28 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:08:28 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:08:28 | ml_trading | INFO | Database initialized at /tmp/tmpt0u9423o.db
+2026-07-30 20:08:28 | ml_trading | ERROR | Transaction failed, rolled back: Mocked commit error
+2026-07-30 20:08:28 | ml_trading | INFO | Recovery log written to /tmp/pytest-of-zafka/pytest-0/logs/recovery_029.json
+2026-07-30 20:09:35 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:35 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=loss
+2026-07-30 20:09:35 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=60-79 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=loss
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: ETHUSDT 1h bucket=80-100 outcome=loss
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=loss
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=loss
+2026-07-30 20:09:36 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=80-100 outcome=win
+2026-07-30 20:09:37 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:37 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:37 | ml_trading | INFO | Database initialized at /tmp/tmp4b21g2v2.db
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 027_backfill_execution_metadata.sql
+2026-07-30 20:09:37 | ml_trading | INFO | ✓ Migration applied: 027_backfill_execution_metadata.sql
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 027_backfill_execution_metadata.sql
+2026-07-30 20:09:37 | ml_trading | INFO | ✓ Migration applied: 027_backfill_execution_metadata.sql
+2026-07-30 20:09:37 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:37 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:37 | ml_trading | INFO | Database initialized at /tmp/tmptep7l14a.db
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 001_add_column.sql
+2026-07-30 20:09:37 | ml_trading | INFO | ✓ Migration applied: 001_add_column.sql
+2026-07-30 20:09:37 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:37 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:37 | ml_trading | INFO | Database initialized at /tmp/tmpm51pzkek.db
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 002_duplicate_column.sql
+2026-07-30 20:09:37 | ml_trading | ERROR | Database error: duplicate column name: status
+2026-07-30 20:09:37 | ml_trading | ERROR | ✗ Migration failed: duplicate column name: status
+2026-07-30 20:09:37 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:37 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:37 | ml_trading | INFO | Database initialized at /tmp/tmp0ag_i2ka.db
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 003_partial_migration.sql
+2026-07-30 20:09:37 | ml_trading | ERROR | Database error: no such table: nonexistent_table
+2026-07-30 20:09:37 | ml_trading | ERROR | ✗ Migration failed: no such table: nonexistent_table
+2026-07-30 20:09:37 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:37 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:37 | ml_trading | INFO | Database initialized at /tmp/tmpq3lsprnk.db
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 004_duplicate_table.sql
+2026-07-30 20:09:37 | ml_trading | ERROR | Database error: table test_table already exists
+2026-07-30 20:09:37 | ml_trading | ERROR | ✗ Migration failed: table test_table already exists
+2026-07-30 20:09:37 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:37 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:37 | ml_trading | INFO | Database initialized at /tmp/tmpyz898uuf.db
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 005_syntax_error.sql
+2026-07-30 20:09:37 | ml_trading | ERROR | Database error: near "THIS": syntax error
+2026-07-30 20:09:37 | ml_trading | ERROR | ✗ Migration failed: near "THIS": syntax error
+2026-07-30 20:09:37 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:37 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:37 | ml_trading | INFO | Database initialized at /tmp/tmpj3tm4zfo.db
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 001_success.sql
+2026-07-30 20:09:37 | ml_trading | INFO | ✓ Migration applied: 001_success.sql
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 002_fail.sql
+2026-07-30 20:09:37 | ml_trading | ERROR | Database error: duplicate column name: field2
+2026-07-30 20:09:37 | ml_trading | ERROR | ✗ Migration failed: duplicate column name: field2
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 003_success.sql
+2026-07-30 20:09:37 | ml_trading | INFO | ✓ Migration applied: 003_success.sql
+2026-07-30 20:09:37 | ml_trading | INFO | Applying SQL migration: 004_fail.sql
+2026-07-30 20:09:37 | ml_trading | ERROR | Database error: no such table: nonexistent
+2026-07-30 20:09:37 | ml_trading | ERROR | ✗ Migration failed: no such table: nonexistent
+2026-07-30 20:09:38 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:38 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:38 | ml_trading | INFO | Database initialized at /tmp/tmpm90hcxv1.db
+2026-07-30 20:09:38 | ml_trading | INFO | Applying SQL migration: 006_idempotent.sql
+2026-07-30 20:09:38 | ml_trading | INFO | ✓ Migration applied: 006_idempotent.sql
+2026-07-30 20:09:38 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:38 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:38 | ml_trading | INFO | Database initialized at /tmp/tmpqzf2w5cc.db
+2026-07-30 20:09:38 | ml_trading | INFO | Applying SQL migration: 007_temp_table.sql
+2026-07-30 20:09:38 | ml_trading | INFO | ✓ Migration applied: 007_temp_table.sql
+2026-07-30 20:09:38 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:38 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:38 | ml_trading | INFO | Database initialized at /tmp/tmp7gxzlxvl.db
+2026-07-30 20:09:38 | ml_trading | INFO | Applying SQL migration: 024_regime_blocks.sql
+2026-07-30 20:09:38 | ml_trading | INFO | ✓ Migration applied: 024_regime_blocks.sql
+2026-07-30 20:09:38 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:38 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:38 | ml_trading | INFO | Database initialized at /tmp/tmpoy5h4wxb.db
+2026-07-30 20:09:38 | ml_trading | INFO | Applying SQL migration: 008_multiline_comments.sql
+2026-07-30 20:09:38 | ml_trading | INFO | ✓ Migration applied: 008_multiline_comments.sql
+2026-07-30 20:09:38 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:38 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:38 | ml_trading | INFO | Database initialized at /tmp/tmpk6xyfi89.db
+2026-07-30 20:09:38 | ml_trading | INFO | Applying SQL migration: 009_mixed_comments.sql
+2026-07-30 20:09:38 | ml_trading | INFO | ✓ Migration applied: 009_mixed_comments.sql
+2026-07-30 20:09:38 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:38 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:38 | ml_trading | INFO | Database initialized at /tmp/tmpa10e3rxr.db
+2026-07-30 20:09:38 | ml_trading | INFO | Applying SQL migration: 025_repair_schema_drift.sql
+2026-07-30 20:09:38 | ml_trading | INFO | ✓ Migration applied: 025_repair_schema_drift.sql
+2026-07-30 20:09:38 | ml_trading | INFO | Added model_version column to signals table
+2026-07-30 20:09:38 | ml_trading | INFO | Database schema initialized
+2026-07-30 20:09:38 | ml_trading | INFO | Database initialized at /tmp/tmpuv8ithbp.db
+2026-07-30 20:09:38 | ml_trading | INFO | Applying SQL migration: 025_repair_schema_drift.sql
+2026-07-30 20:09:38 | ml_trading | INFO | ✓ Migration applied: 025_repair_schema_drift.sql
+2026-07-30 20:09:40 | ml_trading | INFO | Updated calibration stats: BTCUSDT 1h bucket=60-79 outcome=win
+2026-07-30 20:09:41 | ml_trading | INFO | Trading mode changed to PAPER
+2026-07-30 20:09:56 | ml_trading | WARNING | Paper broker: no live execution price for BTCUSDT
+2026-07-30 20:09:56 | ml_trading | INFO | Trading mode changed to PAPER
+2026-07-30 20:10:11 | ml_trading | WARNING | Paper broker: no live execution price for BTCUSDT
+2026-07-30 20:10:11 | ml_trading | INFO | Trading mode changed to PAPER
