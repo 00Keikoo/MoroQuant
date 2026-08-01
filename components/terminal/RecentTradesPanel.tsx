@@ -115,13 +115,13 @@ export default function RecentTradesPanel() {
                     {trade.confidence ? `${(trade.confidence * 100).toFixed(0)}%` : '-'}
                   </td>
                   <td className="py-2 px-2 text-center">
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[#1C1C1C] border border-[#262626] rounded text-[#666666]">
-                      N/A
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[#1C1C1C] border border-[#262626] rounded text-[#A1A1A1]">
+                      {trade.exit_reason || 'N/A'}
                     </span>
                   </td>
                   <td className="py-2 px-2 text-center">
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[#1C1C1C] border border-[#262626] rounded text-[#666666]">
-                      N/A
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[#1C1C1C] border border-[#262626] rounded text-[#A1A1A1]">
+                      {trade.execution_class || 'N/A'}
                     </span>
                   </td>
                 </tr>

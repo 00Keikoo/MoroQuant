@@ -235,6 +235,43 @@ function normalizeExecutionAnalytics(backend: any): ExecutionAnalytics {
  *
  * Frontend Canonical: RecentTrade interface
  */
+function classifyRecentTradeExecution(pos: any): string {
+  const mfe = pos.mfe !== undefined && pos.mfe !== null ? Number(pos.mfe) : null;
+  const mae = pos.mae !== undefined && pos.mae !== null ? Number(pos.mae) : null;
+  const realized_pnl = pos.realized_pnl !== undefined && pos.realized_pnl !== null ? Number(pos.realized_pnl) : null;
+  const profit_capture_ratio = pos.profit_capture_ratio !== undefined && pos.profit_capture_ratio !== null ? Number(pos.profit_capture_ratio) : null;
+
+  if (mfe === null || mae === null || realized_pnl === null) {
+    return "UNKNOWN";
+  }
+
+  const mfe_threshold = 0.02;
+  const pcr_threshold = 0.5;
+
+  const model_correct = mfe > mfe_threshold;
+  let execution_correct = false;
+
+  if (model_correct) {
+    if (profit_capture_ratio !== null && mfe > 0.01) {
+      execution_correct = profit_capture_ratio > pcr_threshold;
+    } else {
+      execution_correct = realized_pnl > 0;
+    }
+  } else {
+    execution_correct = realized_pnl >= 0;
+  }
+
+  if (model_correct && execution_correct) {
+    return "MODEL_CORRECT_EXECUTION_CORRECT";
+  } else if (model_correct && !execution_correct) {
+    return "MODEL_CORRECT_EXECUTION_WEAK";
+  } else if (!model_correct && execution_correct) {
+    return "MODEL_WEAK_EXECUTION_CORRECT";
+  } else {
+    return "MODEL_WEAK_EXECUTION_WEAK";
+  }
+}
+
 function normalizeRecentTrade(backend: any): RecentTrade {
   const pnl = Number(backend.realized_pnl || backend.net_pnl) || 0;
   const side = (backend.direction || backend.side || '').toUpperCase();
@@ -252,12 +289,14 @@ function normalizeRecentTrade(backend: any): RecentTrade {
     exit_time = new Date(dateStr).getTime();
   }
 
+  const duration_minutes = Number(backend.duration_minutes) || (entry_time && exit_time ? Math.round((exit_time - entry_time) / 60000) : 0);
+
   return {
     symbol: backend.symbol || '',
     side: side === 'LONG' || side === 'SHORT' ? side : 'LONG',
     entry_time,
     exit_time,
-    duration_minutes: Number(backend.duration_minutes) || 0,
+    duration_minutes,
     entry_price: Number(backend.entry_price) || 0,
     exit_price: Number(backend.current_price || backend.exit_price) || 0,
     quantity: Number(backend.qty || backend.quantity) || 0,
@@ -267,6 +306,8 @@ function normalizeRecentTrade(backend: any): RecentTrade {
     regime: backend.regime || 'unknown',
     confidence: backend.confidence !== undefined ? Number(backend.confidence) : null,
     outcome: pnl > 0 ? 'win' : pnl < 0 ? 'loss' : 'breakeven',
+    exit_reason: backend.final_exit_reason || backend.exit_reason || backend.status || 'N/A',
+    execution_class: classifyRecentTradeExecution(backend),
   };
 }
 

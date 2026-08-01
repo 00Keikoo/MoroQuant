@@ -93,6 +93,8 @@ export interface RecentTrade {
   regime: string;
   confidence: number | null;
   outcome: "win" | "loss" | "breakeven";
+  exit_reason?: string;
+  execution_class?: string;
 }
 
 export interface ResearchSummary {

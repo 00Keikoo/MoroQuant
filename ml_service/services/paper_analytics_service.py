@@ -156,6 +156,36 @@ def get_research_summary() -> Dict:
         open_count = conn.execute(
             "SELECT COUNT(*) AS c FROM paper_positions WHERE status = 'OPEN'"
         ).fetchone()["c"]
+
+        # Determine average confidence of closed positions (scaled 0-1)
+        conf_rows = conn.execute(
+            "SELECT confidence FROM paper_positions WHERE confidence IS NOT NULL"
+        ).fetchall()
+        confidence_avg = 0.0
+        if conf_rows:
+            confidence_avg = (sum(r["confidence"] for r in conf_rows) / len(conf_rows)) / 100.0
+
+        # Determine current regime
+        latest_position = conn.execute(
+            "SELECT regime FROM paper_positions ORDER BY opened_at DESC LIMIT 1"
+        ).fetchone()
+        regime = latest_position["regime"] if latest_position and latest_position["regime"] else "unknown"
+
+        # Determine model health from Model Registry
+        try:
+            prod_model = conn.execute(
+                "SELECT mv.model_version_id, me.is_approved "
+                "FROM model_versions mv "
+                "LEFT JOIN model_evaluations me ON mv.model_version_id = me.model_version_id "
+                "WHERE mv.lifecycle_state = 'PRODUCTION' LIMIT 1"
+            ).fetchone()
+            if prod_model:
+                model_health = "healthy" if prod_model["is_approved"] == 1 else "unapproved"
+            else:
+                model_health = "unknown"
+        except sqlite3.OperationalError:
+            # Fallback if model registry tables are not yet created or migrated in this DB instance
+            model_health = "unknown"
     finally:
         conn.close()
 
@@ -170,6 +200,10 @@ def get_research_summary() -> Dict:
             "expectancy": 0.0,
             "avg_hold_hours": 0.0,
             "open_positions": open_count,
+            "active_signals": open_count,
+            "model_health": model_health,
+            "regime": regime,
+            "confidence_avg": confidence_avg,
             "last_updated": datetime.now().isoformat(),
         }
 
@@ -205,8 +239,13 @@ def get_research_summary() -> Dict:
         "expectancy": round(expectancy, 2),
         "avg_hold_hours": round(avg_hold, 1),
         "open_positions": open_count,
+        "active_signals": open_count,
+        "model_health": model_health,
+        "regime": regime,
+        "confidence_avg": round(confidence_avg, 3),
         "last_updated": datetime.now().isoformat(),
     }
+
 
 
 def _calculate_eqs(mae: float, mfe: float, realized_pnl: float,

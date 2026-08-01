@@ -60,6 +60,8 @@ export interface RecentTrade {
   outcome: 'win' | 'loss' | 'breakeven';
   matched_signal_id: string | null;
   fill_count: number;
+  exit_reason?: string;
+  execution_class?: string;
 }
 
 export interface Position {
@@ -343,6 +345,43 @@ function computeMaxDrawdown(equityCurve: EquityPoint[], startingBalance: number)
   };
 }
 
+function classifyPaperTradeExecution(pos: any): string {
+  const mfe = pos.mfe !== undefined && pos.mfe !== null ? Number(pos.mfe) : null;
+  const mae = pos.mae !== undefined && pos.mae !== null ? Number(pos.mae) : null;
+  const realized_pnl = pos.realized_pnl !== undefined && pos.realized_pnl !== null ? Number(pos.realized_pnl) : null;
+  const profit_capture_ratio = pos.profit_capture_ratio !== undefined && pos.profit_capture_ratio !== null ? Number(pos.profit_capture_ratio) : null;
+
+  if (mfe === null || mae === null || realized_pnl === null) {
+    return "UNKNOWN";
+  }
+
+  const mfe_threshold = 0.02;
+  const pcr_threshold = 0.5;
+
+  const model_correct = mfe > mfe_threshold;
+  let execution_correct = false;
+
+  if (model_correct) {
+    if (profit_capture_ratio !== null && mfe > 0.01) {
+      execution_correct = profit_capture_ratio > pcr_threshold;
+    } else {
+      execution_correct = realized_pnl > 0;
+    }
+  } else {
+    execution_correct = realized_pnl >= 0;
+  }
+
+  if (model_correct && execution_correct) {
+    return "MODEL_CORRECT_EXECUTION_CORRECT";
+  } else if (model_correct && !execution_correct) {
+    return "MODEL_CORRECT_EXECUTION_WEAK";
+  } else if (!model_correct && execution_correct) {
+    return "MODEL_WEAK_EXECUTION_CORRECT";
+  } else {
+    return "MODEL_WEAK_EXECUTION_WEAK";
+  }
+}
+
 /**
  * Normalize paper closed position to canonical RecentTrade.
  * Backend: /api/paper/positions/closed
@@ -368,14 +407,15 @@ function normalizePaperPosition(pos: any): RecentTrade {
   }
 
   const pnl = Number(pos.realized_pnl) || 0;
+  const duration_minutes = Number(pos.duration_minutes) || (entryTs && exitTs ? Math.round((exitTs - entryTs) / 60000) : 0);
 
   return {
     symbol: pos.symbol || '',
-    side: (pos.direction || '').toUpperCase(),
+    side: (pos.direction || '').toUpperCase() as "LONG" | "SHORT",
     direction: (pos.direction || '').toUpperCase(),
     entry_time: entryTs,
     exit_time: exitTs,
-    duration_minutes: Number(pos.duration_minutes) || 0,
+    duration_minutes,
     entry_price: Number(pos.entry_price) || 0,
     exit_price: Number(pos.current_price || pos.exit_price) || 0,
     quantity: Number(pos.qty) || 0,
@@ -387,6 +427,8 @@ function normalizePaperPosition(pos: any): RecentTrade {
     outcome: pnl > 0 ? ('win' as const) : ('loss' as const),
     matched_signal_id: pos.signal_id || null,
     fill_count: 1,
+    exit_reason: pos.final_exit_reason || pos.exit_reason || pos.status || 'N/A',
+    execution_class: classifyPaperTradeExecution(pos),
   };
 }
 

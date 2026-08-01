@@ -805,8 +805,8 @@
     "semantic_hash": "4d6dd945f211595f977766b345aad99c"
   },
   "lib/services/performanceService.ts": {
-    "mtime": 1785238687.316791,
-    "ast_hash": "65a91e35835497dcb73f8e3228c3e648",
+    "mtime": 1785563500.5474734,
+    "ast_hash": "d585d13b5fc379778f49f17296e2a6c1",
     "semantic_hash": ""
   },
   "lib/stores/analysisStore.ts": {
@@ -1965,9 +1965,9 @@
     "semantic_hash": ""
   },
   "ml_service/services/paper_analytics_service.py": {
-    "mtime": 1785238687.342651,
-    "ast_hash": "d972aed9efd39930da207cdd5b415fc0",
-    "semantic_hash": "d972aed9efd39930da207cdd5b415fc0"
+    "mtime": 1785563419.2859466,
+    "ast_hash": "aa2c3a059e25c4b72816ad71f4bb5cbd",
+    "semantic_hash": ""
   },
   "ml_service/services/proxy_price_service.py": {
     "mtime": 1780474725.623335,
@@ -4220,8 +4220,8 @@
     "semantic_hash": ""
   },
   "components/terminal/RecentTradesPanel.tsx": {
-    "mtime": 1785238687.019648,
-    "ast_hash": "b70ab0dcaf39dfe76fb9b9fb1ba513bb",
+    "mtime": 1785563457.7756045,
+    "ast_hash": "dda62e74451ea90e0859dc9b058fab96",
     "semantic_hash": ""
   },
   "components/terminal/StatusBar.tsx": {
@@ -4240,13 +4240,13 @@
     "semantic_hash": ""
   },
   "lib/services/terminalService.ts": {
-    "mtime": 1785238687.3175309,
-    "ast_hash": "8336f4d36e7424eaac7b9a84a80a1804",
+    "mtime": 1785563430.244117,
+    "ast_hash": "eaa399990f04fcf1bad37275d253a952",
     "semantic_hash": ""
   },
   "lib/types/terminal.ts": {
-    "mtime": 1785238687.3175309,
-    "ast_hash": "9f31383a4cd2f55b544cc1272948abb7",
+    "mtime": 1785563423.8860161,
+    "ast_hash": "0284933f889ca2fc507594b6b594b533",
     "semantic_hash": ""
   },
   "design/institutional-terminal/DESIGN_SPEC.md": {
