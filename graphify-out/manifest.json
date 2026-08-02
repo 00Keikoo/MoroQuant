@@ -805,7 +805,7 @@
     "semantic_hash": "4d6dd945f211595f977766b345aad99c"
   },
   "lib/services/performanceService.ts": {
-    "mtime": 1785563500.5474734,
+    "mtime": 1785564285.487091,
     "ast_hash": "d585d13b5fc379778f49f17296e2a6c1",
     "semantic_hash": ""
   },
@@ -1690,17 +1690,17 @@
     "semantic_hash": "30947e8aefdfd075086caa9a8420f057"
   },
   "ml_service/research/model_registry/model_types.py": {
-    "mtime": 1785515935.6793983,
+    "mtime": 1785564285.4880912,
     "ast_hash": "b06b6573f6531cfdfe302471cdb9737a",
     "semantic_hash": ""
   },
   "ml_service/research/model_registry/repository.py": {
-    "mtime": 1785516035.2170246,
+    "mtime": 1785564285.4890912,
     "ast_hash": "68663b2aae7ad7c672964af5eedc7b60",
     "semantic_hash": ""
   },
   "ml_service/research/model_registry/service.py": {
-    "mtime": 1785516134.6420865,
+    "mtime": 1785564285.4890912,
     "ast_hash": "0abb824a2dcff1fe2956f83dde8b5f29",
     "semantic_hash": ""
   },
@@ -1965,7 +1965,7 @@
     "semantic_hash": ""
   },
   "ml_service/services/paper_analytics_service.py": {
-    "mtime": 1785563419.2859466,
+    "mtime": 1785564285.490091,
     "ast_hash": "aa2c3a059e25c4b72816ad71f4bb5cbd",
     "semantic_hash": ""
   },
@@ -4220,7 +4220,7 @@
     "semantic_hash": ""
   },
   "components/terminal/RecentTradesPanel.tsx": {
-    "mtime": 1785563457.7756045,
+    "mtime": 1785564285.3300889,
     "ast_hash": "dda62e74451ea90e0859dc9b058fab96",
     "semantic_hash": ""
   },
@@ -4240,12 +4240,12 @@
     "semantic_hash": ""
   },
   "lib/services/terminalService.ts": {
-    "mtime": 1785563430.244117,
+    "mtime": 1785564285.487091,
     "ast_hash": "eaa399990f04fcf1bad37275d253a952",
     "semantic_hash": ""
   },
   "lib/types/terminal.ts": {
-    "mtime": 1785563423.8860161,
+    "mtime": 1785564285.487091,
     "ast_hash": "0284933f889ca2fc507594b6b594b533",
     "semantic_hash": ""
   },
@@ -4835,7 +4835,7 @@
     "semantic_hash": ""
   },
   "ml_service/tests/test_training_pipeline.py": {
-    "mtime": 1785514093.766699,
+    "mtime": 1785564285.493091,
     "ast_hash": "f1930ff6e4ea70267e25cbbc9c717e1d",
     "semantic_hash": ""
   },
@@ -4850,22 +4850,22 @@
     "semantic_hash": ""
   },
   "ml_service/research/trainers/xgboost_trainer.py": {
-    "mtime": 1785514077.1032221,
+    "mtime": 1785564285.490091,
     "ast_hash": "45b96e872c83ceab9cea4cd970eceea5",
     "semantic_hash": ""
   },
   "ml_service/tests/test_xgboost_trainer.py": {
-    "mtime": 1785514116.7083578,
+    "mtime": 1785564285.4940913,
     "ast_hash": "23559e77b501e1482ffc5cd6e2f44a67",
     "semantic_hash": ""
   },
   "ml_service/research/trainers/lightgbm_trainer.py": {
-    "mtime": 1785514848.8972578,
+    "mtime": 1785564285.4890912,
     "ast_hash": "f8217b7236c5061231d8d8efe0bea2d4",
     "semantic_hash": ""
   },
   "ml_service/tests/test_lightgbm_trainer.py": {
-    "mtime": 1785514830.5626965,
+    "mtime": 1785564285.4910913,
     "ast_hash": "f1e131258c9891335355f751a3a9809f",
     "semantic_hash": ""
   },
@@ -4880,78 +4880,243 @@
     "semantic_hash": ""
   },
   "ml_service/tests/test_training_pipeline_integration.py": {
-    "mtime": 1785514099.4018607,
+    "mtime": 1785564285.493091,
     "ast_hash": "8d6664abefd2b752b4ce4f293334d031",
     "semantic_hash": ""
   },
   "ml_service/tests/test_research_workflow_e2e.py": {
-    "mtime": 1785516948.0376518,
+    "mtime": 1785564285.493091,
     "ast_hash": "daffe52b8d1b13613e9d751c791260da",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-3.5C.1-RealXGBoostTrainer-Design.md": {
-    "mtime": 1785512985.5477667,
+    "mtime": 1785564285.332089,
     "ast_hash": "bb6f848cff97ee13a11050d6a339f1e9",
     "semantic_hash": ""
   },
   "ml_service/tests/test_real_xgboost_trainer.py": {
-    "mtime": 1785513345.4906716,
+    "mtime": 1785564285.4920912,
     "ast_hash": "3f625fe232a0632963b47eb9cf35754b",
     "semantic_hash": ""
   },
   "ml_service/tests/test_real_lightgbm_trainer.py": {
-    "mtime": 1785514823.1614702,
+    "mtime": 1785564285.4920912,
     "ast_hash": "13435a21b49e3be185a4b943b6419bcd",
     "semantic_hash": ""
   },
   "docs/sprints/Sprint-3.6-ModelRegistry-Design.md": {
-    "mtime": 1785515634.5162463,
+    "mtime": 1785564285.3330889,
     "ast_hash": "8ee1c6c525fdc2c16d149c0e93196296",
     "semantic_hash": ""
   },
   "ml_service/tests/test_model_registry_models.py": {
-    "mtime": 1785515940.3973694,
+    "mtime": 1785564285.4910913,
     "ast_hash": "465e80f935c85b1387f3b3f5d6ab1583",
     "semantic_hash": ""
   },
   "ml_service/tests/test_model_registry_repository.py": {
-    "mtime": 1785516038.9530196,
+    "mtime": 1785564285.4910913,
     "ast_hash": "59dcff1ce2b4a90c7991ddc0d6315876",
     "semantic_hash": ""
   },
   "ml_service/tests/test_model_registry_service.py": {
-    "mtime": 1785516149.423128,
+    "mtime": 1785564285.4910913,
     "ast_hash": "17a7da82442be1e8db249a6189d3e99f",
     "semantic_hash": ""
   },
   "ml_service/research/model_registry/registry_manager.py": {
-    "mtime": 1785516240.0115414,
+    "mtime": 1785564285.4880912,
     "ast_hash": "30785c826d16f379ee085ed0d0a1a7c6",
     "semantic_hash": ""
   },
   "ml_service/tests/test_registry_manager.py": {
-    "mtime": 1785516249.0155964,
+    "mtime": 1785564285.4920912,
     "ast_hash": "f769c1fc6e469c6a811caeca76df5c20",
     "semantic_hash": ""
   },
   "ml_service/research/model_registry/artifact_store.py": {
-    "mtime": 1785516324.076142,
+    "mtime": 1785564285.4880912,
     "ast_hash": "10d781f2f809a99ea36e413eee442e50",
     "semantic_hash": ""
   },
   "ml_service/tests/test_artifact_store.py": {
-    "mtime": 1785516335.8982415,
+    "mtime": 1785564285.490091,
     "ast_hash": "20083f79f52c1a314c658e2bf38d3280",
     "semantic_hash": ""
   },
   "ml_service/research/model_registry/promotion_manager.py": {
-    "mtime": 1785516441.4602704,
+    "mtime": 1785564285.4880912,
     "ast_hash": "8e25243c3288d7aa71d8369c428ce951",
     "semantic_hash": ""
   },
   "ml_service/tests/test_promotion_manager.py": {
-    "mtime": 1785516445.3203125,
+    "mtime": 1785564285.4910913,
     "ast_hash": "5dd18a6ca41086a9f61287e478228579",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7A-Backtesting-Domain-Design.md": {
+    "mtime": 1785569655.1443658,
+    "ast_hash": "9d29e12c8b4e32e1efe29a9795558a0f",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7B-Simulation-Engine-Core-Design.md": {
+    "mtime": 1785588400.24893,
+    "ast_hash": "f2242a8709223c8f998e6c35cb9a2cfb",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7C-Execution-Simulator-Design.md": {
+    "mtime": 1785610075.8040729,
+    "ast_hash": "4d40a720f10f077e24dfa3316c03618f",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7D-Portfolio-Engine-Design.md": {
+    "mtime": 1785610257.4664938,
+    "ast_hash": "5884ec16c11f496516acf18230e08208",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/__init__.py": {
+    "mtime": 1785610877.1516569,
+    "ast_hash": "594b0a164b58b93898dd6688534b3678",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/models.py": {
+    "mtime": 1785610729.3640685,
+    "ast_hash": "504125955457f1bfd2b5dba39506ee61",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/orchestrator.py": {
+    "mtime": 1785657089.4521263,
+    "ast_hash": "c135b3359465d96a3404ccbeb61a1722",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/repository.py": {
+    "mtime": 1785640890.3891966,
+    "ast_hash": "63043202339de7b266f49436f5e02802",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/service.py": {
+    "mtime": 1785610814.2529747,
+    "ast_hash": "aa45430b3981e72940e42f2e77974d7b",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_models.py": {
+    "mtime": 1785610906.8969822,
+    "ast_hash": "2241fe69111eba632e97df643aca7d9b",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_orchestrator.py": {
+    "mtime": 1785611047.8395448,
+    "ast_hash": "aaac6fb8b8a3a9c803dbde1d2d3fae46",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_repository.py": {
+    "mtime": 1785610955.1405132,
+    "ast_hash": "78194f35006ba804b5277dc10466f2f6",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_service.py": {
+    "mtime": 1785611023.620274,
+    "ast_hash": "c55d69487038641c476b73e080df4a05",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/__init__.py": {
+    "mtime": 1785651715.719824,
+    "ast_hash": "0e412dc47404f034b7a029fccf7d1304",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/commission.py": {
+    "mtime": 1785645827.6045954,
+    "ast_hash": "6d1522e898db4b9ca57e6d2d9fac96f4",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/execution_models.py": {
+    "mtime": 1785657122.5466416,
+    "ast_hash": "c21b4cdf303270def8ea8770c9b6405f",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/latency.py": {
+    "mtime": 1785645845.8614204,
+    "ast_hash": "a2062e6541cbd2648ba58d9472bbc86f",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/liquidity.py": {
+    "mtime": 1785645861.8450055,
+    "ast_hash": "2154802cbfbd5a94b5629d0da91abf63",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/matching_engine.py": {
+    "mtime": 1785651666.0746741,
+    "ast_hash": "35fa40759dd6e505d9fd2a4cf50b01fc",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/simulator.py": {
+    "mtime": 1785651672.9628336,
+    "ast_hash": "97da56a87a9bbef2a81dcda721913703",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/slippage.py": {
+    "mtime": 1785645808.174852,
+    "ast_hash": "1a6135af6810328785a3e0a81132e495",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/interfaces.py": {
+    "mtime": 1785640871.4258223,
+    "ast_hash": "40a7fab6b3a0b28dae3991061b683248",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_commission.py": {
+    "mtime": 1785645973.614334,
+    "ast_hash": "f9738303c23b5492420fab0f31108f74",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_execution_models.py": {
+    "mtime": 1785657204.103788,
+    "ast_hash": "7dff70aa3df274fb7c36ad584661603a",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_execution_simulator.py": {
+    "mtime": 1785657208.5888462,
+    "ast_hash": "5d1f85c21411608212ddc437008cb8ad",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_latency.py": {
+    "mtime": 1785645975.6940596,
+    "ast_hash": "2b41fd36b20e0e1fb9410f2c81f0d452",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_liquidity.py": {
+    "mtime": 1785645979.337584,
+    "ast_hash": "9e0550254b3ac522c4eafc46476a8665",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_matching_engine.py": {
+    "mtime": 1785646012.875518,
+    "ast_hash": "14d5a3f131f65fb6703371a3ea8e34e2",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_slippage.py": {
+    "mtime": 1785647974.7591622,
+    "ast_hash": "e640f0261266676455df533d7be45e74",
+    "semantic_hash": ""
+  },
+  "ml_service/validate_simulation_domain.py": {
+    "mtime": 1785611181.6802282,
+    "ast_hash": "7e7fb2fade830e861989c929014da118",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/SPRINT_3.7A-R_COMPLETION.md": {
+    "mtime": 1785641409.266292,
+    "ast_hash": "958401aef1e9c51f823c1e80639b7d33",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_execution_determinism.py": {
+    "mtime": 1785651783.979402,
+    "ast_hash": "e54865abbbdffd85002fc76cf5ccf32c",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7C-R-Completion-Report.md": {
+    "mtime": 1785652129.83276,
+    "ast_hash": "1efcea4f8f39bd105da0b11aa633ee9d",
     "semantic_hash": ""
   }
 }

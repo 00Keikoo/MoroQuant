@@ -4958,5 +4958,160 @@
     "mtime": 1785569655.1443658,
     "ast_hash": "9d29e12c8b4e32e1efe29a9795558a0f",
     "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7B-Simulation-Engine-Core-Design.md": {
+    "mtime": 1785588400.24893,
+    "ast_hash": "f2242a8709223c8f998e6c35cb9a2cfb",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7C-Execution-Simulator-Design.md": {
+    "mtime": 1785610075.8040729,
+    "ast_hash": "4d40a720f10f077e24dfa3316c03618f",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7D-Portfolio-Engine-Design.md": {
+    "mtime": 1785610257.4664938,
+    "ast_hash": "5884ec16c11f496516acf18230e08208",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/__init__.py": {
+    "mtime": 1785610877.1516569,
+    "ast_hash": "594b0a164b58b93898dd6688534b3678",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/models.py": {
+    "mtime": 1785610729.3640685,
+    "ast_hash": "504125955457f1bfd2b5dba39506ee61",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/orchestrator.py": {
+    "mtime": 1785640909.567833,
+    "ast_hash": "81d923dca6b9012c10740a48c0ccfe74",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/repository.py": {
+    "mtime": 1785640890.3891966,
+    "ast_hash": "63043202339de7b266f49436f5e02802",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/service.py": {
+    "mtime": 1785610814.2529747,
+    "ast_hash": "aa45430b3981e72940e42f2e77974d7b",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_models.py": {
+    "mtime": 1785610906.8969822,
+    "ast_hash": "2241fe69111eba632e97df643aca7d9b",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_orchestrator.py": {
+    "mtime": 1785611047.8395448,
+    "ast_hash": "aaac6fb8b8a3a9c803dbde1d2d3fae46",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_repository.py": {
+    "mtime": 1785610955.1405132,
+    "ast_hash": "78194f35006ba804b5277dc10466f2f6",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_simulation_service.py": {
+    "mtime": 1785611023.620274,
+    "ast_hash": "c55d69487038641c476b73e080df4a05",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/__init__.py": {
+    "mtime": 1785651715.719824,
+    "ast_hash": "0e412dc47404f034b7a029fccf7d1304",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/commission.py": {
+    "mtime": 1785645827.6045954,
+    "ast_hash": "6d1522e898db4b9ca57e6d2d9fac96f4",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/execution_models.py": {
+    "mtime": 1785645791.195144,
+    "ast_hash": "1a5af381ddad5da08b7cd423ef13272e",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/latency.py": {
+    "mtime": 1785645845.8614204,
+    "ast_hash": "a2062e6541cbd2648ba58d9472bbc86f",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/liquidity.py": {
+    "mtime": 1785645861.8450055,
+    "ast_hash": "2154802cbfbd5a94b5629d0da91abf63",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/matching_engine.py": {
+    "mtime": 1785651666.0746741,
+    "ast_hash": "35fa40759dd6e505d9fd2a4cf50b01fc",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/simulator.py": {
+    "mtime": 1785651672.9628336,
+    "ast_hash": "97da56a87a9bbef2a81dcda721913703",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/execution/slippage.py": {
+    "mtime": 1785645808.174852,
+    "ast_hash": "1a6135af6810328785a3e0a81132e495",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/interfaces.py": {
+    "mtime": 1785640871.4258223,
+    "ast_hash": "40a7fab6b3a0b28dae3991061b683248",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_commission.py": {
+    "mtime": 1785645973.614334,
+    "ast_hash": "f9738303c23b5492420fab0f31108f74",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_execution_models.py": {
+    "mtime": 1785645955.9837556,
+    "ast_hash": "3686dd8c22a22553888dfe24bf210673",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_execution_simulator.py": {
+    "mtime": 1785651745.679517,
+    "ast_hash": "ece8cf5822a0339401b0fbe3b6138b12",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_latency.py": {
+    "mtime": 1785645975.6940596,
+    "ast_hash": "2b41fd36b20e0e1fb9410f2c81f0d452",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_liquidity.py": {
+    "mtime": 1785645979.337584,
+    "ast_hash": "9e0550254b3ac522c4eafc46476a8665",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_matching_engine.py": {
+    "mtime": 1785646012.875518,
+    "ast_hash": "14d5a3f131f65fb6703371a3ea8e34e2",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_slippage.py": {
+    "mtime": 1785647974.7591622,
+    "ast_hash": "e640f0261266676455df533d7be45e74",
+    "semantic_hash": ""
+  },
+  "ml_service/validate_simulation_domain.py": {
+    "mtime": 1785611181.6802282,
+    "ast_hash": "7e7fb2fade830e861989c929014da118",
+    "semantic_hash": ""
+  },
+  "ml_service/simulation/SPRINT_3.7A-R_COMPLETION.md": {
+    "mtime": 1785641409.266292,
+    "ast_hash": "958401aef1e9c51f823c1e80639b7d33",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_execution_determinism.py": {
+    "mtime": 1785651783.979402,
+    "ast_hash": "e54865abbbdffd85002fc76cf5ccf32c",
+    "semantic_hash": ""
   }
 }

@@ -821,12 +821,5 @@
   "819": ".test_empty_metadata",
   "820": ".test_single_trade",
   "821": ".test_repository_exception_propagates",
-  "822": "mock_no_network_prices",
-  "823": ".test_get_metadata",
-  "824": ".test_metadata_schema",
-  "825": ".test_empty_summary",
-  "826": ".test_empty_metadata",
-  "827": ".test_invalid_database_path",
-  "828": ".test_browse_filter_detail_workflow",
-  "829": ".test_pagination_through_all_trades"
+  "822": "mock_no_network_prices"
 }
