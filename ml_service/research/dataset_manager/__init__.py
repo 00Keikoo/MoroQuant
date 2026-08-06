@@ -7,9 +7,7 @@ from ml_service.research.dataset_manager.types import (
     LifecycleState,
     ValidationResult
 )
-from ml_service.research.dataset_manager.repository import DatasetRepository
-from ml_service.research.dataset_manager.validator import DatasetValidator
-from ml_service.research.dataset_manager.service import DatasetService
+from ml_service.research.dataset_manager.market_event_iterator import MarketEventIterator
 
 __all__ = [
     'DatasetMetadata',
@@ -17,7 +15,5 @@ __all__ = [
     'DatasetSchema',
     'LifecycleState',
     'ValidationResult',
-    'DatasetRepository',
-    'DatasetValidator',
-    'DatasetService'
+    'MarketEventIterator',
 ]

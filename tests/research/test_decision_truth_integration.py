@@ -16,7 +16,7 @@ class TestDecisionTruthIntegration:
             snapshot_id="snap1",
             timestamp="2026-07-06T22:00:00Z",
             trades=[
-                {"id": "sig1", "direction": "LONG", "pnl": 100.0}
+                {"id": "sig1", "signal_id": "sig1", "direction": "LONG", "pnl": 100.0}
             ],
             signals=[
                 {
@@ -77,7 +77,7 @@ class TestDecisionTruthIntegration:
             snapshot_id="snap3",
             timestamp="2026-07-06T22:00:00Z",
             trades=[
-                {"id": "sig1", "direction": "LONG", "pnl": 50.0}
+                {"id": "sig1", "signal_id": "sig1", "direction": "LONG", "pnl": 50.0}
             ],
             signals=[
                 {
@@ -109,7 +109,9 @@ class TestDecisionTruthIntegration:
         snapshot = Snapshot(
             snapshot_id="snap4",
             timestamp="2026-07-06T22:00:00Z",
-            trades=[],
+            trades=[
+                {"id": "sig1", "signal_id": "sig1", "direction": "LONG", "pnl": 50.0}
+            ],
             signals=[
                 {
                     "id": "sig1",

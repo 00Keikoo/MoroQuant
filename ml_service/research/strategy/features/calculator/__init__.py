@@ -11,8 +11,10 @@ This layer contains pure feature calculation contracts.
 
 from ml_service.research.strategy.features.calculator.interfaces import FeatureCalculator
 from ml_service.research.strategy.features.calculator.noop import NoOpFeatureCalculator
+from ml_service.research.strategy.features.calculator.technical_indicators import TechnicalIndicatorCalculator
 
 __all__ = [
     "FeatureCalculator",
     "NoOpFeatureCalculator",
+    "TechnicalIndicatorCalculator",
 ]

@@ -4985,8 +4985,8 @@
     "semantic_hash": ""
   },
   "ml_service/simulation/orchestrator.py": {
-    "mtime": 1785640909.567833,
-    "ast_hash": "81d923dca6b9012c10740a48c0ccfe74",
+    "mtime": 1785657089.4521263,
+    "ast_hash": "c135b3359465d96a3404ccbeb61a1722",
     "semantic_hash": ""
   },
   "ml_service/simulation/repository.py": {
@@ -5030,8 +5030,8 @@
     "semantic_hash": ""
   },
   "ml_service/simulation/execution/execution_models.py": {
-    "mtime": 1785645791.195144,
-    "ast_hash": "1a5af381ddad5da08b7cd423ef13272e",
+    "mtime": 1785657122.5466416,
+    "ast_hash": "c21b4cdf303270def8ea8770c9b6405f",
     "semantic_hash": ""
   },
   "ml_service/simulation/execution/latency.py": {
@@ -5070,13 +5070,13 @@
     "semantic_hash": ""
   },
   "ml_service/tests/test_execution_models.py": {
-    "mtime": 1785645955.9837556,
-    "ast_hash": "3686dd8c22a22553888dfe24bf210673",
+    "mtime": 1785657204.103788,
+    "ast_hash": "7dff70aa3df274fb7c36ad584661603a",
     "semantic_hash": ""
   },
   "ml_service/tests/test_execution_simulator.py": {
-    "mtime": 1785651745.679517,
-    "ast_hash": "ece8cf5822a0339401b0fbe3b6138b12",
+    "mtime": 1785657208.5888462,
+    "ast_hash": "5d1f85c21411608212ddc437008cb8ad",
     "semantic_hash": ""
   },
   "ml_service/tests/test_latency.py": {
@@ -5112,6 +5112,41 @@
   "ml_service/tests/test_execution_determinism.py": {
     "mtime": 1785651783.979402,
     "ast_hash": "e54865abbbdffd85002fc76cf5ccf32c",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7C-R-Completion-Report.md": {
+    "mtime": 1785652129.83276,
+    "ast_hash": "1efcea4f8f39bd105da0b11aa633ee9d",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7D-Portfolio-Engine-Design-v2.md": {
+    "mtime": 1785664034.382335,
+    "ast_hash": "a3d2254919d7c7b972fafd1f08e03e3f",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7D-Portfolio-Engine-Design-v3.md": {
+    "mtime": 1785668374.3486314,
+    "ast_hash": "f26c30b82f90f761ebf486469ca5799e",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint-3.7D-Portfolio-Engine-Design-v4.md": {
+    "mtime": 1785668735.7759466,
+    "ast_hash": "e2fd823293badb33106e2c492a565abd",
+    "semantic_hash": ""
+  },
+  "ml_service/portfolio/__init__.py": {
+    "mtime": 1785669036.5817182,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "ml_service/portfolio/models.py": {
+    "mtime": 1785669094.0199811,
+    "ast_hash": "14fd71c60e8438379f5e2f2bcc4eebc0",
+    "semantic_hash": ""
+  },
+  "ml_service/tests/test_portfolio_domain_models.py": {
+    "mtime": 1785669165.8405356,
+    "ast_hash": "8b6e16498326c2ac496d1b4afec491a2",
     "semantic_hash": ""
   }
 }

@@ -53,34 +53,63 @@ class DecisionEngine:
         prob_neutral = context.probability_neutral
         prob_long = context.probability_long
 
+        # Equal probability handling:
+        if prob_long == prob_short:
+            action = "HOLD"
+            confidence = max(prob_long, prob_short, prob_neutral)
+            threshold_used = max(self._threshold_long, self._threshold_short)
+            reason_code = ["PROBABILITIES_EQUAL"]
+            return DecisionResult(
+                action=action,
+                confidence=confidence,
+                threshold_used=threshold_used,
+                reason_code=reason_code
+            )
+
+        # Argmax logic matching production signal generation (predictor.py)
         probs = [prob_short, prob_neutral, prob_long]
         prediction = int(max(range(len(probs)), key=lambda i: probs[i]))
 
         direction_map = {0: 'SHORT', 1: 'HOLD', 2: 'LONG'}
-        action = direction_map[prediction]
+        argmax_action = direction_map[prediction]
         confidence = probs[prediction]
 
         reason_code: list[str] = []
 
-        if action == "LONG":
+        if argmax_action == "LONG":
             threshold_used = self._threshold_long
-            if confidence < self._threshold_long:
-                action = "HOLD"
-                reason_code.append("CONFIDENCE_BELOW_LONG_THRESHOLD")
+            # Threshold boundary behavior: probability > threshold only
+            if confidence > self._threshold_long:
+                action = "LONG"
+                reason_code.append("LONG_PROBABILITY_EXCEEDS_THRESHOLD")
             else:
-                reason_code.append("ARGMAX_LONG")
+                action = "HOLD"
+                if prob_long <= self._threshold_long and prob_short <= self._threshold_short:
+                    reason_code.append("BOTH_PROBABILITIES_BELOW_THRESHOLD")
+                else:
+                    reason_code.append("CONFIDENCE_BELOW_LONG_THRESHOLD")
             reason_code.append(f"LONG_PROB_{prob_long:.3f}_GT_SHORT_{prob_short:.3f}_NEUTRAL_{prob_neutral:.3f}")
-        elif action == "SHORT":
+
+        elif argmax_action == "SHORT":
             threshold_used = self._threshold_short
-            if confidence < self._threshold_short:
-                action = "HOLD"
-                reason_code.append("CONFIDENCE_BELOW_SHORT_THRESHOLD")
+            if confidence > self._threshold_short:
+                action = "SHORT"
+                reason_code.append("SHORT_PROBABILITY_EXCEEDS_THRESHOLD")
             else:
-                reason_code.append("ARGMAX_SHORT")
+                action = "HOLD"
+                if prob_long <= self._threshold_long and prob_short <= self._threshold_short:
+                    reason_code.append("BOTH_PROBABILITIES_BELOW_THRESHOLD")
+                else:
+                    reason_code.append("CONFIDENCE_BELOW_SHORT_THRESHOLD")
             reason_code.append(f"SHORT_PROB_{prob_short:.3f}_GT_LONG_{prob_long:.3f}_NEUTRAL_{prob_neutral:.3f}")
+
         else:
+            action = "HOLD"
             threshold_used = max(self._threshold_long, self._threshold_short)
-            reason_code.append("ARGMAX_NEUTRAL")
+            if prob_long <= self._threshold_long and prob_short <= self._threshold_short:
+                reason_code.append("BOTH_PROBABILITIES_BELOW_THRESHOLD")
+            else:
+                reason_code.append("ARGMAX_NEUTRAL")
             reason_code.append(f"NEUTRAL_PROB_{prob_neutral:.3f}_GT_LONG_{prob_long:.3f}_SHORT_{prob_short:.3f}")
 
         return DecisionResult(
