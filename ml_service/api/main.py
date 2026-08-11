@@ -16,6 +16,7 @@ from ml_service.lab.experiments.api import router as experiment_router
 from ml_service.research.model_registry.api import router as model_registry_router
 from ml_service.research.research_dashboard.api import router as research_router
 from ml_service.research.research_orchestrator.api import router as orchestrator_router
+from ml_service.research.registry_api.router import router as registry_router
 from ml_service.services.crypto_price_service import get_crypto_service
 from ml_service.services.proxy_price_service import get_proxy_service
 from ml_service.scheduler import start_scheduler
@@ -40,6 +41,7 @@ app.include_router(experiment_router, prefix="/api/lab")
 app.include_router(model_registry_router, prefix="/api")
 app.include_router(research_router, prefix="/api")
 app.include_router(orchestrator_router)
+app.include_router(registry_router)
 
 dashboard_path = Path(__file__).parent.parent / "dashboard.html"
 
