@@ -5968,5 +5968,40 @@
     "mtime": 1786113650.0263638,
     "ast_hash": "954f076146c9020ecc89c5778b5a70b2",
     "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/__init__.py": {
+    "mtime": 1786115105.6427875,
+    "ast_hash": "a085a170795ba5608836523e37611ec1",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/interfaces.py": {
+    "mtime": 1786115142.183096,
+    "ast_hash": "a996ed0d8367d04e33f3517229466440",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/json_ledger.py": {
+    "mtime": 1786115162.5842695,
+    "ast_hash": "b97fd7c7278535428dba29163957fd73",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/models.py": {
+    "mtime": 1786115124.3739452,
+    "ast_hash": "2efc2daff60332a03068f9eac5ce70df",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/service.py": {
+    "mtime": 1786115182.6784408,
+    "ast_hash": "8a1d7cf148f65daf0c94a5036b8110f6",
+    "semantic_hash": ""
+  },
+  "tests/research/test_registry_event_ledger.py": {
+    "mtime": 1786115444.7717307,
+    "ast_hash": "f558004369753fa082ba9f98814e44fd",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint_3.9D-9_Promotion_Workflow_Report.md": {
+    "mtime": 1786114787.6612356,
+    "ast_hash": "d34ea7dd33864d04eddecf2123f171df",
+    "semantic_hash": ""
   }
 }

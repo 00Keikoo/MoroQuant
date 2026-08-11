@@ -5968,5 +5968,100 @@
     "mtime": 1786113650.0263638,
     "ast_hash": "954f076146c9020ecc89c5778b5a70b2",
     "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/__init__.py": {
+    "mtime": 1786115105.6427875,
+    "ast_hash": "a085a170795ba5608836523e37611ec1",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/interfaces.py": {
+    "mtime": 1786115142.183096,
+    "ast_hash": "a996ed0d8367d04e33f3517229466440",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/json_ledger.py": {
+    "mtime": 1786115162.5842695,
+    "ast_hash": "b97fd7c7278535428dba29163957fd73",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/models.py": {
+    "mtime": 1786115124.3739452,
+    "ast_hash": "2efc2daff60332a03068f9eac5ce70df",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_event_ledger/service.py": {
+    "mtime": 1786115182.6784408,
+    "ast_hash": "8a1d7cf148f65daf0c94a5036b8110f6",
+    "semantic_hash": ""
+  },
+  "tests/research/test_registry_event_ledger.py": {
+    "mtime": 1786115444.7717307,
+    "ast_hash": "f558004369753fa082ba9f98814e44fd",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint_3.9D-9_Promotion_Workflow_Report.md": {
+    "mtime": 1786114787.6612356,
+    "ast_hash": "d34ea7dd33864d04eddecf2123f171df",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_query/__init__.py": {
+    "mtime": 1786115990.1212952,
+    "ast_hash": "2347b3be7e97272dc77244a6d54bb63b",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_query/interfaces.py": {
+    "mtime": 1786116023.8667526,
+    "ast_hash": "f6942ef6a37a2c87d977fb75c1e14da7",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_query/models.py": {
+    "mtime": 1786116005.7345078,
+    "ast_hash": "ea635cbc3707d3327144111247509255",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_query/query.py": {
+    "mtime": 1786116040.2689722,
+    "ast_hash": "721f06fc8e4189183f6420ca53f61da4",
+    "semantic_hash": ""
+  },
+  "tests/research/test_registry_query.py": {
+    "mtime": 1786122542.9741075,
+    "ast_hash": "6d109be20e2999e4bf03e3d40acd2b20",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint_3.9D-10_Registry_Event_Ledger_Report.md": {
+    "mtime": 1786115692.094872,
+    "ast_hash": "71fcde6fe516616593e15daff3b1a457",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_api/__init__.py": {
+    "mtime": 1786424110.4348114,
+    "ast_hash": "f05db538061feadf5a32cc4408c5f689",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_api/router.py": {
+    "mtime": 1786424245.8099668,
+    "ast_hash": "5c9d70836a099d999c29ad6d4d6b2b4f",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_api/schemas.py": {
+    "mtime": 1786424266.7447383,
+    "ast_hash": "96b7f4c5b0a1179337ab967fb4b8e949",
+    "semantic_hash": ""
+  },
+  "ml_service/research/registry_api/service.py": {
+    "mtime": 1786424357.027879,
+    "ast_hash": "e89b9fcd43d98344d53fa14f405e3126",
+    "semantic_hash": ""
+  },
+  "tests/research/test_registry_api.py": {
+    "mtime": 1786424344.6349864,
+    "ast_hash": "dcae4b0838771cbbe5198436bc8147c8",
+    "semantic_hash": ""
+  },
+  "docs/sprints/Sprint_3.9D-11_Registry_Query_Report.md": {
+    "mtime": 1786123537.2770216,
+    "ast_hash": "97b3434dd015a06b536b3e94912833d4",
+    "semantic_hash": ""
   }
 }
