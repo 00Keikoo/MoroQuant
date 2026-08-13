@@ -15,7 +15,7 @@ from ml_service.research.registry_api.schemas import (
 )
 from ml_service.research.registry_api.service import RegistryAPIService
 from ml_service.research.registry_query import RegistryQueryEngine
-from ml_service.research.registry_snapshot.snapshot import RegistrySnapshot
+from ml_service.research.registry_snapshot import RegistrySnapshot
 from ml_service.research.registry_event_ledger.service import RegistryEventLedger
 from ml_service.research.registry_store import RegistryStoreService
 
@@ -30,8 +30,12 @@ def get_registry_service() -> RegistryAPIService:
     - RegistryQueryEngine -> RegistryAPIService
     """
     store = RegistryStoreService()
-    snapshot = RegistrySnapshot(store)
-    ledger = RegistryEventLedger(store)
+    snapshot = store.get_latest_snapshot()
+    if snapshot is None:
+        # Create an empty snapshot if no snapshot exists yet
+        snapshot = store.snapshot_builder.build(())
+    # RegistryEventLedger expects storage_path string in its constructor
+    ledger = RegistryEventLedger("storage/research_registry_snapshots/ledger.jsonl")
     query_engine = RegistryQueryEngine(snapshot, ledger)
 
     return RegistryAPIService(query_engine)
