@@ -24,6 +24,7 @@ class StrategyResult:
     max_drawdown: float
     consistency_score: float
     trade_count: int
+    profit_factor: Optional[float] = None
 
 
 @dataclass

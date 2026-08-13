@@ -13,7 +13,7 @@ from ml_service.utils.logger import get_logger
 from ml_service.utils.config import get_forward_periods, get_config
 from ml_service.data.database import get_database
 from ml_service.models.trainer import prepare_features, get_feature_columns
-from models import calibration as cal_mod
+from ml_service.models import calibration as cal_mod
 
 logger = get_logger(__name__)
 

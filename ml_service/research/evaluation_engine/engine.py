@@ -24,7 +24,7 @@ def compute_strategy_score(result: StrategyResult) -> StrategyScore:
 
     expectancy = total_return / trade_count if trade_count > 0 else 0.0
 
-    profit_factor = _estimate_profit_factor(
+    profit_factor = result.profit_factor if result.profit_factor is not None else _estimate_profit_factor(
         pnl=total_return,
         winrate=win_rate,
         trade_count=trade_count
@@ -103,9 +103,8 @@ def evaluate_experiment(experiment_result: ExperimentResult) -> EvaluationResult
 def _estimate_profit_factor(pnl: float, winrate: float, trade_count: int) -> float:
     """Estimate profit factor from aggregate metrics.
 
-    Without individual trade PnLs, we estimate profit factor using:
-    - Assumption: trades have similar position sizes
-    - Use winrate and total PnL to estimate win/loss distribution
+    Note: This is a fallback estimation when individual trade PnLs are not available.
+    The experiment_engine should ideally provide profit_factor directly.
 
     Args:
         pnl: Total PnL
@@ -113,13 +112,16 @@ def _estimate_profit_factor(pnl: float, winrate: float, trade_count: int) -> flo
         trade_count: Number of trades
 
     Returns:
-        Estimated profit factor
+        Estimated profit factor (fallback estimation, not actual calculation)
     """
-    if trade_count == 0 or winrate == 0.0:
+    if trade_count == 0:
         return 1.0
 
     if winrate >= 1.0:
         return 10.0 if pnl > 0 else 1.0
+
+    if winrate == 0.0:
+        return 0.1 if pnl < 0 else 1.0
 
     avg_pnl_per_trade = pnl / trade_count
 
@@ -145,21 +147,23 @@ def _estimate_profit_factor(pnl: float, winrate: float, trade_count: int) -> flo
 
 
 def _estimate_sortino_ratio(sharpe_ratio: float) -> float:
-    """Estimate Sortino ratio from Sharpe ratio.
+    """Placeholder Sortino ratio estimation.
 
-    Sortino focuses on downside deviation. Without individual returns,
-    we approximate: Sortino ≈ Sharpe * sqrt(2) for normal downside
+    Limitation: Proper Sortino calculation requires the full return series
+    to compute downside deviation. The current contract (StrategyResult)
+    only provides aggregate metrics, not individual returns.
+
+    For now, we return the Sharpe ratio as a conservative approximation.
+    A future enhancement would pass return series through StrategyResult
+    to enable proper Sortino calculation.
 
     Args:
         sharpe_ratio: Sharpe ratio
 
     Returns:
-        Estimated Sortino ratio
+        Sharpe ratio (conservative placeholder until return series available)
     """
-    if sharpe_ratio == 0:
-        return 0.0
-
-    return sharpe_ratio * math.sqrt(2)
+    return sharpe_ratio
 
 
 def _compute_final_score(
