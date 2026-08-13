@@ -170,16 +170,7 @@ def test_end_to_end_pipeline_integration():
     assert len(benchmark_result.ranking) == 1
     assert len(benchmark_result.scores) == 1
 
-    # 5. Phase 4: Benchmark → Promotion integration using production benchmark_to_audit_report
-    audit_report = benchmark_to_audit_report(benchmark_result)
-
-    assert audit_report["benchmark_id"] == "integration-benchmark-1"
-    assert audit_report["benchmark_winner"] == "integration-exp-1"
-    assert audit_report["cohort_size"] == 1
-    assert "benchmark_score" in audit_report
-    assert "validation_score" in audit_report
-
-    # 6. Promotion: Generate RegistryProposal using production models and PromotionEngine
+    # 5. Create model identity and lifecycle record for promotion
     model_identity = ModelIdentity(
         artifact_path="integration-model-v1",
         symbol="AAPL",
@@ -205,6 +196,18 @@ def test_end_to_end_pipeline_integration():
         timestamp="2026-08-13T12:00:00Z"
     )
 
+    # Phase 4: Benchmark → Promotion integration using production benchmark_to_audit_report
+    audit_report = benchmark_to_audit_report(benchmark_result, lifecycle_record)
+
+    assert audit_report["benchmark_id"] == "integration-benchmark-1"
+    assert audit_report["benchmark_winner"] == "integration-exp-1"
+    assert audit_report["cohort_size"] == 1
+    assert "benchmark_score" in audit_report
+    # Sprint 3.9D-14R: Canonical contract uses governance_ready from lifecycle state
+    assert "governance_ready" in audit_report
+    # Governance readiness is False because lifecycle_record.current_state is VALIDATED, not GOVERNANCE_READY
+    assert audit_report["governance_ready"] is False
+
     promotion_engine = PromotionEngine()
     registry_proposal = promotion_engine.evaluate(
         model_identity=model_identity,
@@ -212,7 +215,7 @@ def test_end_to_end_pipeline_integration():
         audit_report=audit_report
     )
 
-    # Verify Phase 4: RegistryProposal is canonical promotion_engine model
+    # Verify RegistryProposal is canonical promotion_engine model
     assert registry_proposal.model_id == "integration-model-v1"
     assert registry_proposal.symbol == "AAPL"
     assert registry_proposal.asset_class == "CRYPTO"

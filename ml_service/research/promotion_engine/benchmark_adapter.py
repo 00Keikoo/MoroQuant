@@ -15,19 +15,28 @@ from ml_service.research.model_identity.models import ModelIdentity
 from ml_service.research.model_lifecycle.models import ModelLifecycleRecord
 
 
-def benchmark_to_audit_report(benchmark: BenchmarkResult) -> Dict[str, Any]:
+def benchmark_to_audit_report(
+    benchmark: BenchmarkResult,
+    lifecycle_record: ModelLifecycleRecord
+) -> Dict[str, Any]:
     """Convert BenchmarkResult to audit_report format.
 
     Extracts benchmark evidence and formats it for PromotionEngine consumption.
+    Governance readiness is derived from the canonical lifecycle state, not benchmark performance.
 
     Args:
         benchmark: BenchmarkResult from research benchmark
+        lifecycle_record: Current lifecycle state (canonical source of governance readiness)
 
     Returns:
         Dictionary containing benchmark evidence for audit
     """
+    from ml_service.research.model_lifecycle.models import LifecycleState
+
     scores_dict = dict(benchmark.scores)
     metrics_dict = dict(benchmark.metrics)
+
+    governance_ready = lifecycle_record.current_state == LifecycleState.GOVERNANCE_READY
 
     return {
         "benchmark_id": benchmark.benchmark_id,
@@ -37,9 +46,7 @@ def benchmark_to_audit_report(benchmark: BenchmarkResult) -> Dict[str, Any]:
         "cohort_size": len(benchmark.compared_experiments),
         "cohort_average_score": metrics_dict.get("average_cohort_score", 0.0),
         "cohort_highest_score": metrics_dict.get("highest_score", 0.0),
-        "validation_score": 1.0,
-        "calibration_score": 1.0,
-        "governance_score": 1.0
+        "governance_ready": governance_ready
     }
 
 
@@ -63,7 +70,7 @@ def evaluate_with_benchmark(
     Returns:
         RegistryProposal with promotion decision
     """
-    audit_report = benchmark_to_audit_report(benchmark)
+    audit_report = benchmark_to_audit_report(benchmark, lifecycle_record)
 
     return engine.evaluate(
         model_identity=model_identity,

@@ -155,9 +155,9 @@ class PromotionPolicy:
             LifecycleState.VALIDATED,
             LifecycleState.GOVERNANCE_READY,
         ]:
-            reason_codes.append("PROXY_TO_APPROVED_RESEARCH")
+            reason_codes.append("PROXY_APPROVED_FOR_RESEARCH")
             return (
-                "APPROVED_RESEARCH",
+                LifecycleState.GOVERNANCE_READY.value,
                 PromotionStatus.APPROVED,
                 tuple(reason_codes),
             )
