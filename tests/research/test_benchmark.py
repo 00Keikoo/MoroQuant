@@ -55,7 +55,7 @@ def test_scoring_correctness():
     score = calculate_absolute_score(excellent_report)
     assert score == pytest.approx(1.0)
 
-    # Poor report: Sharpe=0.0, Sortino=0.0, PF=1.0 (or less), WinRate=0.0, MaxDrawdown=1.0 (100% DD)
+    # Poor report: Sharpe=0.0, Sortino=0.0, PF=1.0 (or less), WinRate=0.0, MaxDrawdown=-100.0 (100% DD)
     # Expected score: all zero -> 0.0
     poor_report = ResearchReport(
         experiment_id="poor",
@@ -63,7 +63,7 @@ def test_scoring_correctness():
         win_rate=0.0,
         average_return=-0.05,
         total_return=-0.5,
-        max_drawdown=1.0,
+        max_drawdown=-100.0,
         sharpe_ratio=0.0,
         sortino_ratio=0.0,
         profit_factor=0.5

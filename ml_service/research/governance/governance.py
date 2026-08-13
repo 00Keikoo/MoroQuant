@@ -1,5 +1,8 @@
 """Research Governance Engine Implementation - Sprint 3.9D-3
 
+DEPRECATED: Use promotion_engine.engine.PromotionEngine instead.
+This module provides backward compatibility only.
+
 Default implementation of governance engine that applies policy rules
 to promotion decisions and produces registry proposals.
 """
@@ -8,6 +11,7 @@ from ml_service.research.promotion.models import PromotionDecision, PromotionSta
 from ml_service.research.governance.models import GovernanceAction, RegistryProposal
 from ml_service.research.governance.interfaces import GovernanceEngine
 from ml_service.research.governance.policy import GovernancePolicy
+from ml_service.research.promotion_engine.models import PromotionScore, PromotionStatus as CanonicalStatus
 
 
 class DefaultGovernanceEngine(GovernanceEngine):
@@ -63,47 +67,65 @@ class DefaultGovernanceEngine(GovernanceEngine):
 
     def _create_approve_proposal(self, decision: PromotionDecision) -> RegistryProposal:
         """Create an approval proposal."""
+        score = PromotionScore(
+            model_id=decision.model_id,
+            validation_score=decision.candidate_score,
+            calibration_score=decision.candidate_score,
+            lifecycle_score=decision.candidate_score,
+            governance_score=decision.candidate_score,
+            total_score=decision.candidate_score,
+        )
         return RegistryProposal(
             model_id=decision.model_id,
-            action=GovernanceAction.APPROVE,
-            reason=f"Promotion approved: {decision.reason}",
-            promotion_score=self._normalize_score(decision.score_delta),
-            benchmark_score=decision.candidate_score,
-            metadata=tuple([
-                ("candidate_score", decision.candidate_score),
-                ("current_score", decision.current_score),
-                ("score_delta", decision.score_delta),
-            ])
+            symbol="DEPRECATED_TEST",
+            asset_class="CRYPTO",
+            current_state="VALIDATED",
+            proposed_state="APPROVED_RESEARCH",
+            status=CanonicalStatus.APPROVED,
+            score=score,
+            reason_codes=(f"APPROVED: {decision.reason}",),
         )
 
     def _create_reject_proposal(self, decision: PromotionDecision, reason: str = None) -> RegistryProposal:
         """Create a rejection proposal."""
+        score = PromotionScore(
+            model_id=decision.model_id,
+            validation_score=decision.candidate_score,
+            calibration_score=decision.candidate_score,
+            lifecycle_score=decision.candidate_score,
+            governance_score=decision.candidate_score,
+            total_score=decision.candidate_score,
+        )
         return RegistryProposal(
             model_id=decision.model_id,
-            action=GovernanceAction.REJECT,
-            reason=reason or f"Promotion rejected: {decision.reason}",
-            promotion_score=self._normalize_score(decision.score_delta),
-            benchmark_score=decision.candidate_score,
-            metadata=tuple([
-                ("candidate_score", decision.candidate_score),
-                ("current_score", decision.current_score),
-                ("score_delta", decision.score_delta),
-            ])
+            symbol="DEPRECATED_TEST",
+            asset_class="CRYPTO",
+            current_state="VALIDATED",
+            proposed_state="REJECTED",
+            status=CanonicalStatus.REJECTED,
+            score=score,
+            reason_codes=(reason or f"REJECTED: {decision.reason}",),
         )
 
     def _create_review_proposal(self, decision: PromotionDecision, reason: str = None) -> RegistryProposal:
         """Create a review proposal."""
+        score = PromotionScore(
+            model_id=decision.model_id,
+            validation_score=decision.candidate_score,
+            calibration_score=decision.candidate_score,
+            lifecycle_score=decision.candidate_score,
+            governance_score=decision.candidate_score,
+            total_score=decision.candidate_score,
+        )
         return RegistryProposal(
             model_id=decision.model_id,
-            action=GovernanceAction.REVIEW,
-            reason=reason or f"Manual review required: {decision.reason}",
-            promotion_score=self._normalize_score(decision.score_delta),
-            benchmark_score=decision.candidate_score,
-            metadata=tuple([
-                ("candidate_score", decision.candidate_score),
-                ("current_score", decision.current_score),
-                ("score_delta", decision.score_delta),
-            ])
+            symbol="DEPRECATED_TEST",
+            asset_class="CRYPTO",
+            current_state="VALIDATED",
+            proposed_state="GOVERNANCE_READY",
+            status=CanonicalStatus.CANDIDATE,
+            score=score,
+            reason_codes=(reason or f"REVIEW: {decision.reason}",),
         )
 
     def _normalize_score(self, score_delta: float) -> float:

@@ -15,59 +15,90 @@ class TestRegistryProposal:
 
     def test_registry_proposal_immutability(self):
         """Verify frozen dataclass prevents modification."""
+        from ml_service.research.promotion_engine.models import PromotionScore, PromotionStatus
+
+        score = PromotionScore(
+            model_id="test_model_v1",
+            validation_score=0.85,
+            calibration_score=0.82,
+            lifecycle_score=0.80,
+            governance_score=0.83,
+            total_score=0.825,
+        )
         proposal = RegistryProposal(
             model_id="test_model_v1",
-            action=GovernanceAction.APPROVE,
-            reason="Test approval",
-            promotion_score=0.85,
-            benchmark_score=0.82,
-            metadata=(("key1", "value1"), ("key2", 42))
+            symbol="TEST",
+            asset_class="CRYPTO",
+            current_state="VALIDATED",
+            proposed_state="APPROVED_RESEARCH",
+            status=PromotionStatus.APPROVED,
+            score=score,
+            reason_codes=("APPROVED",),
         )
 
         with pytest.raises(AttributeError):
             proposal.model_id = "modified"
 
         with pytest.raises(AttributeError):
-            proposal.action = GovernanceAction.REJECT
+            proposal.status = PromotionStatus.REJECTED
 
     def test_registry_proposal_validation_score_ranges(self):
         """Verify score validation."""
-        with pytest.raises(ValueError, match="promotion_score must be in"):
-            RegistryProposal(
+        from ml_service.research.promotion_engine.models import PromotionScore, PromotionStatus
+
+        # Test invalid validation_score
+        with pytest.raises(ValueError, match="validation_score must be between"):
+            PromotionScore(
                 model_id="test",
-                action=GovernanceAction.APPROVE,
-                reason="test",
-                promotion_score=1.5,
-                benchmark_score=0.8
+                validation_score=1.5,
+                calibration_score=0.8,
+                lifecycle_score=0.7,
+                governance_score=0.8,
+                total_score=0.95,
             )
 
-        with pytest.raises(ValueError, match="benchmark_score must be in"):
-            RegistryProposal(
+        # Test invalid total_score mismatch
+        with pytest.raises(ValueError, match="total_score.*does not match"):
+            PromotionScore(
                 model_id="test",
-                action=GovernanceAction.APPROVE,
-                reason="test",
-                promotion_score=0.8,
-                benchmark_score=2.0
+                validation_score=0.8,
+                calibration_score=0.8,
+                lifecycle_score=0.7,
+                governance_score=0.8,
+                total_score=0.99,  # Wrong total
             )
 
     def test_registry_proposal_deterministic_serialization(self):
         """Verify deterministic JSON serialization."""
+        from ml_service.research.promotion_engine.models import PromotionScore, PromotionStatus
+
+        score = PromotionScore(
+            model_id="test_model",
+            validation_score=0.75,
+            calibration_score=0.70,
+            lifecycle_score=0.72,
+            governance_score=0.73,
+            total_score=0.727,  # 0.75*0.3 + 0.70*0.2 + 0.72*0.3 + 0.73*0.2
+        )
         proposal = RegistryProposal(
             model_id="test_model",
-            action=GovernanceAction.REVIEW,
-            reason="Manual review",
-            promotion_score=0.75,
-            benchmark_score=0.70,
-            metadata=(("z_key", "last"), ("a_key", "first"), ("m_key", "middle"))
+            symbol="TEST",
+            asset_class="CRYPTO",
+            current_state="VALIDATED",
+            proposed_state="GOVERNANCE_READY",
+            status=PromotionStatus.CANDIDATE,
+            score=score,
+            reason_codes=("REVIEW",),
         )
 
         json1 = proposal.to_json()
         json2 = proposal.to_json()
 
         assert json1 == json2
-        assert '"a_key"' in json1
-        assert json1.index('"a_key"') < json1.index('"m_key"')
-        assert json1.index('"m_key"') < json1.index('"z_key"')
+        # Verify keys are sorted
+        assert '"asset_class"' in json1
+        assert json1.index('"asset_class"') < json1.index('"model_id"')
+        assert json1.index('"model_id"') < json1.index('"symbol"')
 
 
 class TestGovernancePolicy:
@@ -89,7 +120,9 @@ class TestDefaultGovernanceEngine:
     """Test DefaultGovernanceEngine policy evaluation."""
 
     def test_promoted_model_requires_review(self):
-        """PROMOTE with manual review required should produce REVIEW action."""
+        """PROMOTE with manual review required should produce CANDIDATE status."""
+        from ml_service.research.promotion_engine.models import PromotionStatus as CanonicalStatus
+
         engine = DefaultGovernanceEngine(
             GovernancePolicy(
                 minimum_score=0.75,
@@ -108,13 +141,15 @@ class TestDefaultGovernanceEngine:
 
         proposal = engine.evaluate(decision)
 
-        assert proposal.action == GovernanceAction.REVIEW
+        assert proposal.status == CanonicalStatus.CANDIDATE
         assert proposal.model_id == "candidate_model_v2"
-        assert "Manual review required" in proposal.reason
-        assert proposal.benchmark_score == 0.85
+        assert proposal.proposed_state == "GOVERNANCE_READY"
+        assert proposal.score.total_score == 0.85
 
     def test_promoted_model_auto_approve(self):
-        """PROMOTE without manual review and satisfying score should produce APPROVE."""
+        """PROMOTE without manual review and satisfying score should produce APPROVED."""
+        from ml_service.research.promotion_engine.models import PromotionStatus as CanonicalStatus
+
         engine = DefaultGovernanceEngine(
             GovernancePolicy(
                 minimum_score=0.75,
@@ -133,13 +168,15 @@ class TestDefaultGovernanceEngine:
 
         proposal = engine.evaluate(decision)
 
-        assert proposal.action == GovernanceAction.APPROVE
+        assert proposal.status == CanonicalStatus.APPROVED
         assert proposal.model_id == "candidate_model_v3"
-        assert "approved" in proposal.reason.lower()
-        assert proposal.benchmark_score == 0.88
+        assert proposal.proposed_state == "APPROVED_RESEARCH"
+        assert proposal.score.total_score == 0.88
 
     def test_promoted_model_below_threshold_rejected(self):
-        """PROMOTE with score below minimum should produce REJECT."""
+        """PROMOTE with score below minimum should produce REJECTED."""
+        from ml_service.research.promotion_engine.models import PromotionStatus as CanonicalStatus
+
         engine = DefaultGovernanceEngine(
             GovernancePolicy(
                 minimum_score=0.80,
@@ -158,12 +195,14 @@ class TestDefaultGovernanceEngine:
 
         proposal = engine.evaluate(decision)
 
-        assert proposal.action == GovernanceAction.REJECT
-        assert "below minimum" in proposal.reason.lower()
-        assert proposal.benchmark_score == 0.72
+        assert proposal.status == CanonicalStatus.REJECTED
+        assert proposal.proposed_state == "REJECTED"
+        assert proposal.score.total_score == 0.72
 
     def test_rejected_model(self):
-        """REJECT decision should produce REJECT action."""
+        """REJECT decision should produce REJECTED status."""
+        from ml_service.research.promotion_engine.models import PromotionStatus as CanonicalStatus
+
         engine = DefaultGovernanceEngine(
             GovernancePolicy(
                 minimum_score=0.75,
@@ -182,10 +221,10 @@ class TestDefaultGovernanceEngine:
 
         proposal = engine.evaluate(decision)
 
-        assert proposal.action == GovernanceAction.REJECT
+        assert proposal.status == CanonicalStatus.REJECTED
         assert proposal.model_id == "failed_model_v1"
-        assert "rejected" in proposal.reason.lower()
-        assert proposal.benchmark_score == 0.65
+        assert proposal.proposed_state == "REJECTED"
+        assert proposal.score.total_score == 0.65
 
     def test_deterministic_governance_output(self):
         """Same input should produce identical proposal."""
@@ -211,11 +250,13 @@ class TestDefaultGovernanceEngine:
 
         assert proposal1.to_json() == proposal2.to_json()
         assert proposal1.model_id == proposal2.model_id
-        assert proposal1.action == proposal2.action
-        assert proposal1.promotion_score == proposal2.promotion_score
+        assert proposal1.status == proposal2.status
+        assert proposal1.score.total_score == proposal2.score.total_score
 
     def test_metadata_preservation(self):
-        """Verify decision metrics are preserved in proposal metadata."""
+        """Verify decision score is preserved in proposal."""
+        from ml_service.research.promotion_engine.models import PromotionStatus as CanonicalStatus
+
         engine = DefaultGovernanceEngine(
             GovernancePolicy(require_manual_review=False)
         )
@@ -231,10 +272,9 @@ class TestDefaultGovernanceEngine:
 
         proposal = engine.evaluate(decision)
 
-        metadata_dict = dict(proposal.metadata)
-        assert metadata_dict["candidate_score"] == 0.85
-        assert metadata_dict["current_score"] == 0.80
-        assert metadata_dict["score_delta"] == 0.05
+        assert proposal.status == CanonicalStatus.APPROVED
+        assert proposal.score.total_score == 0.85
+        assert proposal.score.model_id == "test"
 
 
 class TestForbiddenDependencies:
@@ -262,6 +302,8 @@ class TestForbiddenDependencies:
 
     def test_governance_is_pure_functional(self):
         """Verify governance engine is stateless and deterministic."""
+        from ml_service.research.promotion_engine.models import PromotionStatus as CanonicalStatus
+
         policy = GovernancePolicy(minimum_score=0.75, require_manual_review=False)
         engine = DefaultGovernanceEngine(policy)
 
@@ -278,3 +320,4 @@ class TestForbiddenDependencies:
 
         first_json = results[0].to_json()
         assert all(r.to_json() == first_json for r in results)
+        assert all(r.status == CanonicalStatus.APPROVED for r in results)

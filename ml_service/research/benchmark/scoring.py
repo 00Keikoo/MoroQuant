@@ -35,8 +35,10 @@ def calculate_absolute_score(report: ResearchReport) -> float:
     # 4. Win Rate Score (already 0.0 to 1.0)
     win_rate_score = min(max(report.win_rate, 0.0), 1.0)
 
-    # 5. Drawdown Recovery Score (1.0 - max_drawdown)
-    drawdown_recovery_score = max(0.0, 1.0 - report.max_drawdown)
+    # 5. Drawdown Recovery Score
+    # max_drawdown is negative (e.g., -50.0 for 50% loss)
+    # Score: 0 → 1.0, -100 → 0.0, bounded and monotonic
+    drawdown_recovery_score = max(0.0, 1.0 + (report.max_drawdown / 100.0))
 
     # Apply Weights
     composite_score = (

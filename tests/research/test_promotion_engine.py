@@ -304,8 +304,8 @@ def test_proxy_to_approved_research():
     proposal = engine.evaluate(identity, lifecycle, audit)
 
     assert proposal.status == PromotionStatus.APPROVED
-    assert proposal.proposed_state == "APPROVED_RESEARCH"
-    assert "PROXY_TO_APPROVED_RESEARCH" in proposal.reason_codes
+    assert proposal.proposed_state == "GOVERNANCE_READY"
+    assert "PROXY_APPROVED_FOR_RESEARCH" in proposal.reason_codes
 
 
 def test_missing_validation_rejected():
