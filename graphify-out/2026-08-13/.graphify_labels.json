@@ -838,13 +838,7 @@
   "836": "TestMarketSnapshot",
   "837": "TestLifecycleState",
   "838": "TestRegistryAPIRegistration",
-  "839": "TestApplyFee",
   "840": ".test_single_trade",
   "841": ".test_repository_exception_propagates",
-  "842": ".test_negative_pagination_parameters",
-  "843": "TestApplyFunding",
-  "844": "TestImmutability",
-  "845": "TestComplexScenarios",
-  "846": "TestEnums",
-  "847": ".get_market_snapshot"
+  "842": ".test_negative_pagination_parameters"
 }

@@ -6040,8 +6040,8 @@
     "semantic_hash": ""
   },
   "ml_service/research/registry_api/router.py": {
-    "mtime": 1786602236.7337549,
-    "ast_hash": "6aa4f847c3695d6f749cc2d6e6c75f40",
+    "mtime": 1786424245.8099668,
+    "ast_hash": "5c9d70836a099d999c29ad6d4d6b2b4f",
     "semantic_hash": ""
   },
   "ml_service/research/registry_api/schemas.py": {
