@@ -102,10 +102,16 @@ class ResearchSession:
     experiments: Tuple[ResearchExperiment, ...] = field(default_factory=tuple)
     created_at: str = ""
     completed_at: Optional[str] = None
+    dataset_fingerprint: Optional[str] = None
+    feature_fingerprint: Optional[str] = None
+    replay_fingerprint: Optional[str] = None
+    experiment_fingerprint: Optional[str] = None
+    evaluation_fingerprint: Optional[str] = None
+    model_fingerprint: Optional[str] = None
+    random_seed: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         sorted_config = sorted(self.config_snapshot, key=lambda x: x[0])
-        # Sort experiments by experiment_id for deterministic ordering
         sorted_experiments = sorted(self.experiments, key=lambda e: e.experiment_id)
         return {
             "session_id": self.session_id,
@@ -117,7 +123,14 @@ class ResearchSession:
             "best_run_id": self.best_run_id,
             "experiments": [exp.to_dict() for exp in sorted_experiments],
             "created_at": self.created_at,
-            "completed_at": self.completed_at
+            "completed_at": self.completed_at,
+            "dataset_fingerprint": self.dataset_fingerprint,
+            "feature_fingerprint": self.feature_fingerprint,
+            "replay_fingerprint": self.replay_fingerprint,
+            "experiment_fingerprint": self.experiment_fingerprint,
+            "evaluation_fingerprint": self.evaluation_fingerprint,
+            "model_fingerprint": self.model_fingerprint,
+            "random_seed": self.random_seed,
         }
 
     def serialize(self) -> str:

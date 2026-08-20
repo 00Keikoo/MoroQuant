@@ -4,26 +4,19 @@ Backtest Workflow Orchestrator
 Coordinates the complete backtest workflow integration:
 1. Load model from ModelRegistryService
 2. Load experiment from ExperimentService
-3. Build simulation configuration
-4. Execute simulation via SimulationPortfolioRunner
-5. Collect portfolio snapshots
-6. Evaluate via EvaluationEngine
-7. Produce BacktestResult
+3. Execute backtest via BacktestRunner
+4. Consume portfolio snapshots from execution result
+5. Evaluate via EvaluationEngine
+6. Produce BacktestResult
 
 Following ADR-024: No database writes during simulation runtime.
+Research consumes execution outcomes, does not construct execution infrastructure.
 """
 
 from datetime import datetime
 from typing import Optional, Dict, Any
-from uuid import uuid4
 
 from ml_service.portfolio.models import AccountType
-from ml_service.portfolio.service import PortfolioService
-from ml_service.portfolio.snapshot import PortfolioSnapshotService
-from ml_service.portfolio.ledger import LedgerService
-from ml_service.portfolio.position import PositionService
-from ml_service.portfolio.equity import EquityService
-from ml_service.portfolio.margin import MarginService
 from ml_service.research.backtest_workflow.models import (
     BacktestConfig,
     BacktestResult,
@@ -37,15 +30,10 @@ from ml_service.research.evaluation_engine.service import EvaluationService
 from ml_service.research.experiment_engine.service import ExperimentService
 from ml_service.research.experiment_engine.types import ExperimentConfig, StrategyConfig
 from ml_service.research.model_registry.service import ModelRegistryService
-from ml_service.simulation.integration.execution_adapter import ExecutionAdapter
-from ml_service.simulation.integration.portfolio_adapter import PortfolioAdapter
-from ml_service.simulation.integration.simulation_portfolio_runner import SimulationPortfolioRunner
-from ml_service.simulation.execution.simulator import ExecutionSimulator
-from ml_service.simulation.execution.matching_engine import MatchingEngine
-from ml_service.simulation.execution.slippage import FixedSlippageModel
-from ml_service.simulation.execution.commission import BinanceSpotCommission
-from ml_service.simulation.execution.latency import ZeroLatencyModel
-from ml_service.simulation.execution.liquidity import InfiniteLiquidityModel
+from ml_service.simulation.backtest.runner import (
+    BacktestRunner,
+    BacktestExecutionConfig,
+)
 
 
 class BacktestWorkflowOrchestrator:
@@ -62,13 +50,16 @@ class BacktestWorkflowOrchestrator:
         ExperimentService (load experiment)
             |
             v
-        SimulationPortfolioRunner (execute simulation)
+        BacktestRunner (execute backtest, returns snapshots)
             |
             v
         EvaluationEngine (evaluate results)
             |
             v
         BacktestResult
+
+    Research consumes execution outcomes (snapshots) from BacktestRunner.
+    Does NOT construct execution infrastructure.
     """
 
     def __init__(
@@ -77,14 +68,14 @@ class BacktestWorkflowOrchestrator:
         model_registry_service: ModelRegistryService,
         experiment_service: ExperimentService,
         evaluation_service: EvaluationService,
-        simulation_runner: SimulationPortfolioRunner,
+        backtest_runner: BacktestRunner,
         dataset_service: DatasetService,
     ):
         self.workflow_service = workflow_service
         self.model_registry = model_registry_service
         self.experiment_service = experiment_service
         self.evaluation_service = evaluation_service
-        self.simulation_runner = simulation_runner
+        self.backtest_runner = backtest_runner
         self.dataset_service = dataset_service
 
     def execute_backtest(self, config: BacktestConfig) -> BacktestRun:
@@ -308,51 +299,36 @@ class BacktestWorkflowOrchestrator:
         simulation_run_id: str,
     ) -> list:
         """
-        Execute simulation via SimulationPortfolioRunner.
+        Execute backtest via BacktestRunner and consume snapshots.
 
-        This is the REAL execution path through Portfolio Engine.
-
-        Flow:
-            1. Initialize simulation state with SimulationPortfolioRunner
-            2. Load market data from dataset snapshot
-            3. For each market event, execute via runner.run_step()
-            4. Portfolio Engine processes orders
-            5. Snapshot Layer captures portfolio state
-            6. Return snapshots for Evaluation Engine
-
-        This replaces the static calculation bypass in ExperimentService.
+        Research consumes execution outcomes, does not construct execution infrastructure.
 
         Args:
             config: Backtest configuration
-            experiment_result: Experiment definition from ExperimentService
+            experiment_config: Experiment definition from ExperimentService
             simulation_run_id: Unique simulation identifier
 
         Returns:
-            List of portfolio snapshots from simulation execution
+            List of portfolio snapshots from execution result
         """
         execution_params = config.execution_assumption
         initial_capital = execution_params.get("initial_capital", 100000.0)
-        start_time = datetime.utcnow()
 
-        state = self.simulation_runner.initialize_state(
-            simulation_id=simulation_run_id,
+        execution_config = BacktestExecutionConfig(
             initial_capital=initial_capital,
-            start_time=start_time,
+            slippage_bps=execution_params.get("slippage_bps", 5.0),
+            commission_pct=execution_params.get("commission_pct", 0.1),
             account_type=AccountType.FUTURES,
         )
 
-        snapshots = []
-        if state.latest_snapshot:
-            snapshots.append(state.latest_snapshot)
-
         market_event_iterator = self._load_market_data(config.dataset_snapshot_id)
 
-        for event in market_event_iterator:
-            state = self.simulation_runner.run_market_update_only(state, event)
-            if state.latest_snapshot:
-                snapshots.append(state.latest_snapshot)
+        result = self.backtest_runner.execute(
+            market_events=market_event_iterator,
+            config=execution_config,
+        )
 
-        return snapshots
+        return result.snapshots
 
     def _load_market_data(self, dataset_snapshot_id: str):
         """
@@ -384,6 +360,7 @@ class BacktestWorkflowOrchestrator:
 
     def _generate_simulation_id(self) -> str:
         """Generate unique simulation run identifier."""
+        from uuid import uuid4
         return f"sim-{uuid4().hex[:12]}"
 
 
@@ -391,8 +368,7 @@ class BacktestWorkflowOrchestratorFactory:
     """
     Factory for creating BacktestWorkflowOrchestrator with dependencies.
 
-    Provides a simplified initialization path by creating default implementations
-    of all required services.
+    Research consumes execution outcomes from BacktestRunner.
     """
 
     @staticmethod
@@ -418,44 +394,13 @@ class BacktestWorkflowOrchestratorFactory:
             snapshot_manager=dataset_snapshot_manager,
         )
 
-        ledger_service = LedgerService()
-        position_service = PositionService()
-        equity_service = EquityService()
-        margin_service = MarginService()
-
-        portfolio_service = PortfolioService(
-            ledger_service=ledger_service,
-            position_service=position_service,
-            equity_service=equity_service,
-            margin_service=margin_service,
-        )
-        snapshot_service = PortfolioSnapshotService()
-
-        matching_engine = MatchingEngine(
-            slippage_model=FixedSlippageModel(fixed_bps=5.0),
-            commission_model=BinanceSpotCommission(fee_pct=0.1),
-            latency_model=ZeroLatencyModel(),
-            liquidity_model=InfiniteLiquidityModel(),
-        )
-        execution_simulator = ExecutionSimulator(matching_engine=matching_engine)
-        execution_adapter = ExecutionAdapter(execution_simulator=execution_simulator)
-        portfolio_adapter = PortfolioAdapter(
-            portfolio_service=portfolio_service,
-            snapshot_service=snapshot_service,
-        )
-
-        simulation_runner = SimulationPortfolioRunner(
-            portfolio_adapter=portfolio_adapter,
-            execution_adapter=execution_adapter,
-            portfolio_service=portfolio_service,
-            snapshot_service=snapshot_service,
-        )
+        backtest_runner = BacktestRunner.create_default()
 
         return BacktestWorkflowOrchestrator(
             workflow_service=workflow_service,
             model_registry_service=model_registry_service,
             experiment_service=experiment_service,
             evaluation_service=evaluation_service,
-            simulation_runner=simulation_runner,
+            backtest_runner=backtest_runner,
             dataset_service=dataset_service,
         )
