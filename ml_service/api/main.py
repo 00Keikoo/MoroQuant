@@ -15,7 +15,7 @@ from ml_service.api.explorer_routes import router as explorer_router
 from ml_service.lab.experiments.api import router as experiment_router
 from ml_service.research.model_registry.api import router as model_registry_router
 from ml_service.research.research_dashboard.api import router as research_router
-from ml_service.research.research_orchestrator.api import router as orchestrator_router
+from ml_service.research.orchestrator_api import router as orchestrator_router
 from ml_service.research.registry_api.router import router as registry_router
 from ml_service.services.crypto_price_service import get_crypto_service
 from ml_service.services.proxy_price_service import get_proxy_service
