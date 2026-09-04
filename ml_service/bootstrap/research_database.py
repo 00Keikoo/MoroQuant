@@ -17,6 +17,8 @@ def bootstrap_research_tables(db_path: Optional[str] = None) -> None:
     - feature_definitions, feature_versions, feature_datasets (Feature Store)
     - experiments, experiment_configs, experiment_results (Experiment Registry)
     - models, model_versions, model_lineage, model_evaluations (Model Registry)
+    - research_jobs, research_job_steps, research_job_logs (Research Orchestrator)
+    - research_sessions, research_experiments, research_runs (Research Session Persistence)
 
     All operations use IF NOT EXISTS - safe to run multiple times.
     """
@@ -316,10 +318,111 @@ def bootstrap_research_tables(db_path: Optional[str] = None) -> None:
             CREATE INDEX IF NOT EXISTS idx_research_job_logs_timestamp ON research_job_logs(timestamp DESC)
         """)
 
+        # Research Session tables (Sprint 3.9D-16 Phase 1)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS research_sessions (
+                session_id TEXT PRIMARY KEY,
+                status TEXT NOT NULL CHECK(
+                    status IN (
+                        'PENDING', 'SNAPSHOT', 'REPLAY', 'EXPERIMENT',
+                        'EVALUATION', 'REPORTING', 'BENCHMARK', 'PROMOTION',
+                        'COMPLETED', 'CREATED', 'RUNNING', 'FAILED', 'CANCELLED'
+                    ) OR status LIKE 'FAILED/%'
+                ),
+                dataset_version_id TEXT,
+                snapshot_id TEXT,
+                feature_dataset_id TEXT,
+                best_run_id TEXT,
+                random_seed INTEGER,
+                config_json TEXT NOT NULL,
+                dataset_fingerprint TEXT,
+                feature_fingerprint TEXT,
+                replay_fingerprint TEXT,
+                experiment_fingerprint TEXT,
+                evaluation_fingerprint TEXT,
+                model_fingerprint TEXT,
+                created_at TEXT NOT NULL,
+                completed_at TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_sessions_status
+            ON research_sessions(status)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_sessions_created_at
+            ON research_sessions(created_at DESC)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_sessions_dataset_version_id
+            ON research_sessions(dataset_version_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_sessions_model_fingerprint
+            ON research_sessions(model_fingerprint)
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS research_experiments (
+                experiment_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('INITIALIZED', 'ACTIVE', 'EVALUATED', 'FAILED', 'CANCELLED')),
+                hypothesis_json TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                completed_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES research_sessions(session_id)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_experiments_session_id
+            ON research_experiments(session_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_experiments_status
+            ON research_experiments(status)
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS research_runs (
+                run_id TEXT PRIMARY KEY,
+                experiment_id TEXT NOT NULL,
+                session_id TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('CREATED', 'RUNNING', 'COMPLETED', 'FAILED')),
+                hyperparameters_json TEXT NOT NULL,
+                metrics_json TEXT NOT NULL,
+                model_binary_path TEXT,
+                created_at TEXT NOT NULL,
+                completed_at TEXT,
+                FOREIGN KEY (experiment_id) REFERENCES research_experiments(experiment_id) ON DELETE CASCADE,
+                FOREIGN KEY (session_id) REFERENCES research_sessions(session_id) ON DELETE CASCADE
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_runs_experiment_id
+            ON research_runs(experiment_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_runs_session_id
+            ON research_runs(session_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_research_runs_status
+            ON research_runs(status)
+        """)
+
         conn.commit()
         print("✓ Research database bootstrap complete")
-        print("  Tables created: 14")
-        print("  Indexes created: 20")
+        print("  Tables created: 17")
+        print("  Indexes created: 30")
 
     finally:
         conn.close()

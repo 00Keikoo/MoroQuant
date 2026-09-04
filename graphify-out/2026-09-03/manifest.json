@@ -1,7 +1,7 @@
 {
   ".claude/settings.local.json": {
-    "mtime": 1788322987.0503733,
-    "ast_hash": "2b75fc9af51031b4ad18293ca2cb6c49",
+    "mtime": 1786612935.8568888,
+    "ast_hash": "0cd4a4da6389722e5ad5c6addef6689f",
     "semantic_hash": ""
   },
   "README.md": {
@@ -1205,8 +1205,8 @@
     "semantic_hash": ""
   },
   "ml_service/bootstrap/research_database.py": {
-    "mtime": 1788392133.845441,
-    "ast_hash": "e68e110c37add80b1bb642d2d201d501",
+    "mtime": 1785238687.322651,
+    "ast_hash": "4d34346c19f0ff25d4a4a4c38370f3b8",
     "semantic_hash": ""
   },
   "ml_service/check_active_compatibility.py": {
@@ -6142,16 +6142,6 @@
   "docs/sprints/Sprint_3.9D-15_IMPLEMENTATION_REPORT.md": {
     "mtime": 1786783839.5474598,
     "ast_hash": "fbf038b70c13d48d58b7bba50324ea32",
-    "semantic_hash": ""
-  },
-  "ml_service/migrations/033_create_research_sessions.sql": {
-    "mtime": 1788392118.5580206,
-    "ast_hash": "b118550db258d6e48bc7fe5d2f590e25",
-    "semantic_hash": ""
-  },
-  "ml_service/tests/bootstrap/test_research_session_schema.py": {
-    "mtime": 1788392208.3313596,
-    "ast_hash": "d2729d5c5abbd2cb04c758fc3741f9e6",
     "semantic_hash": ""
   }
 }
