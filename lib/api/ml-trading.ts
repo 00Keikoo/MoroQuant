@@ -1,6 +1,8 @@
 import { MLSignal, MLSymbolsResponse, MLDbInfo, BacktestResults, ClosedTrade, TradeHistoryResponse, TradingModeResponse, TradingModeUpdate, PaperAccount, PaperPosition, PaperPortfolioSummary, PaperEquityPoint, PaperAnalytics, PaperTrade } from '@/lib/types/ml';
 
-const ML_API_BASE = typeof window !== 'undefined' ? `http://${window.location.hostname}:8000/api` : 'http://localhost:8000/api';
+const ML_API_BASE = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_API_URL || '/ml-api')
+  : 'http://localhost:8000/api';
 
 export const SYMBOL_DISPLAY = {
   'ES_proxy': { name: 'SPY', description: 'S&P 500 ETF (ES Futures Proxy)' },

@@ -193,12 +193,12 @@ export const ACTIVE_TIMEFRAMES = ['1h', '4h'] as const;
 
 const API_BASE =
   typeof window !== 'undefined'
-    ? `${process.env.NEXT_PUBLIC_API_URL || `http://${window.location.hostname}:8000`}/api`
+    ? (process.env.NEXT_PUBLIC_API_URL || '/ml-api')
     : 'http://localhost:8000/api';
 
 function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL || `http://${window.location.hostname}:8000/api`;
+    return process.env.NEXT_PUBLIC_API_URL || '/ml-api';
   }
   return 'http://localhost:8000/api';
 }

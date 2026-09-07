@@ -22,7 +22,7 @@ import type {
 
 const API_BASE =
   typeof window !== 'undefined'
-    ? `${process.env.NEXT_PUBLIC_API_URL || `http://${window.location.hostname}:8000`}/api`
+    ? (process.env.NEXT_PUBLIC_API_URL || '/ml-api')
     : 'http://localhost:8000/api';
 
 async function fetchWithTimeout(
