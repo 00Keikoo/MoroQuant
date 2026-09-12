@@ -10,10 +10,18 @@ Pipeline:
 
 from dataclasses import replace
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Callable
+import uuid
 
 from ml_service.research.models import ResearchSession
 from ml_service.research import provenance
+from ml_service.research.model_identity.scanner import ModelArtifactScanner
+from ml_service.research.model_lifecycle.lifecycle import LifecycleManager
+from ml_service.research.model_lifecycle.models import LifecycleState
+from ml_service.research.model_registry.model_types import ModelLifecycleState, PromotionRecord
+from ml_service.research.model_registry.registry_manager import RegistryManager
+from ml_service.research.promotion_engine.models import PromotionStatus
+from ml_service.research.promotion_engine.benchmark_adapter import evaluate_with_benchmark
 
 
 class ResearchSessionStatus:
@@ -73,6 +81,9 @@ class ResearchSessionOrchestrator:
         promotion_engine,
         registry_service,
         repository,
+        scanner_factory: Optional[type] = None,
+        lifecycle_manager_factory: Optional[Callable] = None,
+        evaluate_with_benchmark_func: Optional[Callable] = None,
     ):
         self.snapshot_engine = snapshot_engine
         self.replay_engine = replay_engine
@@ -83,6 +94,9 @@ class ResearchSessionOrchestrator:
         self.promotion_engine = promotion_engine
         self.registry_service = registry_service
         self.repository = repository
+        self.scanner_factory = scanner_factory or ModelArtifactScanner
+        self.lifecycle_manager_factory = lifecycle_manager_factory or (lambda: LifecycleManager())
+        self.evaluate_with_benchmark_func = evaluate_with_benchmark_func or evaluate_with_benchmark
 
     def execute_session(self, session: ResearchSession) -> ResearchSession:
         """
@@ -345,8 +359,16 @@ class ResearchSessionOrchestrator:
             session = replace(session, status=ResearchSessionStatus.PROMOTION)
             self.repository.save_session(session)
 
-            registry_proposal = self.promotion_engine.evaluate_promotion(
-                benchmark_result=benchmark_result,
+            artifact_path = self._resolve_artifact_path(session)
+
+            model_identity = self._create_model_identity(artifact_path)
+            lifecycle_record = self._evaluate_lifecycle(model_identity)
+
+            registry_proposal = self.evaluate_with_benchmark_func(
+                engine=self.promotion_engine,
+                benchmark=benchmark_result,
+                model_identity=model_identity,
+                lifecycle_record=lifecycle_record,
             )
 
             return session, registry_proposal
@@ -363,11 +385,16 @@ class ResearchSessionOrchestrator:
         """
         Execute registry stage: update metadata.
 
+        Only mutates Registry if proposal status == APPROVED.
+
         Returns:
             Updated session with model_fingerprint
         """
         try:
-            self.registry_service.last_proposal = registry_proposal
+            if registry_proposal.status == PromotionStatus.APPROVED:
+                promotion_record = self._create_promotion_record(session, registry_proposal)
+                self.registry_service.record_promotion(promotion_record)
+
             model_fingerprint = self._compute_model_fingerprint(session)
 
             session = replace(
@@ -417,6 +444,84 @@ class ResearchSessionOrchestrator:
             experiment_fingerprint=getattr(evaluation_result, "experiment_fingerprint", ""),
             metrics_config=getattr(evaluation_result, "metrics_config", {}),
         )
+
+    def _resolve_artifact_path(self, session: ResearchSession) -> str:
+        """Resolve artifact path through RegistryManager."""
+        model_version_id = None
+        for key, val in session.config_snapshot:
+            if key == "model_version_id":
+                model_version_id = val
+                break
+
+        if not model_version_id:
+            raise ValueError("ResearchSession missing model_version_id in config_snapshot")
+
+        registry_manager = RegistryManager(self.registry_service)
+        artifact_path = registry_manager.resolve_storage_path(model_version_id)
+
+        if not artifact_path:
+            raise ValueError(f"No artifact path found for model_version_id: {model_version_id}")
+
+        return artifact_path
+
+    def _create_model_identity(self, artifact_path: str):
+        """Create ModelIdentity using ModelArtifactScanner."""
+        from pathlib import Path
+        artifact_path_obj = Path(artifact_path)
+        model_directory = artifact_path_obj.parent
+        scanner = self.scanner_factory(model_directory)
+        return scanner.inspect(artifact_path_obj)
+
+    def _evaluate_lifecycle(self, model_identity):
+        """Evaluate model lifecycle using LifecycleManager."""
+        lifecycle_manager = self.lifecycle_manager_factory()
+        return lifecycle_manager.evaluate(model_identity)
+
+    def _create_promotion_record(self, session: ResearchSession, registry_proposal) -> PromotionRecord:
+        """Create PromotionRecord from session and proposal."""
+        model_version_id = None
+        for key, val in session.config_snapshot:
+            if key == "model_version_id":
+                model_version_id = val
+                break
+
+        if not model_version_id:
+            raise ValueError("ResearchSession missing model_version_id in config_snapshot")
+
+        previous_state = self._map_lifecycle_state_to_registry(
+            LifecycleState(registry_proposal.current_state)
+        )
+        new_state = self._map_lifecycle_state_to_registry(
+            LifecycleState(registry_proposal.proposed_state)
+        )
+
+        promotion_id = f"promo-{uuid.uuid4().hex[:12]}"
+        promotion_reason = ", ".join(registry_proposal.reason_codes)
+
+        return PromotionRecord(
+            promotion_id=promotion_id,
+            model_version_id=model_version_id,
+            previous_state=previous_state,
+            new_state=new_state,
+            promoted_by="research_orchestrator",
+            promoted_at=datetime.utcnow(),
+            promotion_reason=promotion_reason,
+            approval_reference=None,
+        )
+
+    def _map_lifecycle_state_to_registry(self, lifecycle_state: LifecycleState) -> ModelLifecycleState:
+        """Map lifecycle domain state to registry domain state."""
+        mapping = {
+            LifecycleState.GOVERNANCE_READY: ModelLifecycleState.VALIDATED,
+            LifecycleState.APPROVED: ModelLifecycleState.PRODUCTION,
+            LifecycleState.VALIDATED: ModelLifecycleState.VALIDATED,
+            LifecycleState.PRODUCTION: ModelLifecycleState.PRODUCTION,
+        }
+
+        if lifecycle_state not in mapping:
+            raise ValueError(f"No canonical mapping for lifecycle state: {lifecycle_state.value}")
+
+        return mapping[lifecycle_state]
 
     def _compute_model_fingerprint(self, session: ResearchSession) -> str:
         """Compute deterministic model fingerprint from session state, referencing registry."""
