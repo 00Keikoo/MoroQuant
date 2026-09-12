@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Query, Body
 from typing import List, Dict, Optional
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 from pathlib import Path
 
@@ -1170,7 +1170,7 @@ async def get_system_status() -> Dict:
             # Account exists and system is in PAPER mode
             # updated_at proves recent lifecycle activity
             account_time = datetime.fromisoformat(account["updated_at"]) if isinstance(account["updated_at"], str) else datetime.strptime(account["updated_at"], '%Y-%m-%d %H:%M:%S')
-            age_seconds = (datetime.now() - account_time).total_seconds()
+            age_seconds = (datetime.now(timezone.utc) - account_time.replace(tzinfo=timezone.utc)).total_seconds()
 
             # If account was updated in last 2 minutes (lifecycle runs every minute)
             if age_seconds < 120:

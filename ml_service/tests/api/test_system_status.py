@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ml_service.api.main import app
 
@@ -190,8 +190,8 @@ def test_paper_broker_with_recent_activity():
 
         mock_mode.return_value = "PAPER"
 
-        # Recent activity (within 2 minutes)
-        recent_time = datetime.now().isoformat()
+        # Recent activity (within 2 minutes) - use UTC timestamp
+        recent_time = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', '')
         mock_account.return_value = {
             "balance": 10000,
             "equity": 10500,
@@ -209,8 +209,8 @@ def test_paper_broker_with_stale_activity():
 
         mock_mode.return_value = "PAPER"
 
-        # Stale activity (over 2 minutes old)
-        stale_time = (datetime.now() - timedelta(minutes=5)).isoformat()
+        # Stale activity (over 2 minutes old) - use UTC timestamp
+        stale_time = (datetime.now(timezone.utc) - timedelta(minutes=5)).replace(microsecond=0).isoformat().replace('+00:00', '')
         mock_account.return_value = {
             "balance": 10000,
             "equity": 10500,
@@ -230,7 +230,7 @@ def test_paper_broker_when_mode_not_paper():
         mock_account.return_value = {
             "balance": 10000,
             "equity": 10500,
-            "updated_at": datetime.now().isoformat()
+            "updated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', '')
         }
         response = client.get("/api/system/status")
         data = response.json()
@@ -297,3 +297,88 @@ def test_component_failure_isolation():
         assert "market_data" in data
         assert "paper_broker" in data
         assert "binance_ws" in data
+
+
+def test_paper_broker_timezone_aware_fresh_utc():
+    """Test that fresh UTC timestamp produces RUNNING regardless of local timezone."""
+    with patch("ml_service.trading.paper_broker.get_account") as mock_account, \
+         patch("ml_service.trading.mode_manager.get_trading_mode") as mock_mode:
+
+        mock_mode.return_value = "PAPER"
+
+        # Simulate a UTC timestamp from SQLite CURRENT_TIMESTAMP (30 seconds ago)
+        utc_timestamp = (datetime.now(timezone.utc) - timedelta(seconds=30)).strftime('%Y-%m-%d %H:%M:%S')
+        mock_account.return_value = {
+            "balance": 10000,
+            "equity": 10500,
+            "updated_at": utc_timestamp
+        }
+        response = client.get("/api/system/status")
+        data = response.json()
+        assert data["paper_broker"] == "RUNNING"
+
+
+def test_paper_broker_timezone_aware_stale_utc():
+    """Test that stale UTC timestamp (>120s) produces UNKNOWN."""
+    with patch("ml_service.trading.paper_broker.get_account") as mock_account, \
+         patch("ml_service.trading.mode_manager.get_trading_mode") as mock_mode:
+
+        mock_mode.return_value = "PAPER"
+
+        # Simulate a UTC timestamp 3 minutes old (stale)
+        utc_timestamp = (datetime.now(timezone.utc) - timedelta(seconds=180)).strftime('%Y-%m-%d %H:%M:%S')
+        mock_account.return_value = {
+            "balance": 10000,
+            "equity": 10500,
+            "updated_at": utc_timestamp
+        }
+        response = client.get("/api/system/status")
+        data = response.json()
+        assert data["paper_broker"] == "UNKNOWN"
+
+
+def test_paper_broker_missing_account():
+    """Test that missing account produces UNKNOWN."""
+    with patch("ml_service.trading.paper_broker.get_account") as mock_account, \
+         patch("ml_service.trading.mode_manager.get_trading_mode") as mock_mode:
+
+        mock_mode.return_value = "PAPER"
+        mock_account.return_value = None
+
+        response = client.get("/api/system/status")
+        data = response.json()
+        assert data["paper_broker"] == "UNKNOWN"
+
+
+def test_paper_broker_missing_updated_at():
+    """Test that account without updated_at produces UNKNOWN."""
+    with patch("ml_service.trading.paper_broker.get_account") as mock_account, \
+         patch("ml_service.trading.mode_manager.get_trading_mode") as mock_mode:
+
+        mock_mode.return_value = "PAPER"
+        mock_account.return_value = {
+            "balance": 10000,
+            "equity": 10500
+            # No updated_at field
+        }
+
+        response = client.get("/api/system/status")
+        data = response.json()
+        assert data["paper_broker"] == "UNKNOWN"
+
+
+def test_paper_broker_invalid_timestamp():
+    """Test that invalid timestamp produces UNKNOWN."""
+    with patch("ml_service.trading.paper_broker.get_account") as mock_account, \
+         patch("ml_service.trading.mode_manager.get_trading_mode") as mock_mode:
+
+        mock_mode.return_value = "PAPER"
+        mock_account.return_value = {
+            "balance": 10000,
+            "equity": 10500,
+            "updated_at": "invalid-timestamp"
+        }
+
+        response = client.get("/api/system/status")
+        data = response.json()
+        assert data["paper_broker"] == "UNKNOWN"
