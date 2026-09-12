@@ -1098,3 +1098,107 @@ async def get_paper_live_account_endpoint() -> Dict:
     account["status"] = "success"
     account["timestamp"] = datetime.now().isoformat()
     return account
+
+
+@router.get("/system/status")
+async def get_system_status() -> Dict:
+    """Return operational health status for all system components.
+
+    This endpoint provides the backend contract for the dashboard StatusBar.
+    Status values: RUNNING, STOPPED, CONNECTED, DISCONNECTED, HEALTHY, DOWN, UNKNOWN.
+    """
+    from ml_service.scheduler import get_scheduler_status
+    import time
+
+    start_time = time.time()
+    timestamp = datetime.now().isoformat()
+
+    # API: RUNNING if this endpoint is executing
+    api_status = "RUNNING"
+
+    # DB: Perform lightweight connectivity check
+    db_status = "UNKNOWN"
+    try:
+        db = get_database()
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            db_status = "RUNNING"
+    except Exception:
+        db_status = "DOWN"
+
+    # Scheduler: Use canonical get_scheduler_status()
+    scheduler_status = "UNKNOWN"
+    try:
+        sched_info = get_scheduler_status()
+        scheduler_status = "RUNNING" if sched_info.get("running") else "STOPPED"
+    except Exception:
+        scheduler_status = "UNKNOWN"
+
+    # Market Data: Check for live prices, not just cached data
+    market_data_status = "UNKNOWN"
+    try:
+        crypto_service = get_crypto_service()
+        proxy_service = get_proxy_service()
+
+        # Count only entries explicitly marked as live (recent successful fetch)
+        crypto_live = sum(1 for p in crypto_service.price_cache.values() if p.get("live") is True)
+        proxy_live = sum(1 for p in proxy_service.price_cache.values() if p.get("live") is True)
+
+        # RUNNING only when we have actual live market data
+        if crypto_live > 0 or proxy_live > 0:
+            market_data_status = "RUNNING"
+        # If cache exists but nothing is live, it's stale
+        elif crypto_service.price_cache or proxy_service.price_cache:
+            market_data_status = "UNKNOWN"
+        else:
+            market_data_status = "UNKNOWN"
+    except Exception:
+        market_data_status = "UNKNOWN"
+
+    # Paper Broker: Check for recent operational activity via updated_at
+    paper_broker_status = "UNKNOWN"
+    try:
+        from ml_service.trading.paper_broker import get_account
+        from ml_service.trading.mode_manager import get_trading_mode
+
+        mode = get_trading_mode()
+        account = get_account()
+
+        if account and "updated_at" in account and mode == "PAPER":
+            # Account exists and system is in PAPER mode
+            # updated_at proves recent lifecycle activity
+            account_time = datetime.fromisoformat(account["updated_at"]) if isinstance(account["updated_at"], str) else datetime.strptime(account["updated_at"], '%Y-%m-%d %H:%M:%S')
+            age_seconds = (datetime.now() - account_time).total_seconds()
+
+            # If account was updated in last 2 minutes (lifecycle runs every minute)
+            if age_seconds < 120:
+                paper_broker_status = "RUNNING"
+            else:
+                # Account readable but lifecycle may be stalled
+                paper_broker_status = "UNKNOWN"
+        elif account and mode != "PAPER":
+            # Account exists but mode is not PAPER - broker is effectively stopped
+            paper_broker_status = "STOPPED"
+        else:
+            paper_broker_status = "UNKNOWN"
+    except Exception:
+        paper_broker_status = "UNKNOWN"
+
+    # Binance WebSocket: No production implementation found
+    binance_ws_status = "UNKNOWN"
+
+    # Compute latency
+    latency_ms = int((time.time() - start_time) * 1000)
+
+    return {
+        "api": api_status,
+        "db": db_status,
+        "scheduler": scheduler_status,
+        "paper_broker": paper_broker_status,
+        "market_data": market_data_status,
+        "binance_ws": binance_ws_status,
+        "latency_ms": latency_ms,
+        "timestamp": timestamp,
+    }
