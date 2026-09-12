@@ -94,42 +94,26 @@ def test_db_failure_returns_down():
         assert data["db"] == "DOWN"
 
 
-def test_market_data_with_live_prices():
-    """Test that market data status is RUNNING only with live=True prices."""
-    with patch("ml_service.api.routes.get_crypto_service") as mock_crypto, \
-         patch("ml_service.api.routes.get_proxy_service") as mock_proxy:
-
-        # Test with genuinely live prices (live=True)
-        mock_crypto_service = MagicMock()
-        mock_crypto_service.price_cache = {
-            "BTCUSDT": {"price": 50000, "live": True}
-        }
-        mock_crypto.return_value = mock_crypto_service
-
-        mock_proxy_service = MagicMock()
-        mock_proxy_service.price_cache = {}
-        mock_proxy.return_value = mock_proxy_service
+def test_market_data_with_fresh_ohlcv():
+    """Test that market data status is RUNNING with fresh BTCUSDT 1h timestamp."""
+    with patch("ml_service.data.ingestion.get_last_timestamp") as mock_get_ts:
+        # Fresh timestamp (30 seconds ago) in milliseconds
+        now_ms = datetime.now().timestamp() * 1000
+        fresh_ts = now_ms - (30 * 1000)  # 30 seconds ago
+        mock_get_ts.return_value = int(fresh_ts)
 
         response = client.get("/api/system/status")
         data = response.json()
         assert data["market_data"] == "RUNNING"
 
 
-def test_market_data_with_stale_cache():
-    """Test that market data with stale cache (live=False) returns UNKNOWN."""
-    with patch("ml_service.api.routes.get_crypto_service") as mock_crypto, \
-         patch("ml_service.api.routes.get_proxy_service") as mock_proxy:
-
-        # Stale cached data (live=False or missing)
-        mock_crypto_service = MagicMock()
-        mock_crypto_service.price_cache = {
-            "BTCUSDT": {"price": 50000, "live": False}
-        }
-        mock_crypto.return_value = mock_crypto_service
-
-        mock_proxy_service = MagicMock()
-        mock_proxy_service.price_cache = {}
-        mock_proxy.return_value = mock_proxy_service
+def test_market_data_with_stale_ohlcv():
+    """Test that market data with stale OHLCV (>2h) returns UNKNOWN."""
+    with patch("ml_service.data.ingestion.get_last_timestamp") as mock_get_ts:
+        # Stale timestamp (3 hours ago) in milliseconds
+        now_ms = datetime.now().timestamp() * 1000
+        stale_ts = now_ms - (3 * 3600 * 1000)  # 3 hours ago
+        mock_get_ts.return_value = int(stale_ts)
 
         response = client.get("/api/system/status")
         data = response.json()
@@ -137,18 +121,34 @@ def test_market_data_with_stale_cache():
 
 
 def test_market_data_with_no_evidence():
-    """Test that market data with empty cache returns UNKNOWN."""
-    with patch("ml_service.api.routes.get_crypto_service") as mock_crypto, \
-         patch("ml_service.api.routes.get_proxy_service") as mock_proxy:
+    """Test that market data with missing timestamp returns UNKNOWN."""
+    with patch("ml_service.data.ingestion.get_last_timestamp") as mock_get_ts:
+        # No timestamp data
+        mock_get_ts.return_value = None
 
-        # No cached data
-        mock_crypto_service = MagicMock()
-        mock_crypto_service.price_cache = {}
-        mock_crypto.return_value = mock_crypto_service
+        response = client.get("/api/system/status")
+        data = response.json()
+        assert data["market_data"] == "UNKNOWN"
 
-        mock_proxy_service = MagicMock()
-        mock_proxy_service.price_cache = {}
-        mock_proxy.return_value = mock_proxy_service
+
+def test_market_data_at_threshold():
+    """Test that market data exactly at 2h threshold returns UNKNOWN."""
+    with patch("ml_service.data.ingestion.get_last_timestamp") as mock_get_ts:
+        # Exactly 2 hours old (7200 seconds) in milliseconds
+        now_ms = datetime.now().timestamp() * 1000
+        threshold_ts = now_ms - (7200 * 1000)
+        mock_get_ts.return_value = int(threshold_ts)
+
+        response = client.get("/api/system/status")
+        data = response.json()
+        # At exact threshold, should be UNKNOWN (age > threshold)
+        assert data["market_data"] == "UNKNOWN"
+
+
+def test_market_data_exception_handling():
+    """Test that market data check exceptions return UNKNOWN."""
+    with patch("ml_service.data.ingestion.get_last_timestamp") as mock_get_ts:
+        mock_get_ts.side_effect = Exception("Database error")
 
         response = client.get("/api/system/status")
         data = response.json()
@@ -160,27 +160,6 @@ def test_binance_ws_remains_unknown():
     response = client.get("/api/system/status")
     data = response.json()
     assert data["binance_ws"] == "UNKNOWN"
-
-
-def test_endpoint_does_not_call_health_prices():
-    """Test that endpoint does not make HTTP request to /health/prices."""
-    # This test ensures we're using services directly, not via HTTP
-    with patch("ml_service.api.routes.get_crypto_service") as mock_crypto, \
-         patch("ml_service.api.routes.get_proxy_service") as mock_proxy:
-
-        mock_crypto_service = MagicMock()
-        mock_crypto_service.price_cache = {}
-        mock_crypto.return_value = mock_crypto_service
-
-        mock_proxy_service = MagicMock()
-        mock_proxy_service.price_cache = {}
-        mock_proxy.return_value = mock_proxy_service
-
-        response = client.get("/api/system/status")
-
-        # Verify we called the service methods, not HTTP
-        assert mock_crypto.called
-        assert mock_proxy.called
 
 
 def test_paper_broker_with_recent_activity():

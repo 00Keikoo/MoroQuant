@@ -1136,22 +1136,20 @@ async def get_system_status() -> Dict:
     except Exception:
         scheduler_status = "UNKNOWN"
 
-    # Market Data: Check for live prices, not just cached data
+    # Market Data: Check OHLCV ingestion freshness using canonical evidence
     market_data_status = "UNKNOWN"
     try:
-        crypto_service = get_crypto_service()
-        proxy_service = get_proxy_service()
+        from ml_service.data.ingestion import get_last_timestamp
 
-        # Count only entries explicitly marked as live (recent successful fetch)
-        crypto_live = sum(1 for p in crypto_service.price_cache.values() if p.get("live") is True)
-        proxy_live = sum(1 for p in proxy_service.price_cache.values() if p.get("live") is True)
+        last_ts = get_last_timestamp('BTCUSDT', '1h')
+        if last_ts:
+            age_seconds = (datetime.now().timestamp() * 1000 - last_ts) / 1000
+            freshness_threshold = 3600 * 2  # 2 hours (matches scheduler contract)
 
-        # RUNNING only when we have actual live market data
-        if crypto_live > 0 or proxy_live > 0:
-            market_data_status = "RUNNING"
-        # If cache exists but nothing is live, it's stale
-        elif crypto_service.price_cache or proxy_service.price_cache:
-            market_data_status = "UNKNOWN"
+            if age_seconds <= freshness_threshold:
+                market_data_status = "RUNNING"
+            else:
+                market_data_status = "UNKNOWN"
         else:
             market_data_status = "UNKNOWN"
     except Exception:
