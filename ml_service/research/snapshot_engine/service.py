@@ -15,7 +15,10 @@ class SnapshotService:
         Args:
             db_path: Optional database path for repositories
         """
+        from ml_service.repositories.snapshot_repository import SnapshotRepository
+
         self.db_path = db_path
+        self.repository = SnapshotRepository(db_path=db_path)
 
     def create_snapshot(self, symbol: Optional[str] = None) -> Snapshot:
         """Create a new snapshot of current system state.
@@ -26,7 +29,9 @@ class SnapshotService:
         Returns:
             Snapshot object
         """
-        return capture_snapshot(symbol=symbol, db_path=self.db_path)
+        snapshot = capture_snapshot(symbol=symbol, db_path=self.db_path)
+        self.repository.save(snapshot)
+        return snapshot
 
     def get_snapshot(self, snapshot_id: str) -> Optional[Snapshot]:
         """Retrieve snapshot by ID.
@@ -35,6 +40,6 @@ class SnapshotService:
             snapshot_id: Snapshot identifier
 
         Returns:
-            None (persistence not yet implemented)
+            Snapshot object if found, None otherwise
         """
-        return None
+        return self.repository.get(snapshot_id)

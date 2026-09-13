@@ -419,10 +419,30 @@ def bootstrap_research_tables(db_path: Optional[str] = None) -> None:
             ON research_runs(status)
         """)
 
+        # Snapshots table (Phase 3E-2)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS snapshots (
+                snapshot_id TEXT PRIMARY KEY,
+                timestamp TEXT NOT NULL,
+                snapshot_data TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_snapshots_timestamp
+            ON snapshots(timestamp)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_snapshots_created_at
+            ON snapshots(created_at DESC)
+        """)
+
         conn.commit()
         print("✓ Research database bootstrap complete")
-        print("  Tables created: 17")
-        print("  Indexes created: 30")
+        print("  Tables created: 18")
+        print("  Indexes created: 33")
 
     finally:
         conn.close()
