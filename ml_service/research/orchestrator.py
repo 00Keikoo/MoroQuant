@@ -22,6 +22,9 @@ from ml_service.research.model_registry.model_types import ModelLifecycleState, 
 from ml_service.research.model_registry.registry_manager import RegistryManager
 from ml_service.research.promotion_engine.models import PromotionStatus
 from ml_service.research.promotion_engine.benchmark_adapter import evaluate_with_benchmark
+from ml_service.research.promotion_engine.governance import governance_audit_from_lifecycle
+from ml_service.research.experiment_engine.adapter import ExperimentConfigAdapter
+from ml_service.research.reporting.adapter import evaluation_to_report
 
 
 class ResearchSessionStatus:
@@ -76,7 +79,6 @@ class ResearchSessionOrchestrator:
         replay_engine,
         experiment_engine,
         evaluation_engine,
-        reporting_engine,
         benchmark_engine,
         promotion_engine,
         registry_service,
@@ -89,7 +91,6 @@ class ResearchSessionOrchestrator:
         self.replay_engine = replay_engine
         self.experiment_engine = experiment_engine
         self.evaluation_engine = evaluation_engine
-        self.reporting_engine = reporting_engine
         self.benchmark_engine = benchmark_engine
         self.promotion_engine = promotion_engine
         self.registry_service = registry_service
@@ -97,6 +98,7 @@ class ResearchSessionOrchestrator:
         self.scanner_factory = scanner_factory or ModelArtifactScanner
         self.lifecycle_manager_factory = lifecycle_manager_factory or (lambda: LifecycleManager())
         self.evaluate_with_benchmark_func = evaluate_with_benchmark_func or evaluate_with_benchmark
+        self._experiment_result = None  # Store experiment result for evaluation stage
 
     def execute_session(self, session: ResearchSession) -> ResearchSession:
         """
@@ -108,9 +110,8 @@ class ResearchSessionOrchestrator:
         3. Experiment - run strategies
         4. Evaluation - compute metrics
         5. Reporting - generate reports
-        6. Benchmark - compare against baseline
-        7. Promotion - governance decision
-        8. Registry - metadata updates
+        6. Promotion - governance decision (benchmark deferred to batch orchestrator)
+        7. Registry - metadata updates
 
         Args:
             session: Initial ResearchSession
@@ -138,11 +139,10 @@ class ResearchSessionOrchestrator:
         if session.status.startswith("FAILED"):
             return session
 
-        session, benchmark_result = self._run_benchmark_stage(session, report)
-        if session.status.startswith("FAILED"):
-            return session
-
-        session, registry_proposal = self._run_promotion_stage(session, benchmark_result)
+        # Skip benchmark stage - single-session orchestrator cannot perform cohort-based benchmarking
+        # Benchmark requires List[ResearchReport] for meaningful comparison
+        # Pass report directly to promotion (promotion uses benchmark_adapter for single-report scoring)
+        session, registry_proposal = self._run_promotion_stage(session, report)
         if session.status.startswith("FAILED"):
             return session
 
@@ -170,8 +170,14 @@ class ResearchSessionOrchestrator:
             session = replace(session, status=ResearchSessionStatus.SNAPSHOT)
             self.repository.save_session(session)
 
+            # Extract symbol from session configuration
+            config_dict = dict(session.config_snapshot)
+            symbol = config_dict.get('symbol')
+            if not symbol:
+                raise ValueError("ResearchSession missing symbol in config_snapshot")
+
             snapshot_result = self.snapshot_engine.create_snapshot(
-                dataset_version_id=session.dataset_version_id,
+                symbol=str(symbol),
             )
 
             dataset_fingerprint = self._compute_dataset_fingerprint(snapshot_result)
@@ -205,9 +211,19 @@ class ResearchSessionOrchestrator:
             session = replace(session, status=ResearchSessionStatus.REPLAY)
             self.repository.save_session(session)
 
-            replay_result = self.replay_engine.replay(
+            # Extract replay thresholds from session configuration
+            config_dict = dict(session.config_snapshot)
+            threshold_long = float(config_dict.get('threshold_long', 0.5))
+            threshold_short = float(config_dict.get('threshold_short', 0.5))
+
+            replay_result = self.replay_engine.run_from_snapshot_id(
                 snapshot_id=session.snapshot_id,
+                threshold_long=threshold_long,
+                threshold_short=threshold_short,
             )
+
+            if replay_result is None:
+                raise ValueError(f"Snapshot {session.snapshot_id} not found or replay failed")
 
             replay_fingerprint = self._compute_replay_fingerprint(replay_result)
 
@@ -239,9 +255,26 @@ class ResearchSessionOrchestrator:
             session = replace(session, status=ResearchSessionStatus.EXPERIMENT)
             self.repository.save_session(session)
 
+            # Build ExperimentConfig from session
+            experiment_id = f"exp-{session.session_id}"
+            experiment_config = ExperimentConfigAdapter.from_session(session, experiment_id)
+
+            # Extract artifact directory from session configuration
+            config_dict = dict(session.config_snapshot)
+            artifact_dir = config_dict.get('artifact_dir')
+            if not artifact_dir:
+                raise ValueError("ResearchSession missing artifact_dir in config_snapshot")
+
             experiment_result = self.experiment_engine.run_experiment(
-                session=session,
+                experiment_config=experiment_config,
+                artifact_dir=artifact_dir,
             )
+
+            if experiment_result is None:
+                raise ValueError("Experiment execution failed")
+
+            # Store experiment result for evaluation stage
+            self._experiment_result = experiment_result
 
             experiment_fingerprint = self._compute_experiment_fingerprint(experiment_result)
 
@@ -273,8 +306,12 @@ class ResearchSessionOrchestrator:
             session = replace(session, status=ResearchSessionStatus.EVALUATION)
             self.repository.save_session(session)
 
+            # Pass stored ExperimentResult to evaluation engine
+            if self._experiment_result is None:
+                raise ValueError("No experiment result available for evaluation")
+
             evaluation_result = self.evaluation_engine.evaluate(
-                session=session,
+                experiment_result=self._experiment_result,
             )
 
             evaluation_fingerprint = self._compute_evaluation_fingerprint(evaluation_result)
@@ -307,9 +344,8 @@ class ResearchSessionOrchestrator:
             session = replace(session, status=ResearchSessionStatus.REPORTING)
             self.repository.save_session(session)
 
-            report = self.reporting_engine.generate_report(
-                evaluation_result=evaluation_result,
-            )
+            # Use the canonical pure transformation function
+            report = evaluation_to_report(evaluation_result)
 
             return session, report
 
@@ -321,34 +357,12 @@ class ResearchSessionOrchestrator:
             self.repository.save_session(session)
             return session, None
 
-    def _run_benchmark_stage(self, session: ResearchSession, report: Any) -> tuple[ResearchSession, Any]:
-        """
-        Execute benchmark stage: compare against baseline.
-
-        Returns:
-            Tuple of (Updated session, benchmark_result)
-        """
-        try:
-            session = replace(session, status=ResearchSessionStatus.BENCHMARK)
-            self.repository.save_session(session)
-
-            benchmark_result = self.benchmark_engine.benchmark(
-                report=report,
-            )
-
-            return session, benchmark_result
-
-        except Exception as e:
-            session = replace(
-                session,
-                status=ResearchSessionStatus.FAILED_BENCHMARK,
-            )
-            self.repository.save_session(session)
-            return session, None
-
-    def _run_promotion_stage(self, session: ResearchSession, benchmark_result: Any) -> tuple[ResearchSession, Any]:
+    def _run_promotion_stage(self, session: ResearchSession, report: Any) -> tuple[ResearchSession, Any]:
         """
         Execute promotion stage: governance decision.
+
+        Single-session promotion evaluates ONE model for lifecycle advancement.
+        Benchmark comparison (multi-model ranking) deferred to batch orchestrator.
 
         Promotion rejection is NOT a failure - it's a valid outcome.
 
@@ -364,11 +378,14 @@ class ResearchSessionOrchestrator:
             model_identity = self._create_model_identity(artifact_path)
             lifecycle_record = self._evaluate_lifecycle(model_identity)
 
-            registry_proposal = self.evaluate_with_benchmark_func(
-                engine=self.promotion_engine,
-                benchmark=benchmark_result,
+            # Extract governance audit from lifecycle state (no benchmark needed for single-model)
+            audit_report = governance_audit_from_lifecycle(lifecycle_record)
+
+            # Direct promotion evaluation (single-model governance)
+            registry_proposal = self.promotion_engine.evaluate(
                 model_identity=model_identity,
                 lifecycle_record=lifecycle_record,
+                audit_report=audit_report,
             )
 
             return session, registry_proposal
